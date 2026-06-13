@@ -467,7 +467,7 @@ export type TenantProjectTeamMember = {
 export type TenantProjectEpic = {
   // Primary key, unique, not null, UUID-typed
   id: string;
-  // Foreign key, references TenantProjects.id, UUID-typed, not null
+  // Foreign key, references TenantProject.id, UUID-typed, not null
   project_id: string;
   // Not null
   code: string;
@@ -475,7 +475,7 @@ export type TenantProjectEpic = {
   title: string;
   // Not null
   description: string;
-  // Foreign key, references TenantMembership.id, UUID-typed, not null, indicates the tenant membership of the epic owner
+  // Foreign key, references TenantMembership.id, UUID-typed, default = null, indicates the tenant membership of the epic owner
   owner_membership_id: string | null;
   // Foreign key, references TenantMembership.id, UUID-typed, not null, indicates the tenant membership of the user who created the epic
   created_by_membership_id: string;
@@ -485,7 +485,7 @@ export type TenantProjectEpic = {
   end_date: Date | null;
   // Not null, default = current timestamp
   created_at: Date;
-  // Not null
+  // Not null, default = current timestamp
   updated_at: Date;
   // Default = null (means the epic has not been completed yet)
   completed_at: Date | null;
@@ -496,7 +496,7 @@ export type TenantProjectEpic = {
 export type TenantProjectTask = {
   // Primary key, unique, not null, UUID-typed
   id: string;
-  // Foreign key, references TenantProjects.id, UUID-typed, not null
+  // Foreign key, references TenantProject.id, UUID-typed, not null
   project_id: string;
   // For sub-tasks, default = null (means it's a top-level task)
   parent_task_id: string | null;
