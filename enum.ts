@@ -186,3 +186,346 @@ export enum TenantProjectTaskStatusType {
   DEFERRED = "deferred",
   CANCELLED = "cancelled",
 }
+
+/**
+ * SubscriptionBillingCycleType Enum: defines the billing cycle types for subscription plans in a multi-tenant system.
+ * Each billing cycle type represents a different frequency of billing for the subscription plan, which can affect the tenant customer's billing schedule and costs.
+ * ===
+ * MONTHLY: The tenant customer will be billed every month for the subscription plan,
+ *   which may be suitable for short-term commitments or when the tenant customer prefers monthly payments.
+ * YEARLY: The tenant customer will be billed every year for the subscription plan,
+ *   which may offer cost savings compared to monthly billing and may be suitable for long-term commitments
+ *   or when the tenant customer prefers annual payments.
+ */
+export enum SubscriptionBillingCycleType {
+  MONTHLY = "monthly",
+  YEARLY = "yearly",
+}
+
+/**
+ * SystemSubscriptionPlanStatusType Enum: defines the possible statuses of a system subscription plan in a multi-tenant system.
+ * Each status represents a different state of the system subscription plan, which can affect its availability and accessibility within the system.
+ * ===
+ * ACTIVE: The system subscription plan is active and can be subscribed to by tenant customers.
+ * INACTIVE: The system subscription plan is inactive and cannot be subscribed to by tenant customers,
+ *   possibly due to administrative action or the plan's discontinuation.
+ * ARCHIVED: The system subscription plan is archived and cannot be subscribed to by tenant customers,
+ *   but its data is retained in the system for historical or auditing purposes.
+ */
+export enum SystemSubscriptionPlanStatusType {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  ARCHIVED = "archived",
+}
+
+/**
+ * TenantSubscriptionPlanStatusType Enum: defines the possible statuses of a tenant subscription plan in a multi-tenant system.
+ * Each status represents a different state of the tenant subscription plan, which can affect its billing and access to the system's features and services.
+ * ===
+ * TRIALING: The tenant subscription plan is in a trial period, allowing tenant customers to access the system's features
+ *   and services for free for a limited time.
+ * ACTIVE: The tenant subscription plan is active and the tenant customer is being billed
+ *   according to the plan's pricing and billing cycle.
+ * PAST_DUE: The tenant customer's payment for the subscription plan is past due,
+ *   which may result in restricted access to the system's features and services until the payment is resolved.
+ * SUSPENDED: The tenant subscription plan is suspended, and the tenant customer temporarily cannot access
+ *   the system's features and services, possibly due to non-payment or policy violations.
+ * CANCELED: The tenant subscription plan has been canceled, and the tenant customer cannot access the system's features
+ *   and services, but their data may still be retained in the system for a certain period.
+ * EXPIRED: The tenant subscription plan has expired, and the tenant customer cannot access the system's features
+ *   and services, but their data may still be retained in the system for a certain period,
+ *   depending on the system's data retention policies.
+ */
+export enum TenantSubscriptionPlanStatusType {
+  TRIALING = "trialing",
+  ACTIVE = "active",
+  PAST_DUE = "past_due",
+  SUSPENDED = "suspended",
+  CANCELED = "canceled",
+  EXPIRED = "expired",
+}
+
+/**
+ * TenantSubscriptionBillingRecordStatusType Enum: defines the possible statuses of a tenant subscription billing record in a multi-tenant system.
+ * Each status represents a different state of the billing record, which can affect its processing and the tenant customer's billing history.
+ * ===
+ * DRAFT: The tenant subscription billing record is in draft status,
+ *   meaning it has been created but not yet finalized or sent for payment processing.
+ * OPEN: The tenant subscription billing record is open,
+ *   meaning it has been finalized and sent for payment processing, but the payment has not yet been completed.
+ * PAID: The tenant subscription billing record is paid,
+ *   meaning the payment has been successfully completed and processed.
+ * VOIDED: The tenant subscription billing record is voided,
+ *   meaning it has been canceled and will not be processed for payment, possibly due to an error or administrative action.
+ * REFUNDED: The tenant subscription billing record is refunded,
+ *   meaning the payment has been reversed and the tenant customer has been reimbursed,
+ *   possibly due to a refund request or a billing dispute.
+ */
+export enum TenantSubscriptionBillingRecordStatusType {
+  DRAFT = "draft",
+  OPEN = "open",
+  PAID = "paid",
+  VOIDED = "voided",
+  REFUNDED = "refunded",
+}
+
+/**
+ * TenantPaymentStatusType Enum: defines the possible statuses of a tenant payment in a multi-tenant system.
+ * Each status represents a different state of the payment, which can affect its processing and the tenant customer's billing history.
+ * ===
+ * PENDING: The tenant payment is pending, meaning it has been initiated but not yet completed or processed.
+ * SUCCEEDED: The tenant payment has succeeded,
+ *   meaning the payment has been successfully processed and the tenant customer has been charged.
+ * FAILED: The tenant payment has failed, meaning the payment was not successful,
+ *   possibly due to insufficient funds, an error in processing, or a declined transaction.
+ * REFUNDED: The tenant payment is refunded, meaning the payment has been reversed and the tenant customer
+ *   has been reimbursed, possibly due to a refund request or a billing dispute.
+ */
+export enum TenantPaymentStatusType {
+  PENDING = "pending",
+  SUCCEEDED = "succeeded",
+  FAILED = "failed",
+  REFUNDED = "refunded",
+}
+
+/**
+ * TenantPaymentRecordType Enum: defines the possible types of payment methods used for tenant payments in a multi-tenant system.
+ * Each type represents a different method of payment, which can affect the processing and reconciliation of payments within the system.
+ * ===
+ * CREDIT_CARD: The tenant payment was made using a credit card,
+ *   which may involve processing through a payment gateway and may be subject to fees and chargeback policies.
+ * BANK_TRANSFER: The tenant payment was made using a bank transfer,
+ *   which may involve manual processing and may take longer to complete compared to other payment methods.
+ * E_WALLET: The tenant payment was made using an e-wallet, such as PayPal or Apple Pay,
+ *   which may offer convenience and security for online transactions.
+ * OTHER: The tenant payment was made using another method that does not fall into the above categories,
+ *   which may require additional information for processing and reconciliation.
+ */
+export enum TenantPaymentRecordType {
+  CREDIT_CARD = "credit_card",
+  BANK_TRANSFER = "bank_transfer",
+  E_WALLET = "e_wallet",
+  OTHER = "other",
+}
+
+/**
+ * AuditActionType Enum: defines the possible types of actions that can be performed in a system and recorded in an audit log.
+ * Each action type represents a different kind of operation that can be performed on resources within the system,
+ *   which can be used for tracking changes, monitoring user activity, and ensuring accountability.
+ * ===
+ * CREATE: An action that creates a new resource in the system, such as creating a new tenant, user, or project.
+ * UPDATE: An action that updates an existing resource in the system, such as modifying a tenant's settings or changing a user's role.
+ * DELETE: An action that deletes an existing resource in the system, such as removing a tenant, user, or project.
+ * LOGIN: An action that represents a user logging into the system, which can be used for tracking user access and activity.
+ * LOGOUT: An action that represents a user logging out of the system, which can be used for tracking user access and activity.
+ * INVITE: An action that represents inviting a user to join a tenant or project, which can be used for tracking collaboration and access control.
+ * RESTORE: An action that represents restoring a deleted resource in the system, such as restoring a deleted tenant or project.
+ * SUSPEND: An action that represents suspending a resource in the system, such as suspending a tenant or user account.
+ * CANCEL: An action that represents canceling a resource in the system, such as canceling a subscription or project.
+ * EXPORT: An action that represents exporting data from the system, such as exporting a report or a list of users.
+ */
+export enum AuditActionType {
+  CREATE = "create",
+  UPDATE = "update",
+  DELETE = "delete",
+  LOGIN = "login",
+  LOGOUT = "logout",
+  INVITE = "invite",
+  RESTORE = "restore",
+  SUSPEND = "suspend",
+  CANCEL = "cancel",
+  EXPORT = "export",
+}
+
+/**
+ * AuditResourceType Enum: defines the possible types of resources that can be acted upon in a system and recorded in an audit log.
+ * Each resource type represents a different kind of entity within the system that can be created, updated, deleted, or otherwise manipulated,
+ *   which can be used for tracking changes, monitoring user activity, and ensuring accountability.
+ * ===
+ * TENANT: A tenant resource represents an organizational unit or customer in a multi-tenant system.
+ * USER: A user resource represents an individual user account in the system.
+ * TENANT_MEMBERSHIP: A tenant membership resource represents the association between a user and a tenant, including the user's role and status within the tenant.
+ * CUSTOMER: A customer resource represents a tenant customer in the system,
+ *   which may be associated with billing and subscription information.
+ * PROJECT: A project resource represents a project within a tenant,
+ *   which may have its own settings, members, and tasks.
+ * PROJECT_TASK: A project task resource represents a specific task within a project,
+ *   which may have its own status, priority, and assignee.
+ * SUBSCRIPTION: A subscription resource represents a tenant's subscription to a system subscription plan,
+ *   which may have its own status and billing information.
+ * BILLING_RECORD: A billing record resource represents a record of a billing event, such as an invoice or payment,
+ *   which may have its own status and amount.
+ * PAYMENT_RECORD: A payment record resource represents a record of a payment transaction, which may have its own status,
+ *   amount, and payment method.
+ * FILE_ATTACHMENT: A file attachment resource represents a file that is attached to another resource in the system,
+ *   such as a project task or user profile, which may have its own metadata and access controls.
+ */
+export enum AuditResourceType {
+  TENANT = "tenant",
+  USER = "user",
+  TENANT_MEMBERSHIP = "tenant_membership",
+  CUSTOMER = "customer",
+  PROJECT = "project",
+  PROJECT_TASK = "project_task",
+  SUBSCRIPTION = "subscription",
+  BILLING_RECORD = "billing_record",
+  PAYMENT_RECORD = "payment_record",
+  FILE_ATTACHMENT = "file_attachment",
+}
+
+/**
+ * FileStorageProviderType Enum: defines the possible types of file storage providers that can be used in a system for storing and managing files.
+ * Each provider type represents a different service or method for handling file storage, which can affect the system's scalability, reliability, and cost.
+ * ===
+ * LOCAL: The local file storage provider uses the server's local filesystem to store files,
+ *   which may be suitable for small-scale applications or development environments
+ *   but may not be scalable or reliable for production use.
+ * AWS_S3: The AWS S3 file storage provider uses Amazon Web Services' Simple Storage Service (S3) to store files,
+ *   which offers high scalability, durability, and availability, and is suitable for production use in many applications.
+ * AZURE_BLOB: The Azure Blob file storage provider uses Microsoft Azure's Blob Storage service to store files,
+ *   which offers similar benefits to AWS S3 and is suitable for production use in many applications.
+ * CLOUDFLARE_R2: The Cloudflare R2 file storage provider uses Cloudflare's R2 storage service to store files,
+ *   which offers high performance and low latency, and is suitable for production use in many applications.
+ */
+export enum FileStorageProviderType {
+  LOCAL = "local",
+  AWS_S3 = "aws_s3",
+  AZURE_BLOB = "azure_blob",
+  CLOUDFLARE_R2 = "cloudflare_r2",
+}
+
+/**
+ * FileVisibilityType Enum: defines the possible visibility levels for files stored in a system.
+ * Each visibility type represents a different level of access control for the file, which can affect who can view or download the file.
+ * ===
+ * PRIVATE: The file is private and can only be accessed by the owner or users with explicit permissions to access the file.
+ * INTERNAL: The file is internal and can be accessed by users within the same organization or tenant,
+ *   but not by external users.
+ * PUBLIC: The file is public and can be accessed by anyone, including external users,
+ *   without any authentication or authorization.
+ */
+export enum FileVisibilityType {
+  PRIVATE = "private",
+  INTERNAL = "internal",
+  PUBLIC = "public",
+}
+
+/**
+ * FileAttachmentStatusType Enum: defines the possible statuses of a file attachment in a system.
+ * Each status represents a different state of the file attachment, which can affect its availability and accessibility within the system.
+ * ===
+ * UPLOADING: The file attachment is currently being uploaded to the system,
+ *   and may not yet be fully available or accessible.
+ * ACTIVE: The file attachment is active and can be accessed and downloaded by users with the appropriate permissions.
+ * DELETED: The file attachment has been deleted and cannot be accessed or downloaded,
+ *   but its metadata may still be retained in the system for historical or auditing purposes.
+ * QUARANTINED: The file attachment has been quarantined, meaning it has been flagged for potential security issues
+ *   or policy violations, and may be temporarily inaccessible until it is reviewed and resolved.
+ */
+export enum FileAttachmentStatusType {
+  UPLOADING = "uploading",
+  ACTIVE = "active",
+  DELETED = "deleted",
+  QUARANTINED = "quarantined",
+}
+
+/**
+ * FileAttachmentResourceType Enum: defines the possible types of resources that a file attachment can be associated with in a system.
+ * Each resource type represents a different kind of entity within the system that can have files attached to it,
+ *   which can be used for organizing and managing file attachments based on their associated resources.
+ * ===
+ * USER: The file attachment is associated with a user resource, such as a user's profile picture
+ *   or a document related to the user.
+ * CUSTOMER: The file attachment is associated with a customer resource, such as a contract
+ *   or invoice related to the tenant customer.
+ * PROJECT: The file attachment is associated with a project resource, such as a project specification or design document.
+ * PROJECT_TASK: The file attachment is associated with a project task resource,
+ *   such as a task description or a related document.
+ * PROJECT_TASK_COMMENT: The file attachment is associated with a comment on a project task,
+ *   such as an image or file that provides additional context to the comment.
+ */
+export enum FileAttachmentResourceType {
+  USER = "user",
+  CUSTOMER = "customer",
+  PROJECT = "project",
+  PROJECT_TASK = "project_task",
+  PROJECT_TASK_COMMENT = "project_task_comment",
+}
+
+/**
+ * NotificationChannelType Enum: defines the possible types of notification channels that can be used in a system for sending notifications to users.
+ * Each channel type represents a different method of delivering notifications, which can affect the user's experience and the effectiveness of the notifications.
+ * ===
+ * IN_APP: The in-app notification channel delivers notifications within the application itself,
+ *   allowing users to receive and interact with notifications while using the app.
+ * EMAIL: The email notification channel delivers notifications via email,
+ * SMS: The SMS notification channel delivers notifications via SMS text messages,
+ *  which can be useful for urgent notifications or when users prefer receiving notifications on their mobile devices.
+ */
+export enum NotificationChannelType {
+  IN_APP = "in_app",
+  EMAIL = "email",
+  SMS = "sms",
+}
+
+/**
+ * NotificationStatusType Enum: defines the possible statuses of a notification in a system.
+ * Each status represents a different state of the notification, which can affect its delivery and the user's interaction with it.
+ * ===
+ * PENDING: The notification is pending and has not yet been sent to the user, possibly due to processing delays or scheduling.
+ * SENT: The notification has been sent to the user but has not yet been read or interacted with.
+ * READ: The notification has been read by the user, indicating that they have seen the notification.
+ * FAILED: The notification failed to be sent to the user, possibly due to an error in processing or delivery issues.
+ */
+export enum NotificationStatusType {
+  PENDING = "pending",
+  SENT = "sent",
+  READ = "read",
+  FAILED = "failed",
+}
+
+/**
+ * NotificationDeliveryStatusType Enum: defines the possible delivery statuses of a notification in a system.
+ * Each status represents a different state of the notification's delivery process,
+ *   which can affect the user's experience and the system's monitoring of notification delivery.
+ * ===
+ * PENDING: The notification is pending delivery and has not yet been sent to the user.
+ * SENT: The notification has been sent to the user but has not yet been delivered.
+ * DELIVERED: The notification has been delivered to the user.
+ * FAILED: The notification failed to be delivered to the user, possibly due to an error in processing or delivery issues.
+ */
+export enum NotificationDeliveryStatusType {
+  PENDING = "pending",
+  SENT = "sent",
+  DELIVERED = "delivered",
+  FAILED = "failed",
+}
+
+/**
+ * NotificationType Enum: defines the possible types of notifications that can be sent in a system.
+ * Each notification type represents a different kind of event or action that can trigger a notification,
+ *   which can be used for informing users about important updates, changes, or actions that require their attention.
+ * ===
+ * PROJECT_CREATED: A notification triggered when a new project is created within a tenant.
+ * PROJECT_UPDATED: A notification triggered when an existing project is updated or modified.
+ * TASK_CREATED: A notification triggered when a new task is created within a project.
+ * TASK_ASSIGNED: A notification triggered when a task is assigned to a user.
+ * TASK_COMPLETED: A notification triggered when a task is marked as completed.
+ * CUSTOMER_CREATED: A notification triggered when a new tenant customer is created in the system.
+ * CUSTOMER_UPDATED: A notification triggered when an existing tenant customer is updated or modified.
+ * MEMBER_INVITED: A notification triggered when a user is invited to join a tenant or project.
+ * SUBSCRIPTION_EXPIRING: A notification triggered when a tenant's subscription is approaching its expiration date.
+ * PAYMENT_FAILED: A notification triggered when a payment transaction fails for a tenant customer.
+ */
+export enum NotificationType {
+  PROJECT_CREATED = "project_created",
+  PROJECT_UPDATED = "project_updated",
+  TASK_CREATED = "task_created",
+  TASK_ASSIGNED = "task_assigned",
+  TASK_COMPLETED = "task_completed",
+  CUSTOMER_CREATED = "customer_created",
+  CUSTOMER_UPDATED = "customer_updated",
+  MEMBER_INVITED = "member_invited",
+  SUBSCRIPTION_EXPIRING = "subscription_expiring",
+  PAYMENT_FAILED = "payment_failed",
+}
