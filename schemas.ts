@@ -2,6 +2,14 @@ import {
   AuditActionType,
   AuditResourceType,
   AuthFactorType,
+  FileAttachmentResourceType,
+  FileAttachmentStatusType,
+  FileStorageProviderType,
+  FileVisibilityType,
+  NotificationChannelType,
+  NotificationDeliveryStatusType,
+  NotificationStatusType,
+  NotificationType,
   SubscriptionBillingCycleType,
   SystemSubscriptionPlanStatusType,
   TenantCustomerStatusType,
@@ -799,4 +807,140 @@ export type AuditLog = {
   user_agent: string;
   // Not null, default = current timestamp
   created_at: Date;
+};
+
+export type FileAttachment = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Foreign key, references Tenant.id, UUID-typed, not null
+  tenant_id: string;
+  // Foreign key, references UserMembership.id, UUID-typed, not null
+  uploaded_by_membership_id: string;
+  // Not null
+  original_file_name: string;
+  // Not null
+  stored_file_name: string;
+  // Not null
+  mime_type: string;
+  // Not null
+  file_extension: string;
+  // Not null
+  file_size_bytes: number;
+  // Not null
+  storage_provider: FileStorageProviderType;
+  // Not null
+  storage_path: string;
+  // Not null
+  visibility: FileVisibilityType;
+  // Not null
+  status: FileAttachmentStatusType;
+  // Default = null (means the file has not been scanned for malware)
+  checksum: string | null;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type FileAttachmentReference = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Foreign key, references FileAttachment.id, UUID-typed, not null
+  file_attachment_id: string;
+  // Not null, default = "Unknown" (means the resource type is not available)
+  resource_type: FileAttachmentResourceType | "Unknown";
+  // Not null, default = "Unknown" (means the resource ID is not available)
+  resource_id: string;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type NotificationTemplate = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null, unique
+  code: string;
+  // Not null
+  name: string;
+  // Not null
+  description: string;
+  // Not null
+  channel: NotificationChannelType;
+  // Default = null
+  subject_template: string | null;
+  // Not null
+  body_template: string | null;
+  // Default = true
+  is_active: boolean;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type Notification = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Foreign key, references User.id, UUID-typed, not null
+  user_id: string;
+  // Not null
+  template_id: string;
+  // Foreign key, references TenantMembership.id, UUID-typed, default = null,
+  //   indicates the tenant membership of the sender of the notification.
+  recipient_membership_id: string | null;
+  // Not null
+  title: string;
+  // Not null
+  content: string;
+  // Not null
+  channel: NotificationChannelType;
+  // Not null
+  status: NotificationStatusType;
+  // Using the JSONB data type to store additional context and metadata for the notification,
+  //   where the structure can vary depending on the type of notification.
+  payload: Record<string, any> | null;
+  // Default = null (means the notification has not been read yet)
+  read_at: Date | null;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type NotificationDelivery = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Foreign key, references Notification.id, UUID-typed, not null
+  notification_id: string;
+  // Not null, the name of the delivery provider (e.g., "SMTP", "Twilio", "Firebase", etc).
+  status: NotificationDeliveryStatusType;
+  // Not null
+  attempt_count: number;
+  // Not null, default = current timestamp
+  delivered_at: Date | null;
+  // Default = null (means the delivery has not failed)
+  failure_reason: string | null;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type NotificationPreference = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Foreign key, references TenantMembership.id, UUID-typed, not null
+  membership_id: string;
+  // Not null
+  notification_type: NotificationType;
+  // Default = true
+  in_app_enabled: boolean;
+  // Default = false
+  email_enabled: boolean;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
 };

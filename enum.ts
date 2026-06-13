@@ -372,3 +372,160 @@ export enum AuditResourceType {
   PAYMENT_RECORD = "payment_record",
   FILE_ATTACHMENT = "file_attachment",
 }
+
+/**
+ * FileStorageProviderType Enum: defines the possible types of file storage providers that can be used in a system for storing and managing files.
+ * Each provider type represents a different service or method for handling file storage, which can affect the system's scalability, reliability, and cost.
+ * ===
+ * LOCAL: The local file storage provider uses the server's local filesystem to store files,
+ *   which may be suitable for small-scale applications or development environments
+ *   but may not be scalable or reliable for production use.
+ * AWS_S3: The AWS S3 file storage provider uses Amazon Web Services' Simple Storage Service (S3) to store files,
+ *   which offers high scalability, durability, and availability, and is suitable for production use in many applications.
+ * AZURE_BLOB: The Azure Blob file storage provider uses Microsoft Azure's Blob Storage service to store files,
+ *   which offers similar benefits to AWS S3 and is suitable for production use in many applications.
+ * CLOUDFLARE_R2: The Cloudflare R2 file storage provider uses Cloudflare's R2 storage service to store files,
+ *   which offers high performance and low latency, and is suitable for production use in many applications.
+ */
+export enum FileStorageProviderType {
+  LOCAL = "local",
+  AWS_S3 = "aws_s3",
+  AZURE_BLOB = "azure_blob",
+  CLOUDFLARE_R2 = "cloudflare_r2",
+}
+
+/**
+ * FileVisibilityType Enum: defines the possible visibility levels for files stored in a system.
+ * Each visibility type represents a different level of access control for the file, which can affect who can view or download the file.
+ * ===
+ * PRIVATE: The file is private and can only be accessed by the owner or users with explicit permissions to access the file.
+ * INTERNAL: The file is internal and can be accessed by users within the same organization or tenant,
+ *   but not by external users.
+ * PUBLIC: The file is public and can be accessed by anyone, including external users,
+ *   without any authentication or authorization.
+ */
+export enum FileVisibilityType {
+  PRIVATE = "private",
+  INTERNAL = "internal",
+  PUBLIC = "public",
+}
+
+/**
+ * FileAttachmentStatusType Enum: defines the possible statuses of a file attachment in a system.
+ * Each status represents a different state of the file attachment, which can affect its availability and accessibility within the system.
+ * ===
+ * UPLOADING: The file attachment is currently being uploaded to the system,
+ *   and may not yet be fully available or accessible.
+ * ACTIVE: The file attachment is active and can be accessed and downloaded by users with the appropriate permissions.
+ * DELETED: The file attachment has been deleted and cannot be accessed or downloaded,
+ *   but its metadata may still be retained in the system for historical or auditing purposes.
+ * QUARANTINED: The file attachment has been quarantined, meaning it has been flagged for potential security issues
+ *   or policy violations, and may be temporarily inaccessible until it is reviewed and resolved.
+ */
+export enum FileAttachmentStatusType {
+  UPLOADING = "uploading",
+  ACTIVE = "active",
+  DELETED = "deleted",
+  QUARANTINED = "quarantined",
+}
+
+/**
+ * FileAttachmentResourceType Enum: defines the possible types of resources that a file attachment can be associated with in a system.
+ * Each resource type represents a different kind of entity within the system that can have files attached to it,
+ *   which can be used for organizing and managing file attachments based on their associated resources.
+ * ===
+ * USER: The file attachment is associated with a user resource, such as a user's profile picture
+ *   or a document related to the user.
+ * CUSTOMER: The file attachment is associated with a customer resource, such as a contract
+ *   or invoice related to the tenant customer.
+ * PROJECT: The file attachment is associated with a project resource, such as a project specification or design document.
+ * PROJECT_TASK: The file attachment is associated with a project task resource,
+ *   such as a task description or a related document.
+ * PROJECT_TASK_COMMENT: The file attachment is associated with a comment on a project task,
+ *   such as an image or file that provides additional context to the comment.
+ */
+export enum FileAttachmentResourceType {
+  USER = "user",
+  CUSTOMER = "customer",
+  PROJECT = "project",
+  PROJECT_TASK = "project_task",
+  PROJECT_TASK_COMMENT = "project_task_comment",
+}
+
+/**
+ * NotificationChannelType Enum: defines the possible types of notification channels that can be used in a system for sending notifications to users.
+ * Each channel type represents a different method of delivering notifications, which can affect the user's experience and the effectiveness of the notifications.
+ * ===
+ * IN_APP: The in-app notification channel delivers notifications within the application itself,
+ *   allowing users to receive and interact with notifications while using the app.
+ * EMAIL: The email notification channel delivers notifications via email,
+ * SMS: The SMS notification channel delivers notifications via SMS text messages,
+ *  which can be useful for urgent notifications or when users prefer receiving notifications on their mobile devices.
+ */
+export enum NotificationChannelType {
+  IN_APP = "in_app",
+  EMAIL = "email",
+  SMS = "sms",
+}
+
+/**
+ * NotificationStatusType Enum: defines the possible statuses of a notification in a system.
+ * Each status represents a different state of the notification, which can affect its delivery and the user's interaction with it.
+ * ===
+ * PENDING: The notification is pending and has not yet been sent to the user, possibly due to processing delays or scheduling.
+ * SENT: The notification has been sent to the user but has not yet been read or interacted with.
+ * READ: The notification has been read by the user, indicating that they have seen the notification.
+ * FAILED: The notification failed to be sent to the user, possibly due to an error in processing or delivery issues.
+ */
+export enum NotificationStatusType {
+  PENDING = "pending",
+  SENT = "sent",
+  READ = "read",
+  FAILED = "failed",
+}
+
+/**
+ * NotificationDeliveryStatusType Enum: defines the possible delivery statuses of a notification in a system.
+ * Each status represents a different state of the notification's delivery process,
+ *   which can affect the user's experience and the system's monitoring of notification delivery.
+ * ===
+ * PENDING: The notification is pending delivery and has not yet been sent to the user.
+ * SENT: The notification has been sent to the user but has not yet been delivered.
+ * DELIVERED: The notification has been delivered to the user.
+ * FAILED: The notification failed to be delivered to the user, possibly due to an error in processing or delivery issues.
+ */
+export enum NotificationDeliveryStatusType {
+  PENDING = "pending",
+  SENT = "sent",
+  DELIVERED = "delivered",
+  FAILED = "failed",
+}
+
+/**
+ * NotificationType Enum: defines the possible types of notifications that can be sent in a system.
+ * Each notification type represents a different kind of event or action that can trigger a notification,
+ *   which can be used for informing users about important updates, changes, or actions that require their attention.
+ * ===
+ * PROJECT_CREATED: A notification triggered when a new project is created within a tenant.
+ * PROJECT_UPDATED: A notification triggered when an existing project is updated or modified.
+ * TASK_CREATED: A notification triggered when a new task is created within a project.
+ * TASK_ASSIGNED: A notification triggered when a task is assigned to a user.
+ * TASK_COMPLETED: A notification triggered when a task is marked as completed.
+ * CUSTOMER_CREATED: A notification triggered when a new tenant customer is created in the system.
+ * CUSTOMER_UPDATED: A notification triggered when an existing tenant customer is updated or modified.
+ * MEMBER_INVITED: A notification triggered when a user is invited to join a tenant or project.
+ * SUBSCRIPTION_EXPIRING: A notification triggered when a tenant's subscription is approaching its expiration date.
+ * PAYMENT_FAILED: A notification triggered when a payment transaction fails for a tenant customer.
+ */
+export enum NotificationType {
+  PROJECT_CREATED = "project_created",
+  PROJECT_UPDATED = "project_updated",
+  TASK_CREATED = "task_created",
+  TASK_ASSIGNED = "task_assigned",
+  TASK_COMPLETED = "task_completed",
+  CUSTOMER_CREATED = "customer_created",
+  CUSTOMER_UPDATED = "customer_updated",
+  MEMBER_INVITED = "member_invited",
+  SUBSCRIPTION_EXPIRING = "subscription_expiring",
+  PAYMENT_FAILED = "payment_failed",
+}
