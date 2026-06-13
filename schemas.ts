@@ -1,11 +1,19 @@
 import {
+  AuditActionType,
+  AuditResourceType,
   AuthFactorType,
+  SubscriptionBillingCycleType,
+  SystemSubscriptionPlanStatusType,
   TenantCustomerStatusType,
   TenantMembershipStatusType,
+  TenantPaymentRecordType,
+  TenantPaymentStatusType,
   TenantProjectStatusType,
   TenantProjectTaskPriorityType,
   TenantProjectTaskStatusType,
   TenantStatusType,
+  TenantSubscriptionBillingRecordStatusType,
+  TenantSubscriptionPlanStatusType,
   UserStatus,
   UserTokenType,
 } from "./enum";
@@ -608,6 +616,187 @@ export type TenantProjectTaskActivity = {
   actor_membership_id: string;
   // Not null, using the JSONB data type to store additional details and context about the activity
   metadata: Record<string, any>;
+  // Not null, default = current timestamp
+  created_at: Date;
+};
+
+type SubscriptionPlanFeatures = {
+  can_create_projects: boolean;
+  max_projects: number;
+  max_members: number;
+  max_storage_gb: number;
+  can_use_api: boolean;
+  can_use_sso: boolean;
+};
+
+export type SystemSubscriptionPlan = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null, unique
+  name: string;
+  // Not null
+  description: string;
+  // Not null
+  price: number;
+  // Not null
+  currency: string;
+  // Not null, default = SubscriptionBillingCycleType.MONTHLY
+  billing_cycle: SubscriptionBillingCycleType;
+  // Not null, default = SystemSubscriptionPlanStatusType.ACTIVE
+  status: SystemSubscriptionPlanStatusType;
+  // Not null, using the JSONB data type to store the features and limits of the subscription plan,
+  //   where the keys are defined in SystemSubscriptionPlanFeatureType enum,
+  //   and the values can be of any type depending on the feature.
+  features: SubscriptionPlanFeatures;
+  // Not null
+  created_at: Date;
+  // Not null
+  updated_at: Date;
+};
+
+export type TenantSubscription = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Foreign key, references Tenant.id, UUID-typed, not null
+  tenant_id: string;
+  // Foreign key, references SystemSubscriptionPlan.id, UUID-typed, not null
+  plan_id: string;
+  // Default = null (means the subscription is in trial period, and the trial start date is not set yet)
+  current_period_start: Date | null;
+  // Default = null (means the subscription is in trial period, and the trial end date is not set yet)
+  current_period_end: Date | null;
+  // Default = null (means the subscription is in trial period, and the trial next billing date is not set yet)
+  next_billing_date: Date | null;
+  // Default = null (means the subscription is NOT in trial period)
+  trial_start_date: Date | null;
+  // Default = null (means the subscription is NOT in trial period)
+  trial_end_date: Date | null;
+  // Default = false (means the subscription is not set to auto-renew, and will expire at the end of the current billing cycle without renewing)
+  is_auto_renew: boolean;
+  // Not null, default = TenantSubscriptionPlanStatusType.ACTIVE
+  status: TenantSubscriptionPlanStatusType;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+  // Default = null (means the subscription has not been canceled)
+  canceled_at: Date | null;
+  // Default = null (means the subscription has not been canceled)
+  cancel_reason: string | null;
+};
+
+export type TenantBillingRecord = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Foreign key, references TenantSubscription.id, UUID-typed, not null
+  subscription_id: string;
+  // Not null, the name of the subscription plan at the time of billing, which can be used for historical billing records
+  //   even if the name of the subscription plan changes later.
+  plan_name: string;
+  // Not null, the price of the subscription plan at the time of billing,
+  // which can be used for historical billing records even if the price of the subscription plan changes later.
+  plan_price: number;
+  // Not null
+  raw_amount: number;
+  // Not null
+  tax: number;
+  // Not null
+  discount: number;
+  // Not null
+  total_amount: number;
+  // Not null, unique
+  invoice_number: string;
+  // Not null, using ISO 4217 currency codes (e.g., "USD", "EUR", "CNY", etc).
+  currency: string;
+  // Not null, default = SubscriptionBillingCycleType.MONTHLY
+  billing_cycle: SubscriptionBillingCycleType;
+  // Not null
+  billing_period_start: Date;
+  // Not null
+  billing_period_end: Date;
+  // Not null, default = TenantSubscriptionBillingRecordStatusType.DRAFT
+  status: TenantSubscriptionBillingRecordStatusType;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type TenantPaymentRecord = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Foreign key, references TenantSubscription.id, UUID-typed, not null
+  billing_record_id: string;
+  // Not null
+  provider: string;
+  // Not null, the unique identifier of the transaction from the payment provider (e.g., Stripe, PayPal, etc),
+  //   which can be used for reconciliation and troubleshooting with the payment provider.
+  provider_transaction_id: string;
+  // Not null, default = TenantPaymentRecordType.OTHER
+  payment_method: TenantPaymentRecordType;
+  // Not null
+  amount: number;
+  // Not null
+  currency: string;
+  // Not null
+  status: TenantPaymentStatusType;
+  // Default = null (means the payment has not failed)
+  failure_reason: string | null;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type TenantSubscriptionUsageTracking = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Foreign key, references Tenant.id, UUID-typed, not null
+  tenant_id: string;
+  // Foreign key, references TenantSubscription.id, UUID-typed, not null
+  subscription_id: string;
+  // Not null
+  feature_name: string;
+  // Not null
+  usage_value: number;
+  // Not null
+  usage_period_start: Date;
+  // Not null
+  usage_period_end: Date;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type AuditLog = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  scope: "system" | "tenant" | "project";
+  // Foreign key, references Tenant.id, UUID-typed, default = null (means the action is performed at the system level, not associated with any tenant)
+  tenant_id: string | null;
+  // Foreign key, references Project.id, UUID-typed, default = null (means the action is performed at the system level or tenant level, not associated with any project)
+  project_id: string | null;
+  // Not null, default = "Unknown" (means the resource type is not available)
+  action: AuditActionType | "Unknown";
+  // Foreign key, references User.id, UUID-typed, not null
+  actor_user_id: string;
+  // Not null, default = "Unknown" (means the resource type is not available)
+  resource_type: AuditResourceType | "Unknown";
+  // Not null
+  resource_id: string;
+  // Using the JSONB data type to store the details of the changes made to the resource,
+  //   where the structure can vary depending on the type of action and resource.
+  old_value: Record<string, any> | null;
+  // Using the JSONB data type to store the details of the changes made to the resource,
+  //   where the structure can vary depending on the type of action and resource.
+  new_value: Record<string, any> | null;
+  // Using the JSONB data type to store additional context and metadata about the audit log entry.
+  metadata: Record<string, any> | null;
+  // Not null, default = "Unknown" (means the IP address is not available)
+  ip_address: string;
+  // Not null, default = "Unknown" (means the user agent is not available)
+  user_agent: string;
   // Not null, default = current timestamp
   created_at: Date;
 };
