@@ -276,9 +276,9 @@ export type TenantInvitation = {
 export type TenantInvitationsRoleAssignment = {
   // Primary key, unique, not null, UUID-typed
   id: string;
-  // Foreign key, references TenantInvitations.id, UUID-typed, not null
+  // Foreign key, references TenantInvitation.id, UUID-typed, not null
   invitation_id: string;
-  // Foreign key, references TenantMembershipRole.id, UUID-typed, not null, only for matching tenant roles
+  // Foreign key, references Role.id, UUID-typed, not null, only for matching tenant roles
   role_id: string;
   // Not null, default = current timestamp
   created_at: Date;
@@ -310,7 +310,7 @@ export type TenantMembershipRoleAssignment = {
   id: string;
   // Foreign key, references TenantMembership.id, UUID-typed, not null
   membership_id: string;
-  // Foreign key, references TenantMembershipRole.id, UUID-typed, not null
+  // Foreign key, references Role.id, UUID-typed, not null
   role_id: string;
   // Not null, default = current timestamp
   created_at: Date;
@@ -420,7 +420,7 @@ export type TenantProject = {
   id: string;
   // Foreign key, references Tenant.id, UUID-typed, not null
   tenant_id: string;
-  // Foreign key, references TenantCustomer.id, UUID-typed, not null
+  // Foreign key, references TenantCustomer.id, UUID-typed, default = null
   customer_id: string | null;
   // Not null
   name: string;
@@ -428,7 +428,7 @@ export type TenantProject = {
   code: string;
   // Default = null
   description: string | null;
-  // Foreign key, references TenantMembership.id, UUID-typed, not null, indicates the tenant membership of the project owner
+  // Foreign key, references TenantMembership.id, UUID-typed, default = null, indicates the tenant membership of the project owner
   owner_membership_id: string | null;
   // Foreign key, references TenantMembership.id, UUID-typed, not null, indicates the tenant membership of the user who created the project
   created_by_membership_id: string;
@@ -442,7 +442,7 @@ export type TenantProject = {
   created_at: Date;
   // Not null, default = current timestamp
   updated_at: Date;
-  // Default = null (means the project has not been deleted)
+  // Default = null (means the project has not been completed yet)
   completed_at: Date | null;
   // Default = null (means the project has not been archived)
   archived_at: Date | null;
@@ -451,11 +451,11 @@ export type TenantProject = {
 export type TenantProjectTeamMember = {
   // Primary key, unique, not null, UUID-typed
   id: string;
-  // Foreign key, references TenantProjects.id, UUID-typed, not null
+  // Foreign key, references TenantProject.id, UUID-typed, not null
   project_id: string;
   // Foreign key, references TenantMembership.id, UUID-typed, not null, indicates the tenant membership of the team member
   membership_id: string;
-  // Foreign key, references TenantMembershipRole.id, UUID-typed, not null,
+  // Foreign key, references Role.id, UUID-typed, not null,
   // only for matching project roles, indicates the role of the team member in the project
   project_role_id: string;
   // Not null, default = current timestamp
@@ -479,10 +479,12 @@ export type TenantProjectEpic = {
   owner_membership_id: string | null;
   // Foreign key, references TenantMembership.id, UUID-typed, not null, indicates the tenant membership of the user who created the epic
   created_by_membership_id: string;
-  // Not null, default = current timestamp
+  // Default = null
   start_date: Date | null;
-  // Not null
+  // Default = null
   end_date: Date | null;
+  // Not null, default = current timestamp
+  created_at: Date;
   // Not null
   updated_at: Date;
   // Default = null (means the epic has not been completed yet)
@@ -506,13 +508,13 @@ export type TenantProjectTask = {
   description: string;
   // Not null, default = TenantProjectTaskPriorityType.MEDIUM
   priority: TenantProjectTaskPriorityType;
-  // Not null, default = TenantProjectTaskStatusType.ACTIVE
+  // Not null, default = TenantProjectTaskStatusType.TODO
   status: TenantProjectTaskStatusType;
   // Default = null
   start_date: Date | null;
   // Default = null
   due_date: Date | null;
-  // Foreign key, references TenantMembership.id, UUID-typed, not null, indicates the tenant membership of the assignee of the task
+  // Foreign key, references TenantMembership.id, UUID-typed, not null, indicates the tenant membership of the user who created the task
   created_by_membership_id: string;
   // Not null, default = current timestamp
   created_at: Date;

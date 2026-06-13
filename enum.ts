@@ -144,18 +144,13 @@ export enum TenantProjectStatusType {
 }
 
 /**
- * TenantProjectTaskStatusType Enum: defines the possible statuses of a tenant project task in a multi-tenant system.
- * Each status represents a different state of the tenant project task, which can affect its visibility and accessibility within the system.
+ * TenantProjectTaskPriorityType Enum: defines the possible priorities of a tenant project task in a multi-tenant system.
+ * Each priority represents the urgency and importance level of a task, which can help with planning and execution.
  * ===
- * ACTIVE: The tenant project task is active and can be accessed and modified by users with the appropriate permissions.
- * INACTIVE: The tenant project task is inactive and cannot be accessed or modified,
- *   possibly due to administrative action or the task's completion.
- * COMPLETED: The tenant project task has been completed and is read-only, meaning it can be viewed but not modified,
- *   and may be moved to an archive for completed tasks.
- * ARCHIVED: The tenant project task is archived and cannot be accessed or modified,
- *  but its data is retained in the system for historical or auditing purposes.
- * DELETED: The tenant project task has been deleted and cannot be recovered,
- *   meaning all data associated with the tenant project task is permanently removed from the system.
+ * LOW: The task has low urgency and can be scheduled with flexible timing.
+ * MEDIUM: The task has moderate urgency and should be addressed in normal workflow.
+ * HIGH: The task has high urgency and should be prioritized over lower-priority tasks.
+ * CRITICAL: The task has critical urgency and requires immediate attention.
  */
 export enum TenantProjectTaskPriorityType {
   LOW = "low",
