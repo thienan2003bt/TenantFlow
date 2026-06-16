@@ -735,7 +735,7 @@ export type TenantBillingRecord = {
 export type TenantPaymentRecord = {
   // Primary key, unique, not null, UUID-typed
   id: string;
-  // Foreign key, references TenantSubscription.id, UUID-typed, not null
+  // Foreign key, references TenantBillingRecord.id, UUID-typed, not null
   billing_record_id: string;
   // Not null
   provider: string;
@@ -787,7 +787,7 @@ export type AuditLog = {
   tenant_id: string | null;
   // Foreign key, references Project.id, UUID-typed, default = null (means the action is performed at the system level or tenant level, not associated with any project)
   project_id: string | null;
-  // Not null, default = "Unknown" (means the resource type is not available)
+  // Not null, default = "Unknown" (means the action type is not available)
   action: AuditActionType | "Unknown";
   // Foreign key, references User.id, UUID-typed, not null
   actor_user_id: string;
@@ -872,7 +872,7 @@ export type NotificationTemplate = {
   channel: NotificationChannelType;
   // Default = null
   subject_template: string | null;
-  // Not null
+  // Default = null
   body_template: string | null;
   // Default = true
   is_active: boolean;
@@ -916,11 +916,11 @@ export type NotificationDelivery = {
   id: string;
   // Foreign key, references Notification.id, UUID-typed, not null
   notification_id: string;
-  // Not null, the name of the delivery provider (e.g., "SMTP", "Twilio", "Firebase", etc).
+  // Not null, default = NotificationDeliveryStatusType.PENDING
   status: NotificationDeliveryStatusType;
   // Not null
   attempt_count: number;
-  // Not null, default = current timestamp
+  // Default = null (means the notification has not been successfully delivered yet)
   delivered_at: Date | null;
   // Default = null (means the delivery has not failed)
   failure_reason: string | null;
@@ -1045,7 +1045,7 @@ export type AdminImpersonationSession = {
   admin_id: string;
   // Foreign key, references Tenant.id, UUID-typed, not null, means the tenant that the admin is impersonating into
   tenant_id: string;
-  // Foreign key, references User.id, UUID-typed, not null, means the user that the admin is impersonating
+  // Foreign key, references TenantMembership.id, UUID-typed, not null, means the tenant membership of the user that the admin is impersonating into
   membership_id: string;
   // Not null, default = current timestamp, means the start time of the impersonation session
   started_at: Date;

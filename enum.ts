@@ -274,7 +274,7 @@ export enum TenantSubscriptionBillingRecordStatusType {
  * Each status represents a different state of the payment, which can affect its processing and the tenant customer's billing history.
  * ===
  * PENDING: The tenant payment is pending, meaning it has been initiated but not yet completed or processed.
- * SUCCEEDED: The tenant payment is succeeded,
+ * SUCCEEDED: The tenant payment has succeeded,
  *   meaning the payment has been successfully processed and the tenant customer has been charged.
  * FAILED: The tenant payment has failed, meaning the payment was not successful,
  *   possibly due to insufficient funds, an error in processing, or a declined transaction.
