@@ -1,4 +1,6 @@
 import {
+  AdminAccountStatusType,
+  AdminPermissionType,
   AuditActionType,
   AuditResourceType,
   AuthFactorType,
@@ -652,8 +654,9 @@ export type SystemSubscriptionPlan = {
   billing_cycle: SubscriptionBillingCycleType;
   // Not null, default = SystemSubscriptionPlanStatusType.ACTIVE
   status: SystemSubscriptionPlanStatusType;
-  // Not null, using the JSONB data type to store the features and limits of the subscription plan
-  //   following the structured SubscriptionPlanFeatures type.
+  // Not null, using the JSONB data type to store the features and limits of the subscription plan,
+  //   where the keys are defined in SystemSubscriptionPlanFeatureType enum,
+  //   and the values can be of any type depending on the feature.
   features: SubscriptionPlanFeatures;
   // Not null
   created_at: Date;
@@ -668,11 +671,11 @@ export type TenantSubscription = {
   tenant_id: string;
   // Foreign key, references SystemSubscriptionPlan.id, UUID-typed, not null
   plan_id: string;
-  // Default = null (means the current billing period has not started yet, such as during trial)
+  // Default = null (means the subscription is in trial period, and the trial start date is not set yet)
   current_period_start: Date | null;
-  // Default = null (means the current billing period end is not set yet, such as during trial)
+  // Default = null (means the subscription is in trial period, and the trial end date is not set yet)
   current_period_end: Date | null;
-  // Default = null (means the next scheduled paid billing date is not set yet, such as during trial)
+  // Default = null (means the subscription is in trial period, and the trial next billing date is not set yet)
   next_billing_date: Date | null;
   // Default = null (means the subscription is NOT in trial period)
   trial_start_date: Date | null;
@@ -917,7 +920,7 @@ export type NotificationDelivery = {
   status: NotificationDeliveryStatusType;
   // Not null
   attempt_count: number;
-  // Default = null (means the notification has not been delivered yet)
+  // Default = null (means the notification has not been successfully delivered yet)
   delivered_at: Date | null;
   // Default = null (means the delivery has not failed)
   failure_reason: string | null;
@@ -938,6 +941,118 @@ export type NotificationPreference = {
   in_app_enabled: boolean;
   // Default = false
   email_enabled: boolean;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type AdminAccount = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null, unique
+  email: string;
+  // Not null
+  full_name: string;
+  // Not null
+  password_hash: string;
+  // Foreign key, references FileAttachment.id, UUID-typed, default = null, indicates the file attachment of the avatar of the admin account
+  avatar_attachment_id: string | null;
+  // Foreign key, references AdminRole.id, UUID-typed, not null, indicates the role of the admin account
+  role_id: string;
+  // Not null, default = AdminAccountStatusType.ACTIVE
+  status: AdminAccountStatusType;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type AdminRole = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null, unique
+  name: string;
+  // Not null
+  description: string;
+  // Not null
+  permissions: AdminPermissionType[];
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type AdminAnnouncement = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null
+  title: string;
+  // Not null
+  content: string;
+  // Not null, default = current timestamp
+  starts_at: Date;
+  // Default = null (means the announcement does not have an end time and will be displayed indefinitely until manually removed or expired by other means)
+  ends_at: Date | null;
+  // Default = true (means the announcement is active and should be displayed to users)
+  is_active: boolean;
+  // Foreign key, references AdminAccount.id, UUID-typed, not null, indicates the admin account who created the announcement
+  created_by_admin_id: string;
+  // Not null
+  created_at: Date;
+  // Not null
+  updated_at: Date;
+};
+
+export type SystemSetting = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null, unique
+  key: string;
+  // Not null
+  value: string;
+  // Not null
+  description: string;
+  // Default = false (means the setting is not encrypted and can be stored in plain text in the database. If true, the value should be encrypted before storing in the database, and decrypted when reading from the database.)
+  is_encrypted: boolean;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type FeatureFlag = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null, unique
+  code: string;
+  // Not null
+  name: string;
+  // Not null
+  description: string;
+  // Default = false (means the feature flag is disabled)
+  is_enabled: boolean;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type AdminImpersonationSession = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Foreign key, references AdminAccount.id, UUID-typed, not null, means the admin account who initiated the impersonation session
+  admin_id: string;
+  // Foreign key, references Tenant.id, UUID-typed, not null, means the tenant that the admin is impersonating into
+  tenant_id: string;
+  // Foreign key, references TenantMembership.id, UUID-typed, not null, means the tenant membership of the user that the admin is impersonating into
+  membership_id: string;
+  // Not null, default = current timestamp, means the start time of the impersonation session
+  started_at: Date;
+  // Default = null (means the impersonation session is still active)
+  ended_at: Date | null;
+  // Not null
+  reason: string;
   // Not null, default = current timestamp
   created_at: Date;
   // Not null, default = current timestamp
