@@ -1,4 +1,6 @@
 import {
+  AdminAccountStatusType,
+  AdminPermissionType,
   AuditActionType,
   AuditResourceType,
   AuthFactorType,
@@ -939,6 +941,118 @@ export type NotificationPreference = {
   in_app_enabled: boolean;
   // Default = false
   email_enabled: boolean;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type AdminAccount = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null, unique
+  email: string;
+  // Not null
+  full_name: string;
+  // Not null
+  password_hash: string;
+  // Foreign key, references FileAttachment.id, UUID-typed, default = null, indicates the file attachment of the avatar of the admin account
+  avatar_attachment_id: string | null;
+  // Foreign key, references AdminRole.id, UUID-typed, not null, indicates the role of the admin account
+  role_id: string;
+  // Not null, default = AdminAccountStatusType.ACTIVE
+  status: AdminAccountStatusType;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type AdminRole = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null, unique
+  name: string;
+  // Not null
+  description: string;
+  // Not null
+  permissions: AdminPermissionType[];
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type AdminAnnouncement = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null
+  title: string;
+  // Not null
+  content: string;
+  // Not null, default = current timestamp
+  starts_at: Date;
+  // Default = null (means the announcement does not have an end time and will be displayed indefinitely until manually removed or expired by other means)
+  ends_at: Date | null;
+  // Default = true (means the announcement is active and should be displayed to users)
+  is_active: boolean;
+  // Foreign key, references AdminAccount.id, UUID-typed, not null, indicates the admin account who created the announcement
+  created_by_admin_id: string;
+  // Not null
+  created_at: Date;
+  // Not null
+  updated_at: Date;
+};
+
+export type SystemSetting = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null, unique
+  key: string;
+  // Not null
+  value: string;
+  // Not null
+  description: string;
+  // Default = false (means the setting is not encrypted and can be stored in plain text in the database. If true, the value should be encrypted before storing in the database, and decrypted when reading from the database.)
+  is_encrypted: boolean;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type FeatureFlag = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Not null, unique
+  code: string;
+  // Not null
+  name: string;
+  // Not null
+  description: string;
+  // Default = false (means the feature flag is disabled)
+  is_enabled: boolean;
+  // Not null, default = current timestamp
+  created_at: Date;
+  // Not null, default = current timestamp
+  updated_at: Date;
+};
+
+export type AdminImpersonationSession = {
+  // Primary key, unique, not null, UUID-typed
+  id: string;
+  // Foreign key, references AdminAccount.id, UUID-typed, not null, means the admin account who initiated the impersonation session
+  admin_id: string;
+  // Foreign key, references Tenant.id, UUID-typed, not null, means the tenant that the admin is impersonating into
+  tenant_id: string;
+  // Foreign key, references User.id, UUID-typed, not null, means the user that the admin is impersonating
+  membership_id: string;
+  // Not null, default = current timestamp, means the start time of the impersonation session
+  started_at: Date;
+  // Default = null (means the impersonation session is still active)
+  ended_at: Date | null;
+  // Not null
+  reason: string;
   // Not null, default = current timestamp
   created_at: Date;
   // Not null, default = current timestamp

@@ -529,3 +529,45 @@ export enum NotificationType {
   SUBSCRIPTION_EXPIRING = "subscription_expiring",
   PAYMENT_FAILED = "payment_failed",
 }
+
+/**
+ * AdminAccountStatusType Enum: defines the possible statuses of an admin account in a system.
+ * Each status represents a different state of the admin account, which can affect its access and permissions within the system.
+ * ===
+ * ACTIVE: The admin account is active and can access the system with its assigned permissions.
+ * SUSPENDED: The admin account is suspended and temporarily cannot access the system,
+ *   possibly due to policy violations or security issues.
+ * ARCHIVED: The admin account is archived and cannot access the system,
+ *   but its data is retained in the system for historical or auditing purposes.
+ */
+export enum AdminAccountStatusType {
+  ACTIVE = "active",
+  SUSPENDED = "suspended",
+  ARCHIVED = "archived",
+}
+
+/**
+ * AdminPermissionType Enum: defines the possible types of permissions that can be assigned to admin users in a system.
+ * Each permission type represents a different level of access and control that an admin user can have over the system's features and settings,
+ *   which can be used for managing the system effectively while ensuring security and proper access control.
+ * ===
+ * MANAGE_TENANTS: Permission to manage tenant accounts, including creating, updating, and deleting tenants.
+ * MANAGE_SUBSCRIPTIONS: Permission to manage subscription plans and tenant subscriptions, including creating, updating, and canceling subscriptions.
+ * MANAGE_BILLING: Permission to manage billing information and records, including viewing invoices and processing payments.
+ * MANAGE_SETTINGS: Permission to manage system settings and configurations, including security settings and
+ *  feature toggles.
+ * MANAGE_FEATURE_FLAGS: Permission to manage feature flags and enable or disable features for tenants.
+ * MANAGE_ANNOUNCEMENTS: Permission to manage system announcements and notifications, including creating and sending announcements to users.
+ * IMPERSONATE_TENANT: Permission to impersonate a tenant user, allowing the admin to access the system as if they were that user for troubleshooting or support purposes.
+ * VIEW_AUDIT_LOGS: Permission to view audit logs and monitor system activity for security and compliance purposes.
+ */
+export enum AdminPermissionType {
+  MANAGE_TENANTS = "manage_tenants",
+  MANAGE_SUBSCRIPTIONS = "manage_subscriptions",
+  MANAGE_BILLING = "manage_billing",
+  MANAGE_SETTINGS = "manage_settings",
+  MANAGE_FEATURE_FLAGS = "manage_feature_flags",
+  MANAGE_ANNOUNCEMENTS = "manage_announcements",
+  IMPERSONATE_TENANT = "impersonate_tenant",
+  VIEW_AUDIT_LOGS = "view_audit_logs",
+}
