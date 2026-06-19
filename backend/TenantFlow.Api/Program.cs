@@ -1,9 +1,19 @@
+// using Microsoft.EntityFrameworkCore;
+// using TenantFlow.Infrastructure.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// builder.Services.AddDbContext<ApplicationDbContext>(options => 
+// {
+//     options.UseNpgsql(
+//         builder.Configuration.GetConnectionString("DefaultConnection")
+//     );
+// });
 
 var app = builder.Build();
 
@@ -35,6 +45,16 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast")
 .WithOpenApi();
+
+// app.MapGet("/db-check", async (ApplicationDbContext db) =>
+// {
+//     var canConnect = await db.Database.CanConnectAsync();
+
+//     return Results.Ok(new
+//     {
+//         DatabaseConnected = canConnect
+//     });
+// });
 
 app.Run();
 

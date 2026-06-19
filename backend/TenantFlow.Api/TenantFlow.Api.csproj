@@ -11,4 +11,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TenantFlow.Infrastructure\TenantFlow.Infrastructure.csproj" />
+    <ProjectReference Include="..\TenantFlow.Core\TenantFlow.Core.csproj" />
+  </ItemGroup>
+
 </Project>
