@@ -1,5 +1,5 @@
-// using Microsoft.EntityFrameworkCore;
-// using TenantFlow.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using TenantFlow.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,12 +8,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// builder.Services.AddDbContext<ApplicationDbContext>(options => 
-// {
-//     options.UseNpgsql(
-//         builder.Configuration.GetConnectionString("DefaultConnection")
-//     );
-// });
+builder.Services.AddDbContext<ApplicationDbContext>(options => 
+{
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    );
+});
 
 var app = builder.Build();
 
@@ -31,7 +31,9 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/", () => "Hello World!").WithName("HelloWorld").WithOpenApi();
+
+app.MapGet("/weather-forecast", () =>
 {
     var forecast =  Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
@@ -46,15 +48,15 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast")
 .WithOpenApi();
 
-// app.MapGet("/db-check", async (ApplicationDbContext db) =>
-// {
-//     var canConnect = await db.Database.CanConnectAsync();
+app.MapGet("/db-check", async (ApplicationDbContext db) =>
+{
+    var canConnect = await db.Database.CanConnectAsync();
 
-//     return Results.Ok(new
-//     {
-//         DatabaseConnected = canConnect
-//     });
-// });
+    return Results.Ok(new
+    {
+        DatabaseConnected = canConnect
+    });
+});
 
 app.Run();
 
