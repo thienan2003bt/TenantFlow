@@ -19,10 +19,10 @@ Project bootstrap and technical foundation.
 
 ## Deliverables
 
-- [ ] Repository initialization
-- [ ] .NET 8 Backend setup
-- [ ] PostgreSQL setup
-- [ ] React frontend setup
+- [x] Repository initialization
+- [x] .NET 8 Backend setup
+- [x] PostgreSQL setup
+- [x] React frontend setup
 - [ ] Docker environment
 - [ ] CI/CD pipeline
 - [ ] Domain schemas finalized
