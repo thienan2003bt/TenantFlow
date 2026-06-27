@@ -78,6 +78,8 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    environment: Frontend Auth Stack # This is the environment name in GitHub Actions where you can set secrets for the frontend build.
+
     defaults:
       run:
         working-directory: frontend
