@@ -23,10 +23,10 @@ Project bootstrap and technical foundation.
 - [x] .NET 8 Backend setup
 - [x] PostgreSQL setup
 - [x] React frontend setup
-- [ ] Docker environment
+- [x] Docker environment
 - [ ] CI/CD pipeline
-- [ ] Domain schemas finalized
-- [ ] Initial ERD completed
+- [x] Domain schemas finalized
+- [x] Initial ERD completed
 
 ## Exit Criteria
 
