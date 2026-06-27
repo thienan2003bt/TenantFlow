@@ -150,10 +150,8 @@ jobs:
         if: needs.changes.outputs.frontend == 'true'
         run: |
           docker build \
+            --build-arg NEXT_PUBLIC_STACK_PROJECT_ID=${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }} \
+            --build-arg NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY=${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }} \
+            --build-arg STACK_SECRET_SERVER_KEY=${{ secrets.STACK_SECRET_SERVER_KEY }} \
             -t tenantflow-frontend:ci \
             ./frontend
-
-        env:
-          NEXT_PUBLIC_STACK_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }}
-          NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
-          STACK_SECRET_SERVER_KEY: ${{ secrets.STACK_SECRET_SERVER_KEY }}
