@@ -18,5 +18,35 @@ services:
     volumes:
       - tenantflow_postgres_data:/var/lib/postgresql/data
 
+  api:
+    build:
+      context: ./backend
+    container_name: tenantflow-api
+
+    depends_on:
+      - postgres
+
+    ports:
+      - "5024:8080"
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: tenantflow-frontend
+
+    depends_on:
+      - api
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      STACK_SECRET_SERVER_KEY: ${STACK_SECRET_SERVER_KEY}
+      NEXT_PUBLIC_STACK_PROJECT_ID: ${NEXT_PUBLIC_STACK_PROJECT_ID}
+      NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY}
+
 volumes:
   tenantflow_postgres_data:
