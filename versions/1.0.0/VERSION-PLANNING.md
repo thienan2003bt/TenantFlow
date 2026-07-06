@@ -24,15 +24,15 @@ Project bootstrap and technical foundation.
 - [x] PostgreSQL setup
 - [x] React frontend setup
 - [x] Docker environment
-- [ ] CI/CD pipeline
+- [x] CI/CD pipeline
 - [x] Domain schemas finalized
 - [x] Initial ERD completed
 
 ## Exit Criteria
 
-- [ ] Project builds successfully
-- [ ] Database migrations working
-- [ ] Local development environment documented
+- [x] Project builds successfully
+- [x] Database migrations working
+- [x] Local development environment documented
 
 ---
 
