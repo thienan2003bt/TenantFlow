@@ -10,7 +10,7 @@ public class UserConfiguration: IEntityTypeConfiguration<ApplicationUser>
   {
     // Identity configures its own built-in columns automatically.
     
-    builder.Property(u => u.Status).IsRequired();
+    builder.Property(u => u.Status).HasConversion<string>().IsRequired();
     builder.Property(u => u.CreatedAt).IsRequired();
     builder.Property(u => u.UpdatedAt).IsRequired();
   }
