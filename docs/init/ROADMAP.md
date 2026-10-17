@@ -2,6 +2,8 @@
 
 This roadmap tracks the implementation of TenantFlow from architecture decisions to public deployment. The file is meant to stay current and should be updated whenever a milestone changes status.
 
+**Restart baseline (2026-10-17):** The backend has requirements and design references only; NestJS implementation has not started. A Next.js/Stack Auth frontend scaffold, PostgreSQL Compose configuration, and CI definitions exist. Their presence does not satisfy the API, migration, isolation, or end-to-end exit criteria below. Use [backend requirements](BACKEND_REQUIREMENTS.md) for open decisions and the [cleanup tracker](../../BACKEND_CLEANUP_PLAN.md) for retirement evidence. Release dates in version planning are original estimates awaiting review.
+
 Status legend:
 
 - `NOT STARTED` — no implementation work has begun
@@ -40,6 +42,8 @@ Define the product boundaries before writing the first table or endpoint.
 - free-tier-conscious deployment strategy
 - Stripe test-mode billing strategy
 
+NestJS is the selected backend direction. Identity provider ownership, user/team-to-domain mapping, persistence, and runtime/dependency choices still need decisions; Stack Auth is already used by the frontend.
+
 ---
 
 ## Milestone 1 — Solution Skeleton
@@ -58,6 +62,8 @@ Create the basic runnable application structure.
 - base CI workflow
 - OpenAPI enabled
 - health check endpoints
+
+The existing frontend and CI definitions are partial foundation work. A backend scaffold, application configuration, migrations, API documentation, health endpoints, and verified frontend-to-API access must be implemented anew.
 
 ### Exit criteria
 
@@ -89,8 +95,8 @@ Implement secure account and session management.
 
 ### Notes
 
-- use ASP.NET Core Identity for identity storage and password hashing
-- use JWT access tokens for API authentication
+- define identity ownership and backend credential verification using the existing frontend Stack Auth integration as context; do not assume a second identity store is required
+- decide the API credential/token contract with the identity provider before implementation; do not introduce a parallel token issuer by default
 - rotate refresh tokens rather than reusing them
 
 ### Exit criteria
@@ -270,7 +276,7 @@ Improve usability without adding complexity too early.
 - read/unread state
 - notification preferences
 - background notification generation
-- optional SignalR live push channel
+- optional live push channel; choose its transport only when implemented
 
 ### Exit criteria
 

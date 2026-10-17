@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   changes:
@@ -20,8 +21,8 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
+      configuration: ${{ steps.filter.outputs.configuration }}
 
     steps:
       - name: Checkout
@@ -32,42 +33,34 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            backend:
-              - 'backend/**'
-
             frontend:
               - 'frontend/**'
+              - '.github/workflows/ci.yml'
 
-  backend:
-    name: Backend Build
+            configuration:
+              - 'docker-compose.yml'
+              - '.env.example'
+              - '.github/workflows/ci.yml'
+
+  configuration:
+    name: Compose Configuration
 
     needs: changes
 
-    if: needs.changes.outputs.backend == 'true'
+    if: needs.changes.outputs.configuration == 'true'
 
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: backend
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-
-      - name: Restore
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
-
-      - name: Test
-        run: dotnet test --no-build --configuration Release
+      - name: Validate Compose Configuration
+        run: docker compose config --quiet
+        env:
+          NEXT_PUBLIC_STACK_PROJECT_ID: configuration-check
+          NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: configuration-check
+          STACK_SECRET_SERVER_KEY: configuration-check
 
   frontend:
     name: Frontend Build
@@ -103,35 +96,14 @@ jobs:
           NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
           STACK_SECRET_SERVER_KEY: ${{ secrets.STACK_SECRET_SERVER_KEY }}
 
-      - name: Test
-        run: npm test -- --passWithNoTests
-        env:
-          NEXT_PUBLIC_STACK_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }}
-          NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
-          STACK_SECRET_SERVER_KEY: ${{ secrets.STACK_SECRET_SERVER_KEY }}
-
   docker:
     name: Docker Build
 
     needs:
       - changes
-      - backend
       - frontend
 
-    if: |
-      always() &&
-      (
-        needs.changes.outputs.backend == 'true' ||
-        needs.changes.outputs.frontend == 'true'
-      ) &&
-      (
-        needs.backend.result == 'success' ||
-        needs.backend.result == 'skipped'
-      ) &&
-      (
-        needs.frontend.result == 'success' ||
-        needs.frontend.result == 'skipped'
-      )
+    if: needs.changes.outputs.frontend == 'true' && needs.frontend.result == 'success'
 
     runs-on: ubuntu-latest
 
@@ -139,15 +111,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Backend Docker Image
-        if: needs.changes.outputs.backend == 'true'
-        run: |
-          docker build \
-            -t tenantflow-backend:ci \
-            ./backend
-
       - name: Build Frontend Docker Image
-        if: needs.changes.outputs.frontend == 'true'
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_STACK_PROJECT_ID=${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }} \

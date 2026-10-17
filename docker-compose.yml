@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:17
@@ -18,27 +16,10 @@ services:
     volumes:
       - tenantflow_postgres_data:/var/lib/postgresql/data
 
-  api:
-    build:
-      context: ./backend
-    container_name: tenantflow-api
-
-    depends_on:
-      - postgres
-
-    ports:
-      - "5024:8080"
-
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-
   frontend:
     build:
       context: ./frontend
     container_name: tenantflow-frontend
-
-    depends_on:
-      - api
 
     ports:
       - "3000:3000"

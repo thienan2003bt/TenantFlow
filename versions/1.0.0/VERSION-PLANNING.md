@@ -4,6 +4,8 @@
 
 TenantFlow 1.0.0 aims to deliver a production-ready multi-tenant SaaS platform for customer management, project management, task tracking, tenant administration, subscription billing, and collaboration.
 
+**Restart status (2026-10-17):** Backend work is requirements-only for NestJS. Original timeline dates below are historical planning estimates, not delivery records or a current commitment; they need replanning. Checkboxes distinguish repository artifacts from verified behavior. Use the [implementation roadmap](../../docs/init/ROADMAP.md) for current sequencing and [backend requirements](../../docs/init/BACKEND_REQUIREMENTS.md) for open architecture decisions.
+
 ---
 
 # Version 0.0.0 - Foundation
@@ -20,13 +22,15 @@ Project bootstrap and technical foundation.
 ## Deliverables
 
 - [x] Repository initialization
-- [x] .NET 8 Backend setup
-- [x] PostgreSQL setup
-- [x] React frontend setup
-- [x] Docker environment
-- [ ] CI/CD pipeline
-- [x] Domain schemas finalized
-- [x] Initial ERD completed
+- [ ] NestJS backend implementation (requirements and design notes only)
+- [x] PostgreSQL Compose configuration present (runtime verification pending)
+- [x] React/Next.js frontend scaffold present
+- [x] Frontend and PostgreSQL Docker configuration present (startup verification pending)
+- [x] CI workflow definitions present (frontend build/image and Compose configuration; run results unverified)
+- [ ] Deployment automation
+- [x] Initial TypeScript domain model references drafted
+- [ ] Domain constraints and model consistency reviewed
+- [ ] Initial ERD delivered and verified (no artifact found in the baseline checkout)
 
 ## Exit Criteria
 
@@ -57,6 +61,8 @@ Identity and access management.
 - [ ] Password reset
 - [ ] MFA support
 - [ ] User profile management
+
+MFA is future-safe scope in the SRS and deferred in the initial roadmap. Its placement in this version remains an open product decision; this unchecked item is retained for reconciliation, not a commitment to expand the authentication milestone.
 
 ## Exit Criteria
 

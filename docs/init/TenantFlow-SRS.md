@@ -4,6 +4,8 @@
 **Target release:** 1.0.0 MVP + forward-looking full product requirements  
 **Purpose:** Define the functional and non-functional requirements of TenantFlow so the database schema, ERD, application architecture, and implementation plan can be designed consistently.
 
+**Implementation status (2026-10-17):** The backend is restarting from requirements for NestJS. This SRS describes required behavior, not completed features. The existing frontend starter uses Stack Auth, while backend identity/tenant mapping and persistence remain undecided. See [backend requirements and design notes](BACKEND_REQUIREMENTS.md) for preserved constraint candidates and decisions before implementation. Root TypeScript model references are provisional and are not migrations or runtime validation.
+
 ---
 
 ## 1. Introduction

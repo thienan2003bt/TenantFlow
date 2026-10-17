@@ -1,6 +1,6 @@
 # TenantFlow
 
-TenantFlow is a multi-tenant B2B SaaS reference project built to demonstrate enterprise web engineering skills with ASP.NET Core 8, PostgreSQL, and a modern React frontend.
+TenantFlow is a planned multi-tenant B2B SaaS workspace. The repository contains product requirements, provisional TypeScript domain models, a Next.js frontend starter using Stack Auth, and optional PostgreSQL development storage. The backend is restarting from requirements for NestJS; no backend implementation or business API is currently present.
 
 The project is intentionally designed to exercise the same concerns that appear in real business software:
 
@@ -23,7 +23,7 @@ This repository is not a toy demo. The goal is to model a realistic SaaS product
 
 TenantFlow is a B2B workspace platform for internal business operations. It is intended to model a realistic enterprise SaaS, not a simple CRUD demo.
 
-The application supports multiple organizations sharing the same platform while keeping data isolated per tenant. Each organization can manage members, permissions, customers, projects, tasks, notifications, files, audit logs, and subscriptions.
+The planned application supports multiple organizations sharing the same platform while keeping data isolated per tenant. Each organization can manage members, permissions, customers, projects, tasks, notifications, files, audit logs, and subscriptions.
 
 This project is suitable for demonstrating:
 
@@ -42,7 +42,7 @@ This project is suitable for demonstrating:
 1. Demonstrate a credible enterprise-grade B2B architecture.
 2. Keep the first production version small enough to finish.
 3. Support subscription-based monetization in the domain model.
-4. Use common .NET ecosystem choices so the codebase remains recognizable to employers.
+4. Build a modular backend whose technology choices follow the requirements and are documented when implemented.
 5. Produce a codebase that Copilot can help extend safely because the domain rules, roadmap, and architecture decisions are explicit.
 
 ---
@@ -63,106 +63,43 @@ The billing system should support subscription concepts, but the implementation 
 
 ---
 
-## 4. Recommended Technology Stack
+## 4. Technology Direction and Current State
 
 ### 4.1 Frontend
 
-- React
-- Next.js
-- TypeScript
-- Tailwind CSS
-- TanStack Query for server state
-- Zustand for local client state
-- React Hook Form for forms
-- Zod for schema validation on the client
-- shadcn/ui for a practical component layer
+The existing starter uses Next.js 15.1.11, React 19, TypeScript, Tailwind CSS, shadcn-style UI components, and Stack Auth. It provides sign-in/account/team flows and template dashboards; the displayed business metrics and placeholder pages are not implemented product modules.
 
-### 4.2 Backend
+Earlier candidates for additional frontend tooling include TanStack Query, Zustand, React Hook Form, and Zod. These are not installed or approved by the backend restart.
 
-- .NET 8 LTS
-- ASP.NET Core 8 Web API
-- Minimal APIs for small endpoints where they improve clarity
-- Controllers where grouping, filters, or heavier composition are beneficial
-- C#
+### 4.2 Backend and Data Access
 
-### 4.3 Data Access
+NestJS is the chosen backend direction. Backend code, packages, API routes, persistence, migrations, health endpoints, and backend Docker/CI jobs are absent. PostgreSQL remains the planned database. The root model files are design references, not executable migrations.
 
-- Entity Framework Core 8
-- PostgreSQL
-- EF Core migrations
-- repository pattern only where it adds value; do not wrap EF Core blindly
+Review the [backend requirements and design notes](docs/init/BACKEND_REQUIREMENTS.md) before implementation. Runtime versions, ORM, module layout, configuration, and validation/testing libraries remain future decisions.
 
-### 4.4 Authentication and Authorization
+### 4.3 Authentication and Authorization
 
-Use the built-in ASP.NET Core authentication and authorization stack as the foundation.
+Preserve secure registration, email verification, sign-in/out, password reset/change, session renewal/revocation, refresh-token rotation where applicable, and future MFA. The frontend currently delegates identity/team flows to Stack Auth. Decide API credential verification, domain identity ownership, and provider-user/team mapping before building the backend.
 
-Recommended modules:
+Enforce tenant boundaries, coarse-grained roles, and fine-grained permission policies at the API layer. Client team selection and hidden UI controls cannot enforce authorization. Do not introduce a parallel password/session store without an explicit decision.
 
-- ASP.NET Core Identity for user accounts, password hashing, email verification, and password reset flows
-- JWT bearer authentication for the API surface
-- refresh token rotation for session continuity
-- policy-based authorization for permissions
-- role-based access control for coarse-grained access
-- claims-based authorization for fine-grained checks
+### 4.4 Integration and Operational Requirements
 
-Use external identity providers only if a later milestone requires them.
+- Use typed integration boundaries, timeouts, and appropriate retries/circuit breaking for outbound HTTP calls.
+- Validate requests and domain invariants; return explicit response contracts without sensitive data.
+- Plan structured logs, readiness/liveness checks, diagnosable errors, and optional later OpenTelemetry traces/metrics.
+- Keep caching simple initially; consider Redis/distributed caching only when justified, with tenant-aware keys and invalidation.
+- Start background processing with the simplest sufficient model; add durable scheduling only when required.
+- Treat live notification delivery as optional; notification correctness must not depend on a push transport.
+- Use a storage boundary, local development storage where useful, and PostgreSQL file metadata rather than raw binaries.
+- Document implemented APIs with OpenAPI and an exploration interface.
+- Add meaningful domain/API/database tests, especially isolation, authorization, sessions and webhook idempotency. Container-based integration tests can be considered later.
 
-### 4.5 HTTP and Outbound Integrations
+No backend libraries or services for these capabilities are selected by this cleanup.
 
-- IHttpClientFactory for all outbound HTTP calls
-- typed clients for each external integration
-- Microsoft.Extensions.Http.Resilience for retries, timeout, circuit breaker, and other resilience policies
+### 4.5 Payment Module
 
-### 4.6 Validation
-
-- FluentValidation for request and command validation
-- DataAnnotations only where they are simple and local
-
-### 4.7 Logging and Observability
-
-- built-in ILogger abstraction
-- Serilog for structured logging
-- OpenTelemetry for traces and metrics if the project reaches that stage
-- health checks for readiness and liveness endpoints
-
-### 4.8 Caching
-
-- in-memory cache only for local development and trivial lookup data
-- distributed cache abstraction for production-ready caching behavior
-- Redis if a free-tier provider is available
-
-### 4.9 Background Jobs
-
-- IHostedService / BackgroundService for lightweight local jobs
-- Hangfire only if the project reaches the point where durable scheduled jobs are justified
-
-### 4.10 Real-Time Features
-
-- SignalR for notifications and live UI updates if needed
-
-### 4.11 File Storage
-
-- local filesystem for development
-- abstract storage service interface for future compatibility with object storage
-- store file metadata in PostgreSQL, not raw binaries
-
-### 4.12 API Documentation
-
-- built-in OpenAPI support
-- Swagger UI for exploration and manual testing
-
-### 4.13 Testing
-
-- xUnit
-- FluentAssertions
-- integration tests for API and database boundaries
-- Testcontainers if local container-based integration tests are practical
-
-### 4.14 Payment Module
-
-The product includes a subscription-based billing model.
-
-Stripe is the recommended payment provider because it provides official .NET support and a strong test-mode workflow. In production, the project should store only the minimum payment-related information necessary and should never handle raw card data directly.
+Preserve the subscription-based billing model and planned Stripe test-mode integration. Store only necessary payment metadata and never handle raw card data. Provider client selection belongs to backend implementation; the [SRS](docs/init/TenantFlow-SRS.md) retains billing and webhook requirements.
 
 ---
 
@@ -334,34 +271,19 @@ Roles must be implemented through authorization policies, not by relying only on
 
 ```text
 .
-├── README.md
-├── ROADMAP.md
-├── docs/
-│   ├── architecture/
-│   ├── decisions/
-│   └── domain/
-├── src/
-│   ├── Api/
-│   ├── Application/
-│   ├── Domain/
-│   ├── Infrastructure/
-│   └── Web/
-├── tests/
-│   ├── Api.Tests/
-│   ├── Application.Tests/
-│   └── IntegrationTests/
-└── deploy/
-    ├── docker/
-    └── infra/
+|-- README.md
+|-- BACKEND_CLEANUP_PLAN.md
+|-- docs/
+|   |-- init/        # SRS, backend requirements, implementation roadmap
+|   +-- setup/       # Current onboarding, environment, PostgreSQL
+|-- frontend/       # Existing Next.js / Stack Auth starter
+|-- versions/       # Release intent and future scope
+|-- schemas.ts      # Provisional model reference
+|-- enum.ts         # Domain lifecycle vocabulary
++-- docker-compose.yml
 ```
 
-### Layer meaning
-
-- `Domain`: entities, value objects, domain rules, invariants
-- `Application`: use cases, commands, queries, DTOs, interfaces
-- `Infrastructure`: EF Core, external services, email, storage, cache, auth adapters
-- `Api`: endpoint composition, middleware, filters, request/response contracts
-- `Web`: frontend application
+No backend source, tests, or deployment layout is prescribed as if it already exists. Keep domain rules, use cases, request/response contracts, persistence and integrations separated when the backend is designed; concrete modules and paths are future decisions.
 
 ---
 
@@ -396,7 +318,7 @@ The project should be run like a small professional product, not like a folder o
 
 ### Planning flow
 
-1. Read `ROADMAP.md`.
+1. Read the [implementation roadmap](docs/init/ROADMAP.md).
 2. Pick one milestone.
 3. Create a small set of issues for that milestone.
 4. Implement one task at a time.
@@ -407,7 +329,7 @@ The project should be run like a small professional product, not like a folder o
 ### Branching flow
 
 - `main` for stable code
-- `develop` for integration if needed
+- `dev` for integration
 - `feature/*` for features
 - `fix/*` for bug fixes
 - `docs/*` for documentation changes
@@ -427,35 +349,11 @@ Use conventional commit style:
 
 ## 12. Local Development
 
-### Prerequisites
+Follow [START_HERE](docs/setup/START_HERE.md) for the existing frontend and optional PostgreSQL container. The [environment guide](docs/setup/ENV_AND_GITIGNORE_SETUP.md) explains actual files and consumers. No backend startup or migration command exists yet.
 
-- .NET SDK 8
-- Node.js
-- PostgreSQL
-- Docker Desktop or Docker Engine
-- Git
+Node.js 22/npm are the existing frontend tooling baseline. Docker with Compose is needed for PostgreSQL/container work. Keep local secrets out of Git and separate credentials between environments. Backend database, identity, email, storage and billing configuration will be defined alongside actual implementations.
 
-### Local services
-
-Use Docker Compose for:
-
-- PostgreSQL
-- optional Redis
-- optional mail testing service
-
-### Local configuration
-
-Keep all secrets out of source control.
-
-Use environment variables or local user secrets for:
-
-- database connection string
-- JWT signing key
-- refresh token signing secret if separated
-- email provider configuration
-- storage configuration
-- external API keys
-- payment provider configuration
+The existing frontend container build-time environment handoff remains unverified and is tracked in the cleanup plan. The documented local frontend path is the starting point.
 
 ---
 
@@ -508,7 +406,7 @@ The project should eventually make it easy for a reviewer to answer these questi
 
 ## 16. Link to Progress Tracking
 
-Track implementation status in `ROADMAP.md`.
+Track implementation status in the [implementation roadmap](docs/init/ROADMAP.md) and retirement work in the [cleanup tracker](BACKEND_CLEANUP_PLAN.md).
 
 That file is the source of truth for:
 

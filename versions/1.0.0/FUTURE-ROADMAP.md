@@ -6,6 +6,8 @@ Features intentionally excluded from the 1.0.0 MVP.
 
 These items should only be considered after production stability and customer validation.
 
+**Scope review (2026-10-17):** Read this as an enhancement backlog alongside the [SRS](../../docs/init/TenantFlow-SRS.md), not as a declaration that all related base features are excluded. Basic customer tags/notes, in-app notifications, dashboard summaries, account verification/reset and invitation emails are already requirements there. Advanced segmentation, analytics, delivery channels and workflows below extend those basics. Detailed release placement remains to be reconciled during the backend requirements restart; no feature is implemented by its presence in this document.
+
 ---
 
 # CRM Enhancements
