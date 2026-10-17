@@ -2,6 +2,13 @@
 
 Apply these repository conventions within the current task instructions. The user's explicit direction takes precedence over repository defaults.
 
+## Git and publication authority
+
+- Git access is read-only for the agent. Do not run `git add`, `git commit`, `git push`, `git pull`, `git fetch`, or any command that changes the index, working tree, branches, refs, history, repository configuration, or remote state.
+- Do not bypass this restriction through direct `.git` edits, credential helpers, GitHub connectors/APIs, or other tools that perform equivalent repository mutations or publication.
+- Make requested file edits, then provide suggested commands, commit messages, and PR text in the response for the user to execute or publish. Leave staging, committing, synchronization, branch changes, and publication to the user.
+- Requests to implement changes, finish a cleanup step, validate CI, or prepare a PR do not authorize Git mutations or publication. Do not perform these actions automatically or routinely ask to perform them; provide text instead.
+
 ## Communication
 
 - Lead with the result or intended action. Use plain language, short paragraphs, and concise explanations; use lists when they make parallel information easier to scan.
