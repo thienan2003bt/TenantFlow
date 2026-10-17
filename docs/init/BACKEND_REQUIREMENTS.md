@@ -11,7 +11,7 @@ Use the [SRS](TenantFlow-SRS.md) for product rules, [schema references](../../sc
 - Global user identities and platform roles differ from tenant-owned memberships and tenant/project roles. A global identity must not grant access to every tenant.
 - Root model references use UUIDs. Provider IDs must not be assumed to be compatible with those UUIDs. Record the mapping, synchronization, ownership, and account-deletion behavior before implementation.
 - User identity, profile, session, authentication-factor, and verification/reset-token concepts are represented by `User`, `UserIdentity`, `UserProfile`, `UserSession`, `AuthFactor`, and `UserToken`. Preserve those outcomes even if a provider owns some records. Do not duplicate provider password/session storage without a reason.
-- The five `UserStatus` values remain `active`, `inactive`, `pending_verification`, `frozen`, and `deleted` in the root enum reference. Authentication factors and verification/reset/MFA token types are also preserved there. MFA is a future extension in the SRS; its release placement still needs reconciliation with version planning.
+- The five `UserStatus` values remain `active`, `inactive`, `pending_verification`, `frozen`, and `deleted` in the root enum reference. Authentication factors and verification/reset/MFA token types are also preserved there. MFA is a later enhancement under the [canonical SRS release boundaries](TenantFlow-SRS.md#24-canonical-release-boundaries); model support is not an MVP implementation commitment.
 
 ## 2. Data integrity and lifecycle
 
@@ -60,7 +60,7 @@ The root model files remain design references, not migrations or runtime validat
 
 ## 5. Decisions before implementation
 
-1. Resolve product scope conflicts in the SRS and release planning without treating old dates or checkboxes as completed delivery.
+1. Use the [canonical SRS release boundaries](TenantFlow-SRS.md#24-canonical-release-boundaries) and reconciled version plan as the scope baseline. Record any requested scope change explicitly; old dates, checkboxes and future model fields do not establish completed delivery or new commitments.
 2. Choose NestJS runtime/package tooling, module boundaries, persistence/migrations, and request validation with supported versions when implementation begins.
 3. Define provider identity verification, user/team/tenant mappings, permissions, lifecycle ownership, and identifier compatibility.
 4. Review the data-integrity candidates above and produce a consistent schema/ERD with tenant-aware constraints and retention rules.

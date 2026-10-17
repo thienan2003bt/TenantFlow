@@ -4,6 +4,8 @@ This roadmap tracks the implementation of TenantFlow from architecture decisions
 
 **Restart baseline (2026-10-17):** The backend has requirements and design references only; NestJS implementation has not started. A Next.js/Stack Auth frontend scaffold, PostgreSQL Compose configuration, and CI definitions exist. Their presence does not satisfy the API, migration, isolation, or end-to-end exit criteria below. Use [backend requirements](BACKEND_REQUIREMENTS.md) for open decisions and the [cleanup tracker](../../BACKEND_CLEANUP_PLAN.md) for retirement evidence. Release dates in version planning are original estimates awaiting review.
 
+The [canonical SRS release boundaries](TenantFlow-SRS.md#24-canonical-release-boundaries) govern MVP versus future scope. The [version plan](../../versions/1.0.0/VERSION-PLANNING.md) groups release work; its archived original schedule is retained for history only.
+
 Status legend:
 
 - `NOT STARTED` — no implementation work has begun
@@ -276,7 +278,7 @@ Improve usability without adding complexity too early.
 - read/unread state
 - notification preferences
 - background notification generation
-- optional live push channel; choose its transport only when implemented
+- future extension point for optional live push; MVP notification correctness does not depend on implementing a live transport
 
 ### Exit criteria
 
@@ -432,6 +434,8 @@ These are intentionally deferred until the MVP is stable:
 - mobile application
 - public API platform
 - real billing automation beyond the core subscription model
+
+Detailed enhancements, including additional SSO/OAuth providers, feature flags/rollout controls, customer segmentation, notification delivery channels and advanced analytics, are retained in the [future roadmap](../../versions/1.0.0/FUTURE-ROADMAP.md). They do not defer the base behaviors in the canonical SRS scope table.
 
 ---
 

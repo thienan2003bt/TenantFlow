@@ -1,5 +1,38 @@
 # Agent Instructions
 
-Whenever you complete code changes, include a suitable suggested commit message in your final response.
+Apply these repository conventions within the current task instructions. The user's explicit direction takes precedence over repository defaults.
 
-Keep the entire commit message to 20 words or fewer and describe the completed changes accurately.
+## Communication
+
+- Lead with the result or intended action. Use plain language, short paragraphs, and concise explanations; use lists when they make parallel information easier to scan.
+- Before tool-based work, give a brief update describing the scope. During longer work, report meaningful findings, decisions, and remaining uncertainty.
+- Make reasonable implementation and editorial choices within the authorized scope. Ask for clarification when a missing answer would materially change product behavior or risk losing useful information.
+- Make the final response self-contained: explain what changed, why it matters, what was actually checked, and any unfinished work or material limitation. Link relevant local files using clickable Markdown links.
+- Clearly distinguish planned behavior, existing scaffolding, and verified working features. Never describe an intended command, skipped check, placeholder test, or unexecuted workflow as successful validation.
+- State commit, push, PR, and deployment status accurately. Do not imply that a Git or publishing action happened without evidence.
+
+## Repository context and scope
+
+- The backend is restarting from requirements for NestJS. Keep backend work at requirements/documentation level until implementation is requested; do not introduce a replacement scaffold, ORM, auth service, or migration runner during cleanup.
+- Preserve the existing Next.js/Stack Auth frontend, its assets/license, root TypeScript model references, and PostgreSQL data/volume configuration unless the task explicitly changes them.
+- Read [BACKEND_CLEANUP_PLAN.md](BACKEND_CLEANUP_PLAN.md) before continuing cleanup. Work on the next unfinished item and update its status and evidence without marking unrelated tasks complete.
+- Use the [SRS](docs/init/TenantFlow-SRS.md) for product rules and release boundaries, [backend requirements](docs/init/BACKEND_REQUIREMENTS.md) for backend design candidates/open decisions, and [roadmap](docs/init/ROADMAP.md) for implementation sequencing. Version documents express release intent; historical dates are not current delivery commitments.
+- Resolve conflicting documentation against the canonical requirements. Preserve useful displaced ideas in the future backlog or design notes, record the reconciliation, and keep genuinely unresolved implementation decisions explicit.
+- Extract useful framework-independent requirements before deleting a mixed document. Remove stale references and broken links together with retired files; inspect tracked files even when ignore rules hide them.
+
+## Verification and handoff
+
+- Check the working tree and applicable instructions before editing; preserve unrelated user changes and continue on the intended branch.
+- Run checks appropriate to the change. For documentation edits, review scope consistency, local links/anchors, reference accuracy, and whitespace; do not install application dependencies solely to test prose.
+- For configuration or code changes, check affected behavior and required build/test workflows where available. Record missing tools, credentials, dependencies, or external access as unverified checks with concrete next actions.
+- Keep requirements, design candidates, and implemented database behavior distinct. Do not treat schema comments or tutorial examples as approved constraints or executable migrations.
+- Leave each batch concrete and reviewable. Identify the next unfinished cleanup step and keep remaining runtime/CI/PR work visible in the tracker.
+
+## Suggested commit messages
+
+Whenever you complete repository changes, including code, configuration, or documentation, include one suitable suggested commit message in your final response.
+
+- Keep the entire message to **20 words or fewer**, including the prefix.
+- Use a conventional prefix matching the change, such as `docs:`, `chore:`, `fix:`, `test:` or `refactor:`.
+- Describe the completed batch accurately. Do not claim pending work is done.
+- Present the suggestion on a single line in a code block. A suggested message is not a claim that a commit was created.
