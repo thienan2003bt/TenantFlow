@@ -25,7 +25,7 @@ SHOW TIMEZONE;
 
 A connection/readiness check verifies PostgreSQL only. An empty application schema is expected until the backend and migrations are implemented.
 
-Compose now includes a `pg_isready` health check for this wait. CI uses the same wait and executes `SELECT 1` with SQL errors enabled, then stops services without deleting volumes. This new CI runtime check must run on the updated branch before it is reported as passed; local Step 6 validation rendered the configuration but had no Docker engine to start PostgreSQL.
+Compose includes a `pg_isready` health check for this wait. CI uses the same wait and executes `SELECT 1` with SQL errors enabled, then stops services without deleting volumes. This readiness/SQL/cleanup job passed in the Step 7 CI run recorded in the [tracker](../../BACKEND_CLEANUP_PLAN.md#10-step-7-pr-handoff). Local validation used Compose rendering; there is no local Docker engine.
 
 ## Connection details
 

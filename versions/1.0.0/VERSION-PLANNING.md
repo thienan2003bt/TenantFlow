@@ -18,10 +18,10 @@ Project bootstrap and technical foundation.
 
 - [x] Repository initialization
 - [ ] NestJS backend implementation (requirements and design notes only)
-- [x] PostgreSQL Compose configuration present (runtime verification pending)
+- [x] PostgreSQL Compose configuration, readiness/SQL and cleanup verified in hosted CI
 - [x] React/Next.js frontend scaffold present
-- [x] Frontend and PostgreSQL Docker configuration present (startup verification pending)
-- [x] CI workflow definitions present (frontend lint/build/image smoke and Compose/PostgreSQL connection checks; revised run pending)
+- [x] Frontend/PostgreSQL container configuration verified by image/start/HTTP and database smoke checks
+- [x] Corrected CI passed frontend lint/build/image smoke and Compose/PostgreSQL checks (implementation commit 979d4bd; see the [cleanup tracker](../../BACKEND_CLEANUP_PLAN.md#10-step-7-pr-handoff))
 - [ ] Deployment automation
 - [x] Initial TypeScript domain model references drafted
 - [ ] Domain constraints and model consistency reviewed
