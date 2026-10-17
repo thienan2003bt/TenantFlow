@@ -18,13 +18,18 @@ Prerequisites: Git, Node.js 22 (matching the existing frontend CI/container), np
 From the repository root:
 
 ```powershell
-Copy-Item frontend/.env.local.example frontend/.env.local
+if (!(Test-Path frontend/.env.local)) { Copy-Item frontend/.env.local.example frontend/.env.local }
+```
+
+Fill in `frontend/.env.local` with your project's public identifiers and private server key, then run:
+
+```powershell
 Set-Location frontend
 npm ci
 npm run dev
 ```
 
-Fill in `frontend/.env.local` with your project's public identifiers and private server key before running the app. The starter's team-creation flow also needs client team creation enabled in the Stack Auth project. See the [frontend README](../../frontend/README.md) and [environment guide](ENV_AND_GITIGNORE_SETUP.md).
+The starter's team-creation flow also needs client team creation enabled in the Stack Auth project. See the [frontend README](../../frontend/README.md) and [environment guide](ENV_AND_GITIGNORE_SETUP.md). In Windows PowerShell sessions that block `npm.ps1`, use `npm.cmd` for these commands; no execution-policy change is needed.
 
 Open `http://localhost:3000`. The dashboard contains demo figures and placeholder pages; customer/project/task/billing APIs are not implemented.
 
@@ -33,15 +38,26 @@ Open `http://localhost:3000`. The dashboard contains demo figures and placeholde
 Docker with Compose is required only for the PostgreSQL container and optional container work. From the repository root:
 
 ```powershell
-docker compose up -d postgres
+docker compose up -d --wait --wait-timeout 90 postgres
 ```
 
 See the [PostgreSQL guide](POSTGRESQL_SETUP.md) for connection checks, DBeaver, and persistent-data handling. Starting the database does not create TenantFlow business tables. The frontend starter does not use this database directly.
 
 ## Containers and checks
 
-Compose retains a frontend build, but its existing Dockerfile's Stack Auth build-time configuration handoff still needs verification. CI passes build arguments the Dockerfile does not declare, and Compose supplies runtime variables. Use the local frontend workflow above until that handoff is fixed and tested; do not treat the container path as verified onboarding.
+The frontend Dockerfile declares both public build arguments and consumes the private key through a BuildKit secret during `next build`. Compose supplies these at build time and the three settings at runtime. Local env files and generated/dependency directories are excluded from the build context by `.dockerignore`.
 
-Frontend checks, from `frontend/`, are `npm run build` and `npm run lint`; they may need configuration or reveal existing template issues. The `npm test` script only prints a message and provides no test coverage. Current CI retains frontend build/image checks and adds Compose configuration validation for related changes. There are no backend checks to run.
+For container work, use Docker with a working Linux engine, BuildKit/buildx, and Compose supporting environment-sourced build secrets. From the repository root, create root `.env` from `.env.example` if absent and populate it with the same project's settings. Then:
+
+```powershell
+docker compose config --quiet
+docker compose up -d --build frontend
+```
+
+Changing browser-public project settings requires rebuilding the image. See the [environment guide](ENV_AND_GITIGNORE_SETUP.md) for the exact build/runtime contract and references.
+
+Frontend checks, from `frontend/`, are `npm run lint`, `npx tsc --noEmit`, and `npm run build`. The `npm test` script only prints a message and provides no test coverage. CI checks lint/build, builds the frontend image, renders Compose and waits for PostgreSQL before an actual SQL connection check; services are stopped afterward without deleting volumes. There are no backend checks to run.
+
+**Verification boundary:** Node.js 22 lint/type checks, production build with explicit fake credentials, production HTTP smoke checks and development startup were exercised locally. Compose rendering passed with placeholders and the empty example file. Real sign-in/team flows need real project credentials. The revised image and PostgreSQL container still need a Docker-engine/updated-CI run; local configuration validation alone does not verify them. The tracker records the previous PR run's successful frontend/Compose checks and failed old image build.
 
 Before backend implementation, settle the decisions in the backend requirements document, then add real source, migrations, API contracts, configuration, health checks, and tests together. Do not add a service or a setup command for a backend that does not exist.

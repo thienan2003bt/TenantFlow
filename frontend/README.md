@@ -47,7 +47,7 @@ This directory preserves the Stack Auth starter while the TenantFlow backend res
 
 3. Register an account on [Stack Auth](https://stack-auth.com), copy the keys from the dashboard, and paste them into the `.env.local` file. Then, enable "client team creation" on the team settings tab.
 
-    Start from `.env.local.example`. The `STACK_SECRET_SERVER_KEY` is server-private; only the two `NEXT_PUBLIC_` settings are browser-public. See the [environment guide](../docs/setup/ENV_AND_GITIGNORE_SETUP.md) for file locations and the container build limitation.
+    Start from `.env.local.example`. The `STACK_SECRET_SERVER_KEY` is server-private; only the two `NEXT_PUBLIC_` settings are browser-public. See the [environment guide](../docs/setup/ENV_AND_GITIGNORE_SETUP.md) for file locations, public build arguments, the private BuildKit secret and remaining runtime verification limits.
 
     If you want to learn more about Stack Auth or self-host it, check out the [Docs](https://docs.stack-auth.com) and [GitHub](https://github.com/stack-auth/stack).
 

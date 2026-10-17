@@ -1,3 +1,13 @@
 {
-  "cSpell.words": ["nestjs", "tenantflow", "TOTP", "vercel", "webapi", "Yubi"]
+  "cSpell.words": [
+    "dorny",
+    "healthcheck",
+    "nestjs",
+    "psql",
+    "tenantflow",
+    "TOTP",
+    "vercel",
+    "webapi",
+    "Yubi"
+  ]
 }

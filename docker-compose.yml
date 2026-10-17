@@ -16,9 +16,20 @@ services:
     volumes:
       - tenantflow_postgres_data:/var/lib/postgresql/data
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tenantflow -d tenantflow_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
   frontend:
     build:
       context: ./frontend
+      args:
+        NEXT_PUBLIC_STACK_PROJECT_ID: ${NEXT_PUBLIC_STACK_PROJECT_ID}
+        NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY}
+      secrets:
+        - stack_secret_server_key
     container_name: tenantflow-frontend
 
     ports:
@@ -31,3 +42,7 @@ services:
 
 volumes:
   tenantflow_postgres_data:
+
+secrets:
+  stack_secret_server_key:
+    environment: STACK_SECRET_SERVER_KEY

@@ -8,11 +8,11 @@
 
 **Intended PR base:** `dev`
 
-**Overall status:** Steps 1-5 complete: backend implementation retired, requirements preserved, and scope documentation reconciled. Step 6 static checks are recorded below; runtime/CI validation and Step 7 PR preparation remain open.
+**Overall status:** Steps 1-5 complete. Step 6 now has passing local lint/type/build, development/production HTTP smoke and actual Compose rendering checks. Container runtime, live-auth and the revised CI run remain unverified; cleanup is not marked complete.
 
-**Next unfinished step:** Step 6 runtime validation. Verify the frontend build-time environment handoff and supported local startup with dependencies/Stack Auth configuration available; render/test Compose when Docker is available, then record actual CI results. No backend implementation is part of this cleanup.
+**Next unfinished checks:** Run the revised image/database CI checks after this batch is committed/pushed, or use a Docker engine/buildx locally. Exercise real Stack Auth sign-in/team flows with a configured project. Then finish Step 7's PR description/final evidence. Existing [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8) targets `dev`; it has not been edited by this batch. No backend implementation is part of cleanup.
 
-This document tracks the removal of the .NET backend and its obsolete guidance while preserving the product requirements and technical knowledge useful for a NestJS backend. The first deliverable was this document only (commit `c341909`). Removal and preservation were committed as `e3cedc5`. The backend is requirements/documentation only, with no replacement NestJS scaffold; the existing frontend remains. The current batch completes documentation reconciliation and expands root agent guidance. Later changes on this branch and its PR should follow the steps and record evidence here.
+This document tracks the removal of the .NET backend and its obsolete guidance while preserving the product requirements and technical knowledge useful for a NestJS backend. The first deliverable was this document only (commit `c341909`). Removal and preservation were committed as `e3cedc5`. The backend is requirements/documentation only, with no replacement NestJS scaffold; the existing frontend remains. Documentation reconciliation and agent guidance were committed as `9523344`. The current Step 6 batch repairs the container environment contract, adds real CI smoke checks, and records local/remote verification. Later changes on this branch and its PR should follow the steps and record evidence here.
 
 ## 1. Baseline and application overview
 
@@ -56,8 +56,8 @@ The table records baseline paths, including files now deleted. Paths are relativ
 | `backend/TenantFlow.Core/` (3 tracked files) | Delete after enum comparison | Check `Enums/UserStatus.cs` against root `enum.ts`; preserve lifecycle meaning, not C# enum ordinals. Remove project file and `Class1.cs`. | Deleted after preservation review |
 | `backend/TenantFlow.Infrastructure/` (3 tracked files) | Delete | Empty EF context, project/package references, and placeholder class. Extract relevant database assumptions from docs first. | Deleted after preservation review |
 | `backend/Dockerfile` | Delete | Remove .NET SDK/runtime images and DLL entrypoint. Do not substitute a Dockerfile for nonexistent NestJS source. | Deleted after preservation review |
-| `docker-compose.yml` | Edit | Remove/replace `api` build, ASP.NET environment, and `5024:8080` mapping; remove the frontend's `depends_on: api` in the no-backend transition. Keep PostgreSQL 17, its named volume, frontend build, and Stack Auth configuration. | Done |
-| `.github/workflows/ci.yml` | Edit | Remove .NET setup/restore/build/test and backend image build. Reconcile change-filter outputs, `needs`, result conditions, and image-job conditions together. Preserve frontend validation. | Done |
+| `docker-compose.yml` | Edit | Remove/replace `api` build, ASP.NET environment, and `5024:8080` mapping; remove the frontend's `depends_on: api` in the no-backend transition. Keep PostgreSQL 17, its named volume, frontend build, and Stack Auth configuration. | Done; Step 6 adds readiness and build args/secrets; configuration rendered successfully |
+| `.github/workflows/ci.yml` | Edit | Remove .NET setup/restore/build/test and backend image build. Reconcile change-filter outputs, `needs`, result conditions, and image-job conditions together. Preserve frontend validation. | Done; Step 6 adds lint, PostgreSQL SQL check and frontend image HTTP smoke; revised run pending |
 | `.env.example` | Edit after config review | Currently only `ENVIRONMENT`; not a usable backend configuration contract. Document only variables actually consumed in the resulting checkout, with placeholders. | Done |
 | `.gitignore` | Simplify selectively | Replace the large Visual Studio/.NET template with rules needed for Node/Next, secrets, OS/editor files, logs, and generated outputs. Keep example env files trackable and actual env files ignored. | Done |
 | `.vscode/settings.json` | Edit selectively | Remove retired terms such as `appsettings`, `aspnet`, `ASPNETCORE`, and `Npgsql`; preserve useful domain/tool vocabulary. | Done |
@@ -74,7 +74,7 @@ The table records baseline paths, including files now deleted. Paths are relativ
 | `docs/setup/ENV_AND_GITIGNORE_SETUP.md` | Rewrite and shorten | Retain secret handling and local/container distinctions. Remove .NET configuration classes, user-secrets steps, and duplicated ignore templates. Match actual env files and Compose settings. | Done |
 | `docs/setup/POSTGRESQL_SETUP.md` | Keep; rewrite mixed sections | Keep Docker/DBeaver/psql operations and volume guidance; remove .NET prerequisites, project tree, appsettings, EF wiring, and false expected results. Recheck troubleshooting before carrying it forward. | Done |
 | `frontend/README.md` | Correct onboarding/status | Replace upstream clone/setup assumptions with repository-specific paths; correct Next.js 14 to the package's actual version and explain Stack Auth prerequisites. Preserve attribution and license. | Done |
-| `frontend/` source, assets, package files, and Dockerfile | Preserve; audit integration assumptions | No backend rewrite is needed for the template UI. Review Docker/env behavior only where needed for a truthful supported startup path. Record unrelated template cleanup separately. | Retained; Docker handoff validation pending |
+| `frontend/` source, assets, package files, and Dockerfile | Preserve; audit integration assumptions | No backend rewrite is needed for the template UI. Review Docker/env behavior only where needed for a truthful supported startup path. Record unrelated template cleanup separately. | Retained; Dockerfile/ignore context adjusted for tested build contract; actual image run pending |
 | `schemas.ts`, `enum.ts` | Preserve; annotate unresolved design issues | These are useful NestJS inputs. Reconcile naming, identity ownership, and tenant scoping before implementation; do not convert to an ORM during retirement. | Retained unchanged; implementation decisions documented |
 | `versions/1.0.0/VERSION-PLANNING.md` | Edit | Mark the retired backend foundation as retired, not completed NestJS work. Reconcile CI status, unsupported ERD/migration claims, dates, and scope. | Done: MVP scope follows SRS 2.4; 11 original release ranges archived without new deadlines |
 | `versions/1.0.0/FUTURE-ROADMAP.md` | Keep; reconcile scope | Preserve future product ideas, integrations, and providers. Clarify overlap with MVP requirements rather than deleting features based on framework keywords. | Done: displaced MFA/feature flags preserved; base features distinguished from enhancements |
@@ -166,12 +166,15 @@ Execute in order. Steps 2-6 can be separate reviewable commits on this branch. K
 - [x] Repeat tracked-file and text searches from section 6. Classify every surviving match instead of excluding entire docs directories.
 - [x] Check all local Markdown links, anchors, inline path/command references, code-block examples, CI references, Compose contexts, and env variable names against the final tree.
 - [x] Run `git diff --check`, inspect the full diff and deletion list, and verify all preservation destinations. Explicitly confirm the frontend, model references, SRS, license, and PostgreSQL volume survived.
-- [ ] Run `docker compose config --quiet`; if Docker is available, verify PostgreSQL with a readiness/connection check and follow the revised local startup guide without deleting data. Avoid `down -v`.
-- [ ] Run frontend install/build/lint checks appropriate to the edits and available Stack Auth configuration. Record exact commands, outcomes, and blockers. Treat `npm test` as a placeholder, not validation coverage.
-- [ ] Inspect CI's final graph and run/watch the relevant PR checks when available. If secrets, network, or tools prevent a check, leave it explicitly unverified with a follow-up rather than mark it passed.
-- [ ] Walk through onboarding from the documented starting directory with placeholder/local config. If only the local frontend path was tested, do not claim container startup is verified.
+- [x] Render Compose using the official standalone CLI (`config --quiet`), validate the empty example environment and assert resolved public args/private secret mapping.
+- [ ] Run PostgreSQL readiness/SQL and the revised frontend image with a Docker engine/buildx. The local engine is unavailable; CI now performs these checks and non-volume cleanup, but its revised run is pending.
+- [x] Install locked frontend dependencies; run Node.js 22 lint, TypeScript and production build. The no-config build fails explicitly at missing Stack Auth configuration; the placeholder-config build passes. Treat `npm test` as a placeholder, not validation coverage.
+- [x] Parse workflow YAML and inspect actual PR #8 checks at HEAD `9523344`: frontend build and Compose rendering passed; the old Docker build failed for a missing project ID. Confirm the revised graph, filters, BuildKit secret, readiness/SQL/image-smoke and cleanup steps statically.
+- [ ] Record a successful CI run for this revised working tree after publication. The prior commit's passing jobs do not validate this uncommitted batch.
+- [x] Exercise local development and production startup from `frontend/` with explicit fake environment settings. Development/production `robots.txt` return 200; production unknown route returns 404. Startup docs now populate configuration before running the app and document the build/runtime contract.
+- [ ] Exercise real sign-in/team behavior with valid Stack Auth configuration. Placeholder builds/HTTP smoke are not authenticated end-to-end verification.
 
-**Exit:** no active workflow requires the retired stack; preserved knowledge is traceable; documented commands match verified behavior or have a clearly stated limitation.
+**Exit:** no active workflow requires the retired stack; preserved knowledge is traceable; documented commands match verified behavior or have a clearly stated limitation. Current local checks pass, but the unchecked container/live-auth/revised-CI items above remain required before claiming full runtime verification.
 
 ### Step 7 - Prepare the cleanup PR and close the tracker
 
@@ -234,6 +237,14 @@ Use `Pending`, `In progress`, `Done`, or `Deferred` with a reason. Add commit/PR
 | 2026-10-17 | 6: documentation batch checks | Done | One-time Node verification passed: 64 local document/image links and 10 heading anchors across 12 documents resolve; prior SRS content is unchanged outside the additive scope table; all 11 original date ranges survive; moved ideas remain in the future backlog. Diff is documentation-only; frontend, schemas/enums, Compose and CI are unchanged. Whitespace checked. No dependencies installed or application/runtime checks claimed for this prose-only batch. |
 | 2026-10-17 | 6-7: remaining work | Pending | Docker/Compose is still unavailable; frontend dependencies/Stack Auth configuration are absent. Resolve and verify the existing frontend container build-time handoff, run the supported startup/build checks with required tools/configuration, inspect actual CI when available, then prepare the PR against dev. This documentation batch has not been committed or published by the agent. |
 
+### Step 6 batch log
+
+| Date | Step | Status | Evidence / next action |
+| --- | --- | --- | --- |
+| 2026-10-17 | 6: local validation and container wiring | Done locally; runtime limits remain | See section 9 for exact outcomes. Locked install, Node 22 lint/tsc, placeholder production build, development/production HTTP smoke, generated-browser-asset marker scan and actual Compose rendering passed. Dockerfile/Compose/CI now agree on public args and a private BuildKit secret; local env/generated files are excluded from the context. PostgreSQL data settings/volume and all model/requirements content remain preserved. |
+| 2026-10-17 | 6: real PR run inspected | Done | Existing PR #8 is open against dev at 9523344. Run 39046959815 completed with frontend/Compose success and Docker failure caused by missing build-time project ID. This batch addresses that error; a new run is still required after publication. |
+| 2026-10-17 | 6: outstanding verification | Pending | No local Docker engine/buildx or real Stack Auth configuration. Revised CI now adds database readiness/SQL and frontend-image HTTP smoke with cleanup. This batch is uncommitted/unpublished; its image/database checks and live authentication are not claimed passed. |
+
 ### Retained legacy-reference exceptions
 
 No active .NET references remain outside this tracker in the working-tree reference audit. The baseline inventory, search recipes, and historical findings in this tracker intentionally name retired files and technologies for traceability; they are not setup instructions.
@@ -256,3 +267,32 @@ No active .NET references remain outside this tracker in the working-tree refere
 - Define Stack Auth token verification, backend user identity, tenant/membership mapping, identifier compatibility, and authorization enforcement.
 - Resolve provisional model inconsistencies before implementation. Use the canonical SRS release boundaries as the scope baseline and record any requested scope changes explicitly.
 - Add a real backend startup path, environment contract, Docker/CI, health checks, and meaningful isolation/auth tests alongside real source.
+
+## 9. Step 6 verification evidence
+
+This batch starts from clean HEAD `9523344bea20564c57bf26e5abef6e6f05b41e07`. No real credentials were read, created, printed or extracted from CI; explicitly fake values were set only in validation processes. Temporary tools/caches are outside the repository; generated frontend artifacts remain ignored. Local servers used loopback ports 3137/3138 and were stopped after smoke checks.
+
+| Check | Command / setup | Result and limit |
+| --- | --- | --- |
+| Locked install | `npm.cmd ci --no-audit --no-fund` with a temporary npm cache | Passed: 640 packages installed. Initial sandbox registry requests failed with EACCES; the network-authorized retry passed. Existing peer/deprecation and npm install-script policy warnings were observed; package.json/lockfile unchanged. The installer host was Node 24/npm 11; application checks below explicitly used temporary Node 22.23.3. |
+| Lint | `npm.cmd run lint` on Node 22 | Passed: no ESLint warnings/errors. |
+| Types | `node node_modules/typescript/bin/tsc --noEmit` on Node 22 | Passed, exit 0. |
+| Missing configuration | `npm.cmd run build` with no Stack values | Compilation/type/lint stages passed, then page-data collection failed with the expected missing-project-ID error. This is not recorded as a successful production build. |
+| Placeholder production build | Same build on Node 22 with three explicit fake Stack values | Passed all build stages and generated all routes. Does not verify a real Stack project or auth session. |
+| Production startup/HTTP | `npm.cmd start -- --hostname 127.0.0.1 --port 3137`, HTTP fetches | Ready in 750ms; `/robots.txt` 200 and an unknown route 404. No business/API/auth flow tested. |
+| Development startup/HTTP | `npm.cmd run dev -- --hostname 127.0.0.1 --port 3138`, HTTP fetch | Ready in 3.4s; `/robots.txt` 200. Fake settings came from process environment; no local env file was written. |
+| Browser artifacts | Scan generated production `.next/static` JS/JSON/HTML/map assets | Fake private-key marker absent from 32 browser assets. This does not substitute for building/inspecting the actual Docker image. |
+| Compose CLI | Official v5.6.0 Windows standalone downloaded to temp; SHA-256 checked against official release checksum | Tool executed successfully without installing a service or changing system settings. |
+| Compose rendering | Standalone equivalent of `docker compose config --quiet`, with placeholders and `--env-file .env.example` | Passed. Database-only configuration renders with empty example settings; resolved JSON has public build args, a private environment-sourced secret and PostgreSQL readiness check. |
+| Workflow/config review | Parse YAML with the installed frontend YAML parser; inspect jobs/needs/filters and rendered Compose JSON | Passed structural assertions. Revised CI checks lint, build, Compose, PostgreSQL readiness/SQL and image HTTP smoke; cleanup never removes volumes. This is not a completed revised CI run. |
+| Final preservation/reference audit | Tracked/new file scan, local Markdown/anchor checks, Docker-ignore matching and whitespace checks | Passed: 66 local links/images, 10 heading anchors across 12 documents; no active retired-stack references. Requirements/models, frontend application source/license/package/lockfile and PostgreSQL image/credentials/port/mount/volume unchanged. New readiness/build wiring is explicit. No local env file was created. |
+| Docker runtime/build plan | Standalone `compose ps --all` and `compose build --print frontend` | Unavailable: Docker engine named pipe is absent; build-plan generation also reports no buildx plugin. No database/container/image runtime pass is claimed. |
+| Remote CI at previous HEAD | [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8), [run 39046959815](https://github.com/thienan2003bt/TenantFlow/actions/runs/39046959815) | Detect Changes, Frontend Build and Compose Configuration passed. Docker Build failed because the previous Dockerfile did not consume the project's public build args. Actual job steps/logs inspected; revised changes await commit/push and a fresh run. |
+
+### Step 6 code changes and remaining actions
+
+- `frontend/Dockerfile` now uses locked installs, declares both public args, and exposes the private key only to the build command via a BuildKit secret. `frontend/.dockerignore` prevents copying local configuration, keys, dependencies and generated output.
+- Compose supplies the build args/secret and runtime settings; PostgreSQL gains readiness checking. Database image, credentials, port, data mount and named volume are unchanged.
+- CI passes environment variables safely to public args/private secret, runs lint, starts PostgreSQL with a readiness wait and SQL check, and starts the built frontend image for HTTP smoke. Cleanup removes only its containers/network and never volumes.
+- Build/runtime configuration docs follow the [Next.js 15 environment contract](https://nextjs.org/docs/15/app/guides/environment-variables) and [Docker BuildKit secret specification](https://docs.docker.com/build/building/secrets/). Public project changes require rebuilding the image; runtime still needs the private key.
+- After publishing this batch to the existing branch, require a new successful CI run for the revised jobs. With valid local project settings, verify sign-in/out, team creation/selection and account management. These outcomes remain explicitly pending.

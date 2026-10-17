@@ -35,6 +35,8 @@ jobs:
           filters: |
             frontend:
               - 'frontend/**'
+              - 'docker-compose.yml'
+              - '.env.example'
               - '.github/workflows/ci.yml'
 
             configuration:
@@ -43,7 +45,7 @@ jobs:
               - '.github/workflows/ci.yml'
 
   configuration:
-    name: Compose Configuration
+    name: Compose and PostgreSQL
 
     needs: changes
 
@@ -51,16 +53,27 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      NEXT_PUBLIC_STACK_PROJECT_ID: configuration-check
+      NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: configuration-check
+      STACK_SECRET_SERVER_KEY: configuration-check
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Validate Compose Configuration
         run: docker compose config --quiet
-        env:
-          NEXT_PUBLIC_STACK_PROJECT_ID: configuration-check
-          NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: configuration-check
-          STACK_SECRET_SERVER_KEY: configuration-check
+
+      - name: Start PostgreSQL and Wait for Readiness
+        run: docker compose up -d --wait --wait-timeout 90 postgres
+
+      - name: Verify Database Connection
+        run: docker compose exec -T postgres psql -U tenantflow -d tenantflow_dev -v ON_ERROR_STOP=1 -c 'SELECT 1;'
+
+      - name: Stop Local Services
+        if: always()
+        run: docker compose down
 
   frontend:
     name: Frontend Build
@@ -89,6 +102,9 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
       - name: Build
         run: npm run build
         env:
@@ -107,6 +123,11 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      NEXT_PUBLIC_STACK_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }}
+      NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
+      STACK_SECRET_SERVER_KEY: ${{ secrets.STACK_SECRET_SERVER_KEY }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -114,8 +135,24 @@ jobs:
       - name: Build Frontend Docker Image
         run: |
           docker build \
-            --build-arg NEXT_PUBLIC_STACK_PROJECT_ID=${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }} \
-            --build-arg NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY=${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }} \
-            --build-arg STACK_SECRET_SERVER_KEY=${{ secrets.STACK_SECRET_SERVER_KEY }} \
+            --build-arg NEXT_PUBLIC_STACK_PROJECT_ID \
+            --build-arg NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY \
+            --secret id=stack_secret_server_key,env=STACK_SECRET_SERVER_KEY \
             -t tenantflow-frontend:ci \
             ./frontend
+
+      - name: Start Frontend Image
+        run: |
+          docker run -d --name tenantflow-frontend-ci \
+            -p 127.0.0.1:3137:3000 \
+            -e NEXT_PUBLIC_STACK_PROJECT_ID \
+            -e NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY \
+            -e STACK_SECRET_SERVER_KEY \
+            tenantflow-frontend:ci
+
+      - name: Smoke Check Frontend Image
+        run: curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 --retry-max-time 60 http://127.0.0.1:3137/robots.txt
+
+      - name: Stop Frontend Image
+        if: always()
+        run: docker rm -f tenantflow-frontend-ci 2>/dev/null || true

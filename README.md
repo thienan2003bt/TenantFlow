@@ -353,7 +353,7 @@ Follow [START_HERE](docs/setup/START_HERE.md) for the existing frontend and opti
 
 Node.js 22/npm are the existing frontend tooling baseline. Docker with Compose is needed for PostgreSQL/container work. Keep local secrets out of Git and separate credentials between environments. Backend database, identity, email, storage and billing configuration will be defined alongside actual implementations.
 
-The existing frontend container build-time environment handoff remains unverified and is tracked in the cleanup plan. The documented local frontend path is the starting point.
+Frontend build-time configuration is now wired through public build arguments and a private BuildKit secret, with runtime settings documented in the environment guide. Node.js 22 lint/type/build and local HTTP smoke checks passed using fake credentials; Compose rendering passed. Actual revised image/database-container execution and real authentication remain unverified; see the [cleanup tracker](BACKEND_CLEANUP_PLAN.md).
 
 ---
 

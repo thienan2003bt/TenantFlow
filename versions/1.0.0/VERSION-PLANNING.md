@@ -21,7 +21,7 @@ Project bootstrap and technical foundation.
 - [x] PostgreSQL Compose configuration present (runtime verification pending)
 - [x] React/Next.js frontend scaffold present
 - [x] Frontend and PostgreSQL Docker configuration present (startup verification pending)
-- [x] CI workflow definitions present (frontend build/image and Compose configuration; run results unverified)
+- [x] CI workflow definitions present (frontend lint/build/image smoke and Compose/PostgreSQL connection checks; revised run pending)
 - [ ] Deployment automation
 - [x] Initial TypeScript domain model references drafted
 - [ ] Domain constraints and model consistency reviewed
@@ -29,9 +29,10 @@ Project bootstrap and technical foundation.
 
 ## Exit Criteria
 
-- [ ] Project builds successfully
+- [x] Existing frontend builds (Node.js 22 with fake Stack Auth settings; real authentication unverified)
+- [ ] Full application builds after backend implementation
 - [ ] Database migrations working
-- [ ] Local development environment documented
+- [x] Local development environment documented (Docker-engine and real-auth verification limits are explicit)
 
 ---
 

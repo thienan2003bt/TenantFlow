@@ -7,7 +7,7 @@ The repository retains PostgreSQL 17 in [Compose](../../docker-compose.yml) as o
 Run from the repository root:
 
 ```powershell
-docker compose up -d postgres
+docker compose up -d --wait --wait-timeout 90 postgres
 docker compose ps postgres
 docker compose logs postgres
 docker compose exec postgres pg_isready -U tenantflow -d tenantflow_dev
@@ -24,6 +24,8 @@ SHOW TIMEZONE;
 ```
 
 A connection/readiness check verifies PostgreSQL only. An empty application schema is expected until the backend and migrations are implemented.
+
+Compose now includes a `pg_isready` health check for this wait. CI uses the same wait and executes `SELECT 1` with SQL errors enabled, then stops services without deleting volumes. This new CI runtime check must run on the updated branch before it is reported as passed; local Step 6 validation rendered the configuration but had no Docker engine to start PostgreSQL.
 
 ## Connection details
 
