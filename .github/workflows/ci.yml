@@ -151,7 +151,11 @@ jobs:
             tenantflow-frontend:ci
 
       - name: Smoke Check Frontend Image
-        run: curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 --retry-max-time 60 http://127.0.0.1:3137/robots.txt
+        run: curl --fail --silent --show-error --connect-timeout 2 --max-time 5 --retry 20 --retry-all-errors --retry-delay 1 --retry-max-time 60 http://127.0.0.1:3137/robots.txt
+
+      - name: Show Frontend Logs on Failure
+        if: failure()
+        run: docker logs --tail 100 tenantflow-frontend-ci 2>&1 || true
 
       - name: Stop Frontend Image
         if: always()
