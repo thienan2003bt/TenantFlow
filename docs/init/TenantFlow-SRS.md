@@ -4,6 +4,8 @@
 **Target release:** 1.0.0 MVP + forward-looking full product requirements  
 **Purpose:** Define the functional and non-functional requirements of TenantFlow so the database schema, ERD, application architecture, and implementation plan can be designed consistently.
 
+**Implementation status (2026-10-17):** The backend is restarting from requirements for NestJS. This SRS describes required behavior, not completed features. The existing frontend starter uses Stack Auth, while backend identity/tenant mapping and persistence remain undecided. See [backend requirements and design notes](BACKEND_REQUIREMENTS.md) for preserved constraint candidates and decisions before implementation. Root TypeScript model references are provisional and are not migrations or runtime validation.
+
 ---
 
 ## 1. Introduction
@@ -86,6 +88,22 @@ Although the MVP is limited, the domain model should be able to support later fe
 - support tickets
 - CRM pipeline stages
 - approval workflows
+
+### 2.4 Canonical Release Boundaries
+
+Use this SRS to resolve scope differences in the implementation roadmap and version documents. The following table clarifies existing requirements; it does not claim delivery or select implementation libraries. Model references may include future concepts without making them MVP commitments.
+
+| Area | 1.0.0 MVP requirement | Later enhancement |
+| --- | --- | --- |
+| Identity | Registration, verification, login/logout, password reset/change, session renewal and revocation (sections 4.1 A and 5.1). | MFA, additional SSO/OAuth integrations and enterprise provisioning. Keep extension points in the model. The frontend's existing Stack Auth use does not move these future features into the MVP. |
+| Customers | Customer/contact records, notes/history, tags, search and filtering (sections 4.1 F and 5.6). | Automated/dynamic tagging enhancements, smart segmentation, CRM pipelines and richer interaction workflows. |
+| Email and notifications | Account confirmation/reset, invitation delivery and billing alerts (section 9.1), plus in-app notifications and optional preferences (section 5.9). | General notification email delivery/tracking, digests, browser/mobile push and optional live updates. An email provider may own required lifecycle delivery; a separate delivery service is not prescribed. |
+| Reporting | Tenant-safe operational summaries for tasks, activity, members/projects, subscriptions and plan usage (section 5.11). | Revenue/retention analytics, advanced trends and richer productivity reports. |
+| API and integrations | Application-facing API contracts, API documentation, and payment-provider webhook handling/idempotency (sections 5.5, 6.4 and 9.2; backend requirements section 3). | A public developer API platform, API keys and outbound customer webhooks/retries. Internal API documentation is not deferred with the public platform. |
+| Administration | Required core admin operations, tenant lifecycle and basic settings (sections 2.1 and 3). | Feature flags/rollout controls, support tools, enterprise integrations and advanced retention automation. |
+| Billing | Standard subscription plans, status/history, limits and provider integration (sections 5.5 and 9.2). | Coupons, flexible trial policies, usage-based billing and multiple subscriptions per tenant. |
+
+The [version plan](../../versions/1.0.0/VERSION-PLANNING.md) maps these requirements to milestones; the [future roadmap](../../versions/1.0.0/FUTURE-ROADMAP.md) retains the enhancements. Dates in the archived original schedule do not set a new delivery deadline. Identity ownership, model consistency and technical choices remain decisions before implementation.
 
 ---
 

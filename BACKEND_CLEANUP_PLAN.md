@@ -1,0 +1,337 @@
+# Backend Cleanup Plan: Retire .NET, Target NestJS
+
+**Created:** 2026-10-17 (Asia/Bangkok)
+
+**Branch:** `chore/retire-dotnet-backend`
+
+**Base:** local `dev` at `fec9987798afab7bbdf8caf7ec8d8dbb0c2649df`
+
+**Intended PR base:** `dev`
+
+**Overall status:** Retirement implementation and Step 7 PR handoff are complete. Local verification and the corrected CI run passed, including PostgreSQL readiness/SQL and built-image HTTP smoke. Real authenticated end-to-end validation remains unverified as follow-up F-01; this is not a product-readiness claim.
+
+**Handoff:** [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8) targets `dev` with an updated title/description and verified implementation head `979d4bd`. Corrected [CI run 39048634979](https://github.com/thienan2003bt/TenantFlow/actions/runs/39048634979) passed all four jobs. Follow-up F-01 covers real Stack Auth flows; F-02 through F-04 cover future backend design/implementation. The PR is open for review and is not merged.
+
+This document tracks the removal of the .NET backend and its obsolete guidance while preserving the product requirements and technical knowledge useful for a NestJS backend. The first deliverable was this document only (commit `c341909`). Removal and preservation were committed as `e3cedc5`. The backend is requirements/documentation only, with no replacement NestJS scaffold; the existing frontend remains. Documentation reconciliation and agent guidance were committed as `9523344`. Step 6's build/CI changes were committed as `58f1cf7`; Step 7 fixed a startup-probe reset in `979d4bd`, verified the new run and prepared this documentation handoff. Later changes on this branch and its PR should follow the steps and record evidence here.
+
+## 1. Baseline and application overview
+
+The initial pass covered the tracked file inventory, source structure and representative implementations, all 14 existing Markdown documents at outline/content level, configuration, Docker, CI, and repository-wide reference searches. This is a shallow repository review, not a runtime verification, security audit, or exhaustive domain correctness review. There were 90 tracked files and a clean working tree before this document was added. No applicable `AGENTS.md` was found.
+
+Local `dev` and the existing `origin/dev` tracking ref both pointed to the base above. The remote was not fetched; this records the local starting point, not a claim about the latest server state.
+
+Starting references: [product requirements](docs/init/TenantFlow-SRS.md), [implementation roadmap](docs/init/ROADMAP.md), [model definitions](schemas.ts), [domain enums](enum.ts), and [release planning](versions/1.0.0/VERSION-PLANNING.md).
+
+| Area | What exists at the baseline | Implication for cleanup |
+| --- | --- | --- |
+| Product | A planned multi-tenant B2B workspace for organizations, memberships, RBAC, customers, projects/tasks, subscriptions, files, notifications, reporting, and audit logs. | Preserve these requirements regardless of backend framework. |
+| Frontend | `frontend/`: Next.js 15.1.11, React 19, TypeScript, Tailwind, reusable UI components, landing page, team dashboard, and Stack Auth integration. | Preserve the app, assets, lockfile, license, and auth flows. Dashboard figures and several routes are template/demo content, not proof of implemented business features. |
+| Authentication | `frontend/stack.tsx`, the root provider, auth handler, and dashboard use `@stackframe/stack` for users and teams. | Do not replace this with homegrown auth as an incidental cleanup change. Backend identity and tenant mapping still need a decision. |
+| Backend | `backend/`: a .NET 8 solution with API, Core, and Infrastructure projects. The API exposes `/`, `/weather-forecast`, and `/db-check`; the EF context has no entity sets/mappings. Core contains a user-status enum and placeholder classes remain. | This is a scaffold, not an implemented business backend. No tracked migrations or backend test project were found. |
+| NestJS | No NestJS package, bootstrap, module tree, or backend implementation was found in this checkout. Mentions in a setup comparison table are not an implementation. | NestJS is the selected direction. Do not document an existing NestJS app or invent its commands. Re-inventory if code is added before cleanup. |
+| Domain design | Root `schemas.ts` and `enum.ts` contain extensive TypeScript model definitions, constraints/defaults in comments, and lifecycle enums. | Keep them as design references. They are not executable database migrations, request validation, or a wired shared package. |
+| Local services | Compose builds .NET API and frontend images and runs PostgreSQL 17 with a named data volume. The frontend has a Compose dependency on `api`; no application calls to this .NET API were found in the shallow source scan. | Remove obsolete service wiring together. Preserve PostgreSQL and its data. Stack Auth remains an external dependency of the frontend. |
+| Automation | CI detects backend/frontend path changes, runs .NET restore/build/test, builds the frontend, and conditionally builds images. | Remove .NET jobs and all dependent references. The frontend `test` script currently only prints a message; it is not test coverage. |
+| Documentation | Root README, SRS, implementation roadmap, eight setup guides, frontend template README, and two release-planning documents. | Reconcile contradictory stack, scope, setup, and progress statements across all of them. |
+
+## 2. Scope and working rules
+
+- Retire all tracked .NET source, projects, solution files, configuration, launch profiles, HTTP samples, and .NET Docker/CI tooling.
+- Remove active instructions and recommendations that require the retired stack, including less obvious library and architecture references.
+- Preserve framework-independent requirements, schema design, PostgreSQL operations, frontend behavior, and useful integration constraints.
+- Extract useful information from mixed documents before deleting their originals. Use Git history for the retired implementation instead of retaining an active .NET archive in the tree.
+- Keep this cleanup and any later NestJS implementation distinct. Building the new API, choosing an ORM/auth provider, redesigning schemas, and implementing features are follow-up work unless the scope is explicitly expanded.
+- Since no NestJS app exists at baseline, the default cleanup end state is a documented frontend + PostgreSQL foundation with the backend marked **planned**. Remove the dead API service and CI jobs; add NestJS wiring only with real source and verified scripts.
+- Do not reset databases, delete volumes, rewrite Git history, or remove user-local files as part of source cleanup. Audit tracked files even when ignore rules hide them.
+- Mark a task complete only with its changed paths and review/check evidence. An unchecked item is pending, not implied complete by this plan.
+
+## 3. File disposition inventory
+
+The table records baseline paths, including files now deleted. Paths are relative to the repository root. Statuses reflect this cleanup batch; pending runtime/product decisions are not implied complete.
+
+| Path | Action | Content to preserve or review | Status |
+| --- | --- | --- | --- |
+| `backend/TenantFlow.sln` | Delete | No runtime value after retirement; recoverable from Git. | Deleted after preservation review |
+| `backend/TenantFlow.Api/` (6 tracked files) | Delete | `Program.cs`, project file, both appsettings files, launch settings, and HTTP sample. Preserve the need for API documentation and database health checks as future requirements, not these implementations. | Deleted after preservation review |
+| `backend/TenantFlow.Core/` (3 tracked files) | Delete after enum comparison | Check `Enums/UserStatus.cs` against root `enum.ts`; preserve lifecycle meaning, not C# enum ordinals. Remove project file and `Class1.cs`. | Deleted after preservation review |
+| `backend/TenantFlow.Infrastructure/` (3 tracked files) | Delete | Empty EF context, project/package references, and placeholder class. Extract relevant database assumptions from docs first. | Deleted after preservation review |
+| `backend/Dockerfile` | Delete | Remove .NET SDK/runtime images and DLL entrypoint. Do not substitute a Dockerfile for nonexistent NestJS source. | Deleted after preservation review |
+| `docker-compose.yml` | Edit | Remove/replace `api` build, ASP.NET environment, and `5024:8080` mapping; remove the frontend's `depends_on: api` in the no-backend transition. Keep PostgreSQL 17, its named volume, frontend build, and Stack Auth configuration. | Done; readiness/SQL and corrected image build/start/HTTP smoke verified in CI |
+| `.github/workflows/ci.yml` | Edit | Remove .NET setup/restore/build/test and backend image build. Reconcile change-filter outputs, `needs`, result conditions, and image-job conditions together. Preserve frontend validation. | Done; all four corrected CI jobs passed at 979d4bd |
+| `.env.example` | Edit after config review | Currently only `ENVIRONMENT`; not a usable backend configuration contract. Document only variables actually consumed in the resulting checkout, with placeholders. | Done |
+| `.gitignore` | Simplify selectively | Replace the large Visual Studio/.NET template with rules needed for Node/Next, secrets, OS/editor files, logs, and generated outputs. Keep example env files trackable and actual env files ignored. | Done |
+| `.vscode/settings.json` | Edit selectively | Remove retired terms such as `appsettings`, `aspnet`, `ASPNETCORE`, and `Npgsql`; preserve useful domain/tool vocabulary. | Done |
+| `README.md` | Rewrite stack/setup/status sections | Preserve product, tenant isolation, RBAC, billing, data modeling, deployment constraints, and quality requirements. Fix imaginary paths, roadmap links, and branch naming. | Done |
+| `docs/init/TenantFlow-SRS.md` | Keep; reconcile targeted conflicts | Preserve business and non-functional requirements. Clarify implementation status and align identity, tenancy, and MVP scope decisions without silently shrinking the product. | Done |
+| `docs/init/BACKEND_REQUIREMENTS.md` (new) | Add requirements/design notes | Preserve unique tutorial constraints, identity boundaries, security outcomes and operations; record unresolved decisions without implementation examples. | Done |
+| `docs/init/ROADMAP.md` | Edit | Remove ASP.NET Identity and SignalR prescriptions; retain auth/session and live-update outcomes. Reconcile scaffold status with version planning and the post-cleanup state. | Done |
+| `docs/setup/START_HERE.md` | Rewrite as the setup entrypoint | Preserve onboarding intent, identity relationship explanations, and relevant credential handling. Remove .NET steps, unsupported success claims, old dates/statuses, absolute personal paths, and framework comparison advice. Explicitly state the backend is planned until present. | Done |
+| `docs/setup/BACKEND_DEPENDENCIES.md` | Delete after extraction | Retire NuGet version matrices and future .NET packages. Preserve integration needs in canonical requirements; do not invent an approved NestJS dependency matrix. | Deleted after preservation review |
+| `docs/setup/BACKEND_SETUP_COMPLETE.md` | Delete after extraction | Fold any unique useful architecture/onboarding notes into the retained entrypoint or requirements. Remove duplicated summaries and unverified completion claims. | Deleted after preservation review |
+| `docs/setup/BUILDING_CORE_LAYER.md` | Extract, then delete | Retain identity entities, DTO exposure boundaries, lifecycle semantics, UUIDs, timestamps, and use cases where not already captured. Drop C# examples and project/layer instructions. | Deleted after preservation review |
+| `docs/setup/BUILDING_INFRASTRUCTURE_LAYER.md` | Extract, then delete | Review unique relationships, constraints, indexes, deletion behavior, and integration boundaries. Do not blindly port EF mappings, unscoped repository examples, or sample password hashing. | Deleted after preservation review |
+| `docs/setup/DOTNET_COMMANDS.md` | Delete | .NET CLI, EF migration, NuGet, and .NET troubleshooting guidance is obsolete. Repair all incoming references. | Deleted after preservation review |
+| `docs/setup/ENV_AND_GITIGNORE_SETUP.md` | Rewrite and shorten | Retain secret handling and local/container distinctions. Remove .NET configuration classes, user-secrets steps, and duplicated ignore templates. Match actual env files and Compose settings. | Done |
+| `docs/setup/POSTGRESQL_SETUP.md` | Keep; rewrite mixed sections | Keep Docker/DBeaver/psql operations and volume guidance; remove .NET prerequisites, project tree, appsettings, EF wiring, and false expected results. Recheck troubleshooting before carrying it forward. | Done |
+| `frontend/README.md` | Correct onboarding/status | Replace upstream clone/setup assumptions with repository-specific paths; correct Next.js 14 to the package's actual version and explain Stack Auth prerequisites. Preserve attribution and license. | Done |
+| `frontend/` source, assets, package files, and Dockerfile | Preserve; audit integration assumptions | No backend rewrite is needed for the template UI. Review Docker/env behavior only where needed for a truthful supported startup path. Record unrelated template cleanup separately. | Retained; Dockerfile/context adjusted; image build/start/HTTP smoke passed in corrected CI |
+| `schemas.ts`, `enum.ts` | Preserve; annotate unresolved design issues | These are useful NestJS inputs. Reconcile naming, identity ownership, and tenant scoping before implementation; do not convert to an ORM during retirement. | Retained unchanged; implementation decisions documented |
+| `versions/1.0.0/VERSION-PLANNING.md` | Edit | Mark the retired backend foundation as retired, not completed NestJS work. Reconcile CI status, unsupported ERD/migration claims, dates, and scope. | Done: MVP scope follows SRS 2.4; 11 original release ranges archived without new deadlines |
+| `versions/1.0.0/FUTURE-ROADMAP.md` | Keep; reconcile scope | Preserve future product ideas, integrations, and providers. Clarify overlap with MVP requirements rather than deleting features based on framework keywords. | Done: displaced MFA/feature flags preserved; base features distinguished from enhancements |
+| `AGENT.md` (new since baseline) | Add and expand agent guidance | Response clarity, repository context, truthful validation/status reporting, cleanup handoff and a suggested commit message of at most 20 words after repository changes. | Done |
+
+The backend inventory totals **14 tracked files**. `backend/TenantFlow.Api/appsettings.Development.json` is tracked despite matching an ignore rule; ordinary `rg --files` missed it, while `git ls-files` and `git grep` exposed it. It is now deleted with the other backend files; its values were not copied into replacement documentation. No new/non-.NET backend files were found in the pre-deletion re-inventory.
+
+## 4. Preservation and decision ledger
+
+[Backend requirements and design notes](docs/init/BACKEND_REQUIREMENTS.md) is the extraction destination added by this batch. The other destinations below are existing canonical sources. Before deleting a source document, record the destination section or confirm that its useful information is already represented there. Preserve intent, not every tutorial example.
+
+| Knowledge to retain | Sources to compare | Destination / required decision | Status |
+| --- | --- | --- | --- |
+| Tenant boundaries, memberships, invitations, system/tenant/project roles and permissions | README; SRS; `schemas.ts`; core/infrastructure tutorials; START_HERE identity diagram | SRS sections 3, 5, 7, 8 and schema comments. Explicitly distinguish global identities from tenant-owned records and validate child records through their tenant-scoped parents. | Preserved: SRS 3/5/7/8, root models, backend requirements 1-2 |
+| Identity lifecycle, provider identity, profiles, sessions, token revocation/rotation, MFA extension points | `schemas.ts`, `enum.ts`, C# user-status enum, auth tutorials, README/roadmap | Keep model vocabulary in the root TS files and auth requirements in the SRS. Decide later which records are owned by Stack Auth and which by TenantFlow. | Preserved: root models/enums, backend requirements 1-3; provider boundary remains open |
+| UUIDs, enum values, UTC timestamps, nullable relationships, uniqueness/indexes, join tables, soft deletion, retained history | Root model files; EF mapping examples; SRS data rules | Schema comments and SRS sections 7, 8, 10. Record any unique constraint/deletion rule before discarding its EF example; do not assume examples are correct. | Preserved: SRS 7/8/10 and backend requirements 2, including candidate limits, indexes and deletion rules |
+| API boundaries, validation, pagination, safe responses, errors, health/readiness, OpenAPI, logging and tests | Core DTO/service examples; README; roadmaps | SRS requirements and `docs/init/BACKEND_REQUIREMENTS.md` sections 1, 3-5. Identify sensitive fields that must stay out of responses. | Preserved: SRS 6 and backend requirements 1/3; no endpoint paths or libraries chosen |
+| Billing history, plan limits, webhook idempotency, file metadata/storage abstraction, notification preferences, audit history | README; SRS; schema and enum files; dependency guide | Keep product outcomes and integrations in the SRS/model files. Remove .NET client prescriptions without deleting the integration requirements. | Already covered: SRS 5/9, root models and backend requirements 4 |
+| PostgreSQL operations, host/container connection differences, DBeaver, psql, persistent storage | Compose; PostgreSQL guide; environment guide | Retained PostgreSQL guide and actual environment examples. Local hosts use the published port; containers use the service hostname. Preserve volume/data handling notes. | Preserved: rewritten PostgreSQL guide, connection and data-lifecycle sections |
+| Configuration boundaries and secrets | Root/frontend examples; Compose; environment guide; frontend auth setup | Environment guide for variable/file behavior; START_HERE links to it rather than duplicating it. Keep private Stack keys server-side. Do not infer env-file loading from file existence. | Reconciled: environment guide files/consumers and variables tables; START_HERE links to it |
+
+Baseline contradictions and stale statements discovered (historical findings; addressed statements are no longer active guidance). The removal batch fixed retired prescriptions and navigation/config/status claims. The documentation batch resolves release boundaries against [SRS section 2.4](docs/init/TenantFlow-SRS.md#24-canonical-release-boundaries) and archives the original schedule. Provider ownership, model consistency and technical choices remain explicitly open in backend requirements:
+
+1. **Auth architecture:** README mandates ASP.NET Identity and postpones external providers; the frontend already uses Stack Auth users/teams. Retain the working frontend integration, remove the retired prescription, and document NestJS token verification and user/team-to-tenant mapping as future decisions. Do not assert that a Stack team ID already satisfies the UUID-based domain model or API authorization requirements.
+2. **Progress:** the initial roadmap calls the skeleton not started, version planning checks off .NET setup and leaves CI unchecked, and setup summaries call the foundation complete. CI exists, but was not executed in this review; business entities, migrations, and health/auth endpoints described in tutorials are not thereby implemented. Split historical scaffold work, current runnable capabilities, and planned NestJS work.
+3. **Release scope and dates:** version planning includes early MFA while the SRS/initial roadmap treats it as future work; tags appear in MVP guidance and the future roadmap, and reporting overlaps both. Resolve these as scope decisions, retaining the requirements and their provenance. Existing June 2026-February 2027 dates are plans, not evidence of delivery; do not fabricate a replacement schedule.
+4. **Repository navigation:** README shows nonexistent root `ROADMAP.md`, `src/`, and test/deploy trees; the integration branch is `dev`, not its suggested `develop`. Point to real paths and label any future structure clearly. Setup guides also contain machine-specific `E:\PersonalProjects\...` paths.
+5. **Configuration drift:** root `.env.example` only has `ENVIRONMENT`; guides describe additional settings and disagree about root/backend env-file location. Docker and application env loading are different mechanisms. Define the supported files and consumed variables without promising implicit loading.
+6. **Docker drift:** the environment guide shows PostgreSQL 15 and `db`/a different volume, while Compose uses PostgreSQL 17 and `postgres`/`tenantflow_postgres_data`. Preserve the actual data volume and align examples. The PostgreSQL guide's unrestricted `compose up` currently starts more than the database.
+7. **Samples presented as implementation:** the HTTP sample calls `/weatherforecast/`, but the API maps `/weather-forecast`; START_HERE proposes `/api/health`, which is absent. Retire these samples and do not advertise equivalent NestJS endpoints until verified.
+8. **Model design remains provisional:** schema comments refer to `Project.id` and `UserMembership.id` while exported types are `TenantProject` and `TenantMembership`; identity requirements and root model shapes need comparison. Record such findings; schema redesign is follow-up work unless a small documentation clarification is necessary.
+9. **Frontend template claims:** frontend README says Next.js 14 while the package uses 15.1.11; demo data, upstream branding, and placeholder routes are scaffolding. Correct misleading setup/capability documentation; broader visual rebranding is a separate task.
+10. **Useful provider references:** Azure Blob, Azure AD/SSO, Stripe, OpenAPI/Swagger, PostgreSQL, OpenTelemetry, and general architectural concepts are not automatically obsolete because they also occur in .NET guidance. Review context before removal. Revalidate environment-specific troubleshooting, including timezone workarounds, rather than treating old advice as verified.
+
+## 5. Execution plan
+
+Execute in order. Steps 2-6 can be separate reviewable commits on this branch. Keep service/job removal and its dependent references in the same commit so intermediate revisions do not invoke missing projects.
+
+### Step 1 - Establish the baseline and tracker
+
+- [x] Verify a clean starting tree, inspect branch/history, and inventory tracked files including ignored tracked paths.
+- [x] Shallow-scan application code, all existing docs, infrastructure, and stack references.
+- [x] Create `chore/retire-dotnet-backend` from local `dev`.
+- [x] Create this root tracker with file actions, preservation requirements, known conflicts, and validation criteria.
+
+**Exit (planning commit `c341909`):** that first change contained only `BACKEND_CLEANUP_PLAN.md`; cleanup implementation started in the subsequent batch. Documentation checks are recorded in the log below.
+
+### Step 2 - Preserve useful knowledge and settle documentation boundaries
+
+- [x] Compare each preservation-ledger row against the full source sections before deleting any tutorial. Mark each as preserved at a specific destination, already covered, or obsolete with a reason.
+- [x] Extract unique constraints, relationships, security outcomes, and operational guidance into the retained canonical documents. Label unverified examples and unresolved model issues.
+- [x] Establish documentation ownership: README for overview/current stack/navigation; SRS for product rules; root TS files for model vocabulary; START_HERE for actual onboarding; environment/PostgreSQL guides for their procedures; initial roadmap for implementation status; version files for release scope/history.
+- [x] Record NestJS as the target and Stack Auth as the current frontend integration. Leave ORM, backend auth verification, runtime/package versions, port, validation, jobs, logging, and live-update libraries undecided until implementation evidence exists. Add a concise architecture decision document only if needed.
+
+**Exit:** every mixed document scheduled for deletion has a reviewed preservation entry. No useful rule is discarded simply because its example is C#.
+
+### Step 3 - Remove the .NET scaffold and its execution paths together
+
+- [x] Re-inventory `backend/` immediately before removal to catch newly added or reusable non-.NET files.
+- [x] Remove the 14 tracked backend files after Step 2 is complete; retain any newly discovered reusable assets with a recorded destination.
+- [x] Remove the .NET API service and frontend service dependency from Compose; keep PostgreSQL, frontend, their required environment, and the existing named data volume.
+- [x] Remove .NET CI jobs/image build and update all change-filter outputs, dependencies, conditions, and working directories. Ensure no job or service references a deleted path.
+- [x] Review path filters for changes to Compose, Dockerfiles, CI, and shared configuration so relevant validation is not silently skipped. Do not claim a docs-only PR executed builds when filters skipped them.
+
+**Exit:** the supported frontend/database workflow and CI graph no longer require .NET; there is no placeholder NestJS service or green backend test claim without a backend.
+
+### Step 4 - Align configuration and developer tooling
+
+- [x] Remove .NET-specific ignore rules and spelling entries selectively; retain secret, Node/Next, log, generated-file, and relevant editor/OS exclusions.
+- [x] Align `.env.example`, `frontend/.env.local.example`, Compose, and setup guidance with actual consumers and loading behavior. Separate browser-public identifiers from private server credentials.
+- [x] Review the frontend Dockerfile/CI environment handoff: CI supplies build arguments that the current Dockerfile does not declare, while Compose supplies runtime values. Verify the chosen supported path and fix directly related startup issues or record a concrete limitation.
+- [x] Use `git check-ignore` with representative local env, node_modules, Next build, log, and env-example paths; also confirm already tracked files separately. Do not print real environment values.
+
+**Exit:** a contributor can identify required variables and file locations, examples can be tracked, local secrets/generated artifacts stay ignored, and retired environment names/config classes are gone.
+
+### Step 5 - Rewrite and deduplicate documentation
+
+- [x] Rewrite README stack, auth, integrations, architecture, prerequisites, repository layout, workflow, links, and current implementation status; preserve framework-independent sections.
+- [x] Rewrite START_HERE, environment, and PostgreSQL guides around the actual resulting checkout. Use repository-relative commands and service-specific startup instructions.
+- [x] Delete the five obsolete guides: dependency matrix, setup summary, core tutorial, infrastructure tutorial, and .NET CLI reference, after recording preservation destinations.
+- [x] Correct frontend onboarding/version/capability statements while retaining attribution/license and working Stack Auth setup.
+- [x] Reconcile release placement and feature boundaries against SRS section 2.4. Preserve MFA/feature flags and enhanced tagging, customer activities, delivery channels, analytics and public integrations in the future backlog; keep required base workflows in MVP scope. Preserve all 11 original release ranges once in the historical schedule, with no new deadlines; leave unbuilt NestJS features unchecked.
+- [x] Remove duplicate instructions, dangling references, obsolete comparison tables, unsupported success statements, and personal absolute paths. Link to one canonical procedure for each task.
+
+**Exit:** all 14 baseline Markdown files have an explicit kept/edited/deleted disposition. Canonical SRS scope governs the roadmap and version documents; current behavior, future enhancements and historical estimates are distinguished. Provider ownership, model review and technical implementation choices remain follow-up decisions.
+
+### Step 6 - Audit completeness and validate the supported state
+
+- [x] Repeat tracked-file and text searches from section 6. Classify every surviving match instead of excluding entire docs directories.
+- [x] Check all local Markdown links, anchors, inline path/command references, code-block examples, CI references, Compose contexts, and env variable names against the final tree.
+- [x] Run `git diff --check`, inspect the full diff and deletion list, and verify all preservation destinations. Explicitly confirm the frontend, model references, SRS, license, and PostgreSQL volume survived.
+- [x] Render Compose using the official standalone CLI (`config --quiet`), validate the empty example environment and assert resolved public args/private secret mapping.
+- [x] Verify PostgreSQL readiness/SQL and the revised frontend image in CI. Run 39048634979 passed database readiness/query, image build/start/HTTP smoke, and cleanup. The local Docker engine remains unavailable; this evidence comes from the hosted runner.
+- [x] Install locked frontend dependencies; run Node.js 22 lint, TypeScript and production build. The no-config build fails explicitly at missing Stack Auth configuration; the placeholder-config build passes. Treat `npm test` as a placeholder, not validation coverage.
+- [x] Parse workflow YAML and inspect actual PR #8 checks at HEAD `9523344`: frontend build and Compose rendering passed; the old Docker build failed for a missing project ID. Confirm the revised graph, filters, BuildKit secret, readiness/SQL/image-smoke and cleanup steps statically.
+- [x] Record successful corrected CI run 39048634979 for published implementation commit 979d4bd. All four jobs passed; previous failures are retained as historical evidence.
+- [x] Exercise local development and production startup from `frontend/` with explicit fake environment settings. Development/production `robots.txt` return 200; production unknown route returns 404. Startup docs now populate configuration before running the app and document the build/runtime contract.
+- [ ] Deferred follow-up F-01: exercise real sign-in/team/account behavior with valid Stack Auth configuration. Placeholder builds and HTTP smoke are not authenticated end-to-end verification. This manual coverage is separate from code/document retirement and remains open.
+
+**Exit:** the retired stack is absent, preserved knowledge is traceable, and supported build/container/database smoke paths have local/CI evidence. Real authenticated end-to-end coverage remains F-01; full runtime/product verification is not claimed.
+
+### Step 7 - Prepare the cleanup PR and close the tracker
+
+- [x] Update every inventory/preservation row with its final action, destination where applicable, and evidence; record any newly discovered files or statements.
+- [x] Prepare/update PR #8 against dev with final scope, preserved requirements, supported startup, validation and explicit NestJS follow-ups; link this tracker.
+- [x] Record the PR URL, validated implementation commit 979d4bd, successful CI run 39048634979, unresolved decisions and follow-up register F-01 through F-04. The final closeout commit is documentation-only; its SHA is recorded in the PR handoff.
+- [x] Close code/document retirement and PR preparation after verifying all section 7 criteria. Keep F-01 and future backend tasks explicitly open; no backend implementation or authenticated end-to-end pass is implied.
+
+**Exit:** the review surface explains both what was removed and why retained information remains useful for NestJS.
+
+## 6. Reference-search and review procedure
+
+Start with tracked files so ignored-but-tracked configuration cannot escape the audit. These are review commands, not deletion commands:
+
+```powershell
+git ls-files
+git ls-files '*.cs' '*.csproj' '*.sln' '*.fsproj' '*.props' '*.targets' 'global.json' 'NuGet.Config' 'nuget.config' 'appsettings*.json' 'launchSettings.json'
+git grep -n -I -i -E 'dotnet|\.net|asp\.?net|aspnetcore|entity.?framework|ef[ -]?core|npgsql|nuget|swashbuckle|TenantFlow\.(Api|Core|Infrastructure)|net8\.0|appsettings|launchSettings|IISExpress' -- . ':!BACKEND_CLEANUP_PLAN.md'
+git grep -n -I -i -E 'IHttpClientFactory|Microsoft.Extensions.Http.Resilience|FluentValidation|DataAnnotations|ILogger|Serilog|IHostedService|BackgroundService|Hangfire|SignalR|xUnit|FluentAssertions|Stripe.net|user[- ]secrets|UseNpgsql|AddDbContext|ConnectionStrings|5024|7228|weatherforecast|weather-forecast|db-check' -- . ':!BACKEND_CLEANUP_PLAN.md'
+git grep -n -I -E 'DOTNET_COMMANDS|BACKEND_DEPENDENCIES|BACKEND_SETUP_COMPLETE|BUILDING_CORE_LAYER|BUILDING_INFRASTRUCTURE_LAYER|ROADMAP\.md|develop|PersonalProjects|src/|Api.Tests' -- . ':!BACKEND_CLEANUP_PLAN.md'
+rg --files --hidden -g '!.git' -g '!node_modules' -g '!dist' -g '!coverage' -g '!bin' -g '!obj'
+git diff --check
+git diff --stat dev
+git diff --name-status dev
+```
+
+`git grep` exit code 1 means no matches. Searches are aids, not the definition of completion: also read surviving docs for semantic drift, unimplemented features described as complete, duplicated guidance, old framework links, and stale file trees. Inspect matches locally without copying configuration values into logs or PR text.
+
+Review residual matches individually. OpenAPI/Swagger, generic logging/test concepts, supported provider names, and explicitly labeled retirement history can be legitimate. For each retained legacy reference outside this tracker, record its path and reason here. The tracker itself necessarily names retired files; it must not become an alternate setup guide.
+
+## 7. Completion criteria
+
+- [x] No tracked .NET application/project/config/sample files or active .NET images, commands, dependencies, jobs, or service references remain.
+- [x] No retained document recommends the old stack as the current architecture or marks NestJS work done without source and verification.
+- [x] Every baseline path is accounted for; repeated semantic and keyword reviews reveal no unclassified stale references or broken local links.
+- [x] Each deleted mixed guide has a specific preservation destination or a documented explanation that its content was redundant/obsolete.
+- [x] SRS/domain models, enum meanings, tenancy/authorization rules, operational knowledge, frontend auth, attribution/license, and PostgreSQL data persistence remain intact.
+- [x] The supported local startup path, configuration examples, and CI reflect the actual checkout; local/hosted check evidence and live-auth limitations are recorded.
+- [x] Requirements documents consistently report a backend restart, with unresolved product/architecture decisions explicitly tracked rather than silently chosen.
+- [x] PR #8 targets dev and links this tracker; future NestJS implementation and outstanding manual coverage are recorded in the follow-up register.
+
+## 8. Progress and evidence log
+
+Use `Pending`, `In progress`, `Done`, or `Deferred` with a reason. Add commit/PR/check links when available; do not substitute an intention for evidence.
+
+Rows below are point-in-time history. The header and section 10 provide the current closeout status and supersede earlier pending entries.
+
+| Date | Step | Status | Evidence / next action |
+| --- | --- | --- | --- |
+| 2026-10-17 | 1: baseline and tracker | Done | Clean initial tree; 90 tracked files, 14 existing Markdown docs, and 14 backend files inventoried. Source/config/outline scans and tracked-file reference searches completed. Branch created from local `dev` at `fec9987`. Only this document is added. |
+| 2026-10-17 | Planning document checks | Done | Verified baseline counts, all 21 primary file/document paths in the inventory, local reference links, and branch/HEAD equality with the recorded `dev` base. Reviewed the added document and checked its whitespace with `git diff --no-index --check`; final status contains only this new document. No runtime tests run for this planning-only change. |
+| 2026-10-17 | 2: preservation | Done | Full core/infrastructure tutorial sections compared; all seven ledger rows mapped above. New backend requirements sections 1-4 retain identity/model concepts, candidate limits/indexes, deletion/timestamp caveats, response boundaries, integrations and operations. Root schemas/enums unchanged. |
+| 2026-10-17 | 3: implementation retirement | Done | All 14 backend files removed after re-inventory found no additional files. Compose API/dependency and all backend CI/filter/image references removed together. PostgreSQL service/volume settings and frontend source retained. |
+| 2026-10-17 | 4: configuration/tooling | Done with recorded limitation | Root env example now lists actual frontend settings; ignore rules and spelling entries cleaned. Env/Next/Node/generated-output exclusions and example exceptions checked. Existing frontend Docker build-time Stack Auth handoff remains unverified; documented in START_HERE and environment guide. |
+| 2026-10-17 | 5: documentation | In progress | Five obsolete guides deleted after extraction; README, SRS status, roadmap, three setup guides, frontend README and version files updated. Product decisions on MFA/release boundaries and provisional schema consistency remain open; no backend code added. |
+| 2026-10-17 | 6: static checks | Done | One-time Node verification passed: all 14 backend files and five guides absent; 46 local Markdown/image references across 11 current documents resolve; current files including the lockfile/new requirements have no unclassified retired-stack matches. CI job/dependency/filter references and Compose paths reviewed. PostgreSQL service/volume text equals the pre-cleanup definition; schemas, enums, frontend package/lockfile/Dockerfile/license unchanged. Whitespace and ignore checks passed. This is static verification, not YAML schema validation, Compose rendering, or an application test. |
+| 2026-10-17 | 6: runtime/CI checks | Pending | Docker is unavailable in this environment; Compose rendering/startup and database connectivity cannot be run locally. Existing frontend source/package files are unchanged, dependencies are not installed, and Stack Auth configuration is not provided; frontend build/lint/onboarding and remote CI are not claimed verified. A Compose config check is added to CI. |
+| 2026-10-17 | 7: PR | Pending | Current changes are reviewable locally on the existing cleanup branch. No implementation commit, push, or PR was created by this batch. |
+| 2026-10-17 | Removal commit recorded | Done | The previously completed removal/preservation batch is now committed as `e3cedc5`; the documentation reconciliation batch starts from that clean HEAD on the same branch. |
+| 2026-10-17 | 5: scope reconciliation | Done | Added canonical SRS section 2.4 without changing existing requirements. Version milestones now retain base tags/history, lifecycle/invitation/billing email, operational reporting and application API documentation; MFA and feature flags are preserved in the future backlog. All 11 original release date ranges are preserved once in an explicitly historical table. Provider ownership, model consistency and technical choices remain open implementation decisions. |
+| 2026-10-17 | Agent response guidance | Done | Expanded root AGENT.md with communication, repository scope, verification/handoff and truthful publication-status guidance. Suggested conventional commit messages remain mandatory after repository edits and are limited to 20 words including the prefix. |
+| 2026-10-17 | 6: documentation batch checks | Done | One-time Node verification passed: 64 local document/image links and 10 heading anchors across 12 documents resolve; prior SRS content is unchanged outside the additive scope table; all 11 original date ranges survive; moved ideas remain in the future backlog. Diff is documentation-only; frontend, schemas/enums, Compose and CI are unchanged. Whitespace checked. No dependencies installed or application/runtime checks claimed for this prose-only batch. |
+| 2026-10-17 | 6-7: remaining work | Pending | Docker/Compose is still unavailable; frontend dependencies/Stack Auth configuration are absent. Resolve and verify the existing frontend container build-time handoff, run the supported startup/build checks with required tools/configuration, inspect actual CI when available, then prepare the PR against dev. This documentation batch has not been committed or published by the agent. |
+
+### Step 6 batch log
+
+| Date | Step | Status | Evidence / next action |
+| --- | --- | --- | --- |
+| 2026-10-17 | 6: local validation and container wiring | Done locally; runtime limits remain | See section 9 for exact outcomes. Locked install, Node 22 lint/tsc, placeholder production build, development/production HTTP smoke, generated-browser-asset marker scan and actual Compose rendering passed. Dockerfile/Compose/CI now agree on public args and a private BuildKit secret; local env/generated files are excluded from the context. PostgreSQL data settings/volume and all model/requirements content remain preserved. |
+| 2026-10-17 | 6: real PR run inspected | Done | Existing PR #8 is open against dev at 9523344. Run 39046959815 completed with frontend/Compose success and Docker failure caused by missing build-time project ID. This batch addresses that error; a new run is still required after publication. |
+| 2026-10-17 | 6: outstanding verification | Pending | No local Docker engine/buildx or real Stack Auth configuration. Revised CI now adds database readiness/SQL and frontend-image HTTP smoke with cleanup. This batch is uncommitted/unpublished; its image/database checks and live authentication are not claimed passed. |
+
+### Retained legacy-reference exceptions
+
+No active .NET references remain outside this tracker in the working-tree reference audit. The baseline inventory, search recipes, and historical findings in this tracker intentionally name retired files and technologies for traceability; they are not setup instructions.
+
+
+### Disposition of deleted guides
+
+| Retired baseline guide | Preservation evidence |
+| --- | --- |
+| `docs/setup/BUILDING_CORE_LAYER.md` | Entity fields and lifecycle values already exist in root models/enums. Backend requirements 1 preserves identity/role boundaries; 3 preserves DTO exposure and lifecycle use cases. No C# classes retained. |
+| `docs/setup/BUILDING_INFRASTRUCTURE_LAYER.md` | Backend requirements 2 preserves all example length limits, join/provider uniqueness, token-index intent, timestamp and deletion candidates with caveats; 3-4 retains service/security/operations intent. Unscoped repository and password-hashing examples deliberately discarded. |
+| `docs/setup/BACKEND_DEPENDENCIES.md` | OpenAPI, identity, email, billing, logging/tracing needs retained in backend requirements 3-4 and SRS 5/6/9. Package/version matrices and framework-specific installation rules are obsolete. No dependency approval carried over. |
+| `docs/setup/BACKEND_SETUP_COMPLETE.md` | Its onboarding, domain references and boundaries are covered by START_HERE, SRS, root models and backend requirements 1/4. Duplicate summaries, framework commands, imaginary trees and completion claims removed. |
+| `docs/setup/DOTNET_COMMANDS.md` | CLI/package/build/migration instructions apply solely to the retired stack and are obsolete. PostgreSQL operations and persistent-data warnings remain in the PostgreSQL guide. |
+
+### Follow-up decisions for NestJS implementation
+
+- Locate/reuse a NestJS implementation if one exists elsewhere; otherwise scaffold it in a separate implementation step.
+- Choose and record supported Node/package tooling, NestJS dependencies, persistence/migrations, and API contracts when implementation begins.
+- Define Stack Auth token verification, backend user identity, tenant/membership mapping, identifier compatibility, and authorization enforcement.
+- Resolve provisional model inconsistencies before implementation. Use the canonical SRS release boundaries as the scope baseline and record any requested scope changes explicitly.
+- Add a real backend startup path, environment contract, Docker/CI, health checks, and meaningful isolation/auth tests alongside real source.
+
+## 9. Step 6 verification evidence
+
+This batch starts from clean HEAD `9523344bea20564c57bf26e5abef6e6f05b41e07`. No real credentials were read, created, printed or extracted from CI; explicitly fake values were set only in validation processes. Temporary tools/caches are outside the repository; generated frontend artifacts remain ignored. Local servers used loopback ports 3137/3138 and were stopped after smoke checks.
+
+| Check | Command / setup | Result and limit |
+| --- | --- | --- |
+| Locked install | `npm.cmd ci --no-audit --no-fund` with a temporary npm cache | Passed: 640 packages installed. Initial sandbox registry requests failed with EACCES; the network-authorized retry passed. Existing peer/deprecation and npm install-script policy warnings were observed; package.json/lockfile unchanged. The installer host was Node 24/npm 11; application checks below explicitly used temporary Node 22.23.3. |
+| Lint | `npm.cmd run lint` on Node 22 | Passed: no ESLint warnings/errors. |
+| Types | `node node_modules/typescript/bin/tsc --noEmit` on Node 22 | Passed, exit 0. |
+| Missing configuration | `npm.cmd run build` with no Stack values | Compilation/type/lint stages passed, then page-data collection failed with the expected missing-project-ID error. This is not recorded as a successful production build. |
+| Placeholder production build | Same build on Node 22 with three explicit fake Stack values | Passed all build stages and generated all routes. Does not verify a real Stack project or auth session. |
+| Production startup/HTTP | `npm.cmd start -- --hostname 127.0.0.1 --port 3137`, HTTP fetches | Ready in 750ms; `/robots.txt` 200 and an unknown route 404. No business/API/auth flow tested. |
+| Development startup/HTTP | `npm.cmd run dev -- --hostname 127.0.0.1 --port 3138`, HTTP fetch | Ready in 3.4s; `/robots.txt` 200. Fake settings came from process environment; no local env file was written. |
+| Browser artifacts | Scan generated production `.next/static` JS/JSON/HTML/map assets | Fake private-key marker absent from 32 browser assets. This does not substitute for building/inspecting the actual Docker image. |
+| Compose CLI | Official v5.6.0 Windows standalone downloaded to temp; SHA-256 checked against official release checksum | Tool executed successfully without installing a service or changing system settings. |
+| Compose rendering | Standalone equivalent of `docker compose config --quiet`, with placeholders and `--env-file .env.example` | Passed. Database-only configuration renders with empty example settings; resolved JSON has public build args, a private environment-sourced secret and PostgreSQL readiness check. |
+| Workflow/config review | Parse YAML with the installed frontend YAML parser; inspect jobs/needs/filters and rendered Compose JSON | Passed structural assertions. Revised CI checks lint, build, Compose, PostgreSQL readiness/SQL and image HTTP smoke; cleanup never removes volumes. This is not a completed revised CI run. |
+| Final preservation/reference audit | Tracked/new file scan, local Markdown/anchor checks, Docker-ignore matching and whitespace checks | Passed: 66 local links/images, 10 heading anchors across 12 documents; no active retired-stack references. Requirements/models, frontend application source/license/package/lockfile and PostgreSQL image/credentials/port/mount/volume unchanged. New readiness/build wiring is explicit. No local env file was created. |
+| Docker runtime/build plan | Standalone `compose ps --all` and `compose build --print frontend` | Unavailable: Docker engine named pipe is absent; build-plan generation also reports no buildx plugin. No database/container/image runtime pass is claimed. |
+| Remote CI at previous HEAD | [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8), [run 39046959815](https://github.com/thienan2003bt/TenantFlow/actions/runs/39046959815) | Detect Changes, Frontend Build and Compose Configuration passed. Docker Build failed because the previous Dockerfile did not consume the project's public build args. Actual job steps/logs inspected; revised changes await commit/push and a fresh run. |
+
+### Step 6 code changes and remaining actions (historical snapshot)
+
+- `frontend/Dockerfile` now uses locked installs, declares both public args, and exposes the private key only to the build command via a BuildKit secret. `frontend/.dockerignore` prevents copying local configuration, keys, dependencies and generated output.
+- Compose supplies the build args/secret and runtime settings; PostgreSQL gains readiness checking. Database image, credentials, port, data mount and named volume are unchanged.
+- CI passes environment variables safely to public args/private secret, runs lint, starts PostgreSQL with a readiness wait and SQL check, and starts the built frontend image for HTTP smoke. Cleanup removes only its containers/network and never volumes.
+- Build/runtime configuration docs follow the [Next.js 15 environment contract](https://nextjs.org/docs/15/app/guides/environment-variables) and [Docker BuildKit secret specification](https://docs.docker.com/build/building/secrets/). Public project changes require rebuilding the image; runtime still needs the private key.
+- After publishing this batch to the existing branch, require a new successful CI run for the revised jobs. With valid local project settings, verify sign-in/out, team creation/selection and account management. These outcomes remain explicitly pending.
+
+## 10. Step 7 PR handoff
+
+**PR:** [#8](https://github.com/thienan2003bt/TenantFlow/pull/8), `chore/retire-dotnet-backend` into `dev`.
+
+**Published implementation head:** `979d4bdafa2c384e94f1df971db374327793c47f`. The PR and local implementation HEAD match. The implementation consists of planning, retirement, scope-reconciliation, build-validation and readiness-probe commits; no backend scaffold was added.
+
+**Initial Step 7 run:** [39048260814](https://github.com/thienan2003bt/TenantFlow/actions/runs/39048260814) passed frontend lint/build, PostgreSQL readiness/SQL, image build and container start. Its HTTP probe failed immediately with curl error 56 (connection reset) before startup readiness, so the run is not counted as successful.
+
+**Readiness correction:** `979d4bd` adds bounded retries for transient resets, per-request timeouts and failure-only container logs while preserving cleanup. A local fixture exercised the exact CI curl command: a dropped first connection recovered on request two; persistent HTTP failures still exited nonzero. The retry behavior follows the [curl option reference](https://curl.se/docs/manpage.html#--retry-all-errors). Corrected [run 39048634979](https://github.com/thienan2003bt/TenantFlow/actions/runs/39048634979) passed all four jobs. Earlier failed-run evidence remains historical.
+
+### Follow-up register
+
+These are repository-local tracking IDs, not newly created GitHub issues. They retain unfinished validation and implementation decisions without treating them as delivered features.
+
+| ID | Follow-up | Completion evidence | Disposition |
+| --- | --- | --- | --- |
+| F-01 | Verify real Stack Auth sign-in/out, account management, team creation/selection and tenant-switch UI with a configured project. | Record environment/commit and observed outcomes without storing credentials or account data in docs. | Open manual validation; unchanged auth application code and placeholder smoke checks do not prove these flows. |
+| F-02 | Define future NestJS credential verification and provider-user/team to domain-user/tenant mapping. | Record identifier compatibility, membership/permission enforcement, lifecycle ownership and synchronization decisions before implementation. | Future backend design; no parallel identity/session store selected by cleanup. |
+| F-03 | Review provisional model names, constraints, joins, deletion/timestamp policy and produce the ERD/migration design. | Resolve the candidates in backend requirements section 2 with explicit tenant-safety and history-retention rules. | Future model/persistence work; root model references remain unchanged. |
+| F-04 | Implement the NestJS backend foundation from the SRS scope baseline. | Choose supported tooling, add real source/contracts/configuration/migrations/health checks and meaningful isolation/auth tests together. | Future implementation; not included in this retirement PR. |
+
+The retirement completion criteria in section 7 concern removal, preservation, supported workflow evidence and PR handoff. F-01 remains explicitly unverified; closing the retirement work does not certify authenticated end-to-end behavior or product readiness. Full runtime-verification claims still require that check, as stated in Step 6.
+
+### Final Step 7 evidence
+
+| Job / check | Result |
+| --- | --- |
+| Detect Changes | Passed at implementation commit `979d4bdafa2c384e94f1df971db374327793c47f`. |
+| Frontend Build | Locked install, lint and production build passed on the hosted Node.js 22 runner. |
+| Compose and PostgreSQL | Configuration, readiness wait, actual SQL connection and non-volume cleanup passed. |
+| Docker Build | Image build, container start, bounded-retry HTTP smoke and cleanup passed; failure diagnostics were not needed. |
+| Final local review | 70 local document/image references and 15 heading anchors resolve; whitespace and model/frontend preservation against dev passed. The readiness probe fixture verifies reset recovery and persistent-error failure. |
+| PR metadata | PR #8 title/description updated for the final retirement scope. The connected app returned 403 for writes; the repository's existing Git authentication completed the requested metadata update without printing credential values. |
+| Publication | CI correction is committed/pushed as `979d4bd`. Closing documentation is published separately; its SHA and current branch/CI state are recorded in the PR. The PR remains open, not merged. |
+
+The source/model/auth boundaries are unchanged by final documentation. The remaining product and manual-validation work is in F-01 through F-04 above. No new GitHub issues were opened and no existing issue was closed as a substitute for validation.

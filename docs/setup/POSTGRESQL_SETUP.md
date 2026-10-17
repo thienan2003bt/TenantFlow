@@ -1,295 +1,58 @@
-# PostgreSQL Docker Setup Guide
+# PostgreSQL Development Setup
 
-## Purpose
+The repository retains PostgreSQL 17 in [Compose](../../docker-compose.yml) as optional development storage for the future backend. No migrations or business tables are supplied. Docker with Compose is required; DBeaver is optional.
 
-This guide explains how to set up the local PostgreSQL database for TenantFlow using Docker and connect it with DBeaver.
+## Start and verify
 
----
+Run from the repository root:
 
-# Prerequisites
-
-Install:
-
-- Docker Desktop
-- DBeaver Community Edition
-- .NET 8 SDK
-
-Verify Docker:
-
-```bash
-docker --version
-docker compose version
+```powershell
+docker compose up -d --wait --wait-timeout 90 postgres
+docker compose ps postgres
+docker compose logs postgres
+docker compose exec postgres pg_isready -U tenantflow -d tenantflow_dev
+docker compose exec postgres psql -U tenantflow -d tenantflow_dev
 ```
 
----
-
-# Project Structure
-
-```text
-tenantflow/
-
-├── backend/
-│   ├── TenantFlow.Api/
-│   ├── TenantFlow.Core/
-│   ├── TenantFlow.Infrastructure/
-│   └── TenantFlow.sln
-│
-├── docker-compose.yml
-└── docs/
-```
-
----
-
-# Docker Compose Configuration
-
-Create `docker-compose.yml` at repository root.
-
-```yaml
-version: "3.9"
-
-services:
-  postgres:
-    image: postgres:17
-    container_name: tenantflow-postgres
-
-    restart: unless-stopped
-
-    environment:
-      POSTGRES_DB: tenantflow_dev
-      POSTGRES_USER: tenantflow
-      POSTGRES_PASSWORD: tenantflow_password
-
-    ports:
-      - "5432:5432"
-
-    volumes:
-      - tenantflow_postgres_data:/var/lib/postgresql/data
-
-volumes:
-  tenantflow_postgres_data:
-```
-
----
-
-# Starting PostgreSQL
-
-Start container:
-
-```bash
-docker compose up -d
-```
-
-Verify:
-
-```bash
-docker ps
-```
-
-Expected container:
-
-```text
-tenantflow-postgres
-```
-
-Check logs:
-
-```bash
-docker logs tenantflow-postgres
-```
-
-Expected output:
-
-```text
-database system is ready to accept connections
-```
-
----
-
-# DBeaver Connection
-
-Create a new PostgreSQL connection.
-
-Configuration:
-
-```text
-Host: localhost
-Port: 5432
-
-Database: tenantflow_dev
-
-Username: tenantflow
-Password: tenantflow_password
-```
-
-Press "Test Connection".
-
----
-
-# Timezone Error Fix
-
-## Symptom
-
-DBeaver may show:
-
-```text
-FATAL: invalid value for parameter "TimeZone": "Asia/Saigon"
-```
-
-## Cause
-
-The PostgreSQL container does not recognize the legacy timezone identifier:
-
-```text
-Asia/Saigon
-```
-
-## Solution
-
-Open:
-
-```text
-DBeaver
-→ Preferences
-→ User Interface
-→ Time Zones
-```
-
-Set timezone to:
-
-```text
-Asia/Ho_Chi_Minh
-```
-
-or:
-
-```text
-Asia/Ho_Chi_Minh_City
-```
-
-Restart DBeaver.
-
-Test the connection again.
-
----
-
-# Application Configuration
-
-## appsettings.json
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": ""
-  }
-}
-```
-
-## appsettings.Development.json
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=tenantflow_dev;Username=tenantflow;Password=tenantflow_password"
-  }
-}
-```
-
----
-
-# Program.cs
-
-```csharp
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"));
-});
-```
-
----
-
-# Verify Database Connectivity
-
-Open container:
-
-```bash
-docker exec -it tenantflow-postgres bash
-```
-
-Connect:
-
-```bash
-psql -U tenantflow -d tenantflow_dev
-```
-
-Verify:
+Within psql:
 
 ```sql
 SELECT version();
-```
-
-Exit:
-
-```sql
+SHOW TIMEZONE;
+\dt
 \q
 ```
 
----
+A connection/readiness check verifies PostgreSQL only. An empty application schema is expected until the backend and migrations are implemented.
 
-# Useful Commands
+Compose includes a `pg_isready` health check for this wait. CI uses the same wait and executes `SELECT 1` with SQL errors enabled, then stops services without deleting volumes. This readiness/SQL/cleanup job passed in the Step 7 CI run recorded in the [tracker](../../BACKEND_CLEANUP_PLAN.md#10-step-7-pr-handoff). Local validation used Compose rendering; there is no local Docker engine.
 
-Start:
+## Connection details
 
-```bash
-docker compose up -d
-```
+| Setting | Host application / DBeaver | Future container on the Compose network |
+| --- | --- | --- |
+| Host | `localhost` | `postgres` |
+| Port | `5432` | `5432` |
+| Database | `tenantflow_dev` | `tenantflow_dev` |
+| User | `tenantflow` | `tenantflow` |
 
-Stop:
+The development password is set in Compose. In DBeaver, create a PostgreSQL connection with the host-side values and use **Test Connection**. A future API container must use the service hostname; `localhost` inside that container would refer to itself.
 
-```bash
-docker compose stop
-```
+If a client reports an invalid timezone, compare its configured value with the server's `pg_timezone_names` view and select a value the server actually lists. Old client-specific timezone workarounds are not assumed valid for every environment. Do not modify the database or volume to solve a client display setting.
 
-Restart:
+## Persistent data and lifecycle
 
-```bash
-docker compose restart
-```
+The `tenantflow_postgres_data` volume is mounted at `/var/lib/postgresql/data`. Its existing name and mount are retained by cleanup. Keep the same Compose project name when reconnecting to existing data.
 
-View logs:
+Useful non-destructive commands from the repository root:
 
-```bash
-docker logs tenantflow-postgres
-```
-
-Destroy container:
-
-```bash
+```powershell
+docker compose stop postgres
+docker compose start postgres
+docker compose restart postgres
 docker compose down
 ```
 
-Destroy container and database:
+The last command removes this project's containers/network but leaves the named volume. Adding `-v` would remove persistent data; it is not a cleanup or troubleshooting step here. Do not delete the volume to change initialization credentials or to retire application source.
 
-```bash
-docker compose down -v
-```
-
-Warning:
-
-```bash
-docker compose down -v
-```
-
-removes all PostgreSQL data permanently.
-
----
-
-# Expected Result
-
-After setup:
-
-- PostgreSQL runs inside Docker.
-- DBeaver connects successfully.
-- ASP.NET Core uses `DefaultConnection`.
-- Entity Framework migrations can be executed.
-- Database tables are visible from DBeaver.
+A backend connection string, ORM, migration commands, seed data, and database health endpoint remain future implementation work. See the [backend requirements](../init/BACKEND_REQUIREMENTS.md) and [environment guide](ENV_AND_GITIGNORE_SETUP.md).

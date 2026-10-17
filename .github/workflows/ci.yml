@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   changes:
@@ -20,8 +21,8 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
+      configuration: ${{ steps.filter.outputs.configuration }}
 
     steps:
       - name: Checkout
@@ -32,42 +33,47 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            backend:
-              - 'backend/**'
-
             frontend:
               - 'frontend/**'
+              - 'docker-compose.yml'
+              - '.env.example'
+              - '.github/workflows/ci.yml'
 
-  backend:
-    name: Backend Build
+            configuration:
+              - 'docker-compose.yml'
+              - '.env.example'
+              - '.github/workflows/ci.yml'
+
+  configuration:
+    name: Compose and PostgreSQL
 
     needs: changes
 
-    if: needs.changes.outputs.backend == 'true'
+    if: needs.changes.outputs.configuration == 'true'
 
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: backend
+    env:
+      NEXT_PUBLIC_STACK_PROJECT_ID: configuration-check
+      NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: configuration-check
+      STACK_SECRET_SERVER_KEY: configuration-check
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
+      - name: Validate Compose Configuration
+        run: docker compose config --quiet
 
-      - name: Restore
-        run: dotnet restore
+      - name: Start PostgreSQL and Wait for Readiness
+        run: docker compose up -d --wait --wait-timeout 90 postgres
 
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
+      - name: Verify Database Connection
+        run: docker compose exec -T postgres psql -U tenantflow -d tenantflow_dev -v ON_ERROR_STOP=1 -c 'SELECT 1;'
 
-      - name: Test
-        run: dotnet test --no-build --configuration Release
+      - name: Stop Local Services
+        if: always()
+        run: docker compose down
 
   frontend:
     name: Frontend Build
@@ -96,15 +102,11 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
       - name: Build
         run: npm run build
-        env:
-          NEXT_PUBLIC_STACK_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }}
-          NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
-          STACK_SECRET_SERVER_KEY: ${{ secrets.STACK_SECRET_SERVER_KEY }}
-
-      - name: Test
-        run: npm test -- --passWithNoTests
         env:
           NEXT_PUBLIC_STACK_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }}
           NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
@@ -115,43 +117,46 @@ jobs:
 
     needs:
       - changes
-      - backend
       - frontend
 
-    if: |
-      always() &&
-      (
-        needs.changes.outputs.backend == 'true' ||
-        needs.changes.outputs.frontend == 'true'
-      ) &&
-      (
-        needs.backend.result == 'success' ||
-        needs.backend.result == 'skipped'
-      ) &&
-      (
-        needs.frontend.result == 'success' ||
-        needs.frontend.result == 'skipped'
-      )
+    if: needs.changes.outputs.frontend == 'true' && needs.frontend.result == 'success'
 
     runs-on: ubuntu-latest
+
+    env:
+      NEXT_PUBLIC_STACK_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }}
+      NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: ${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }}
+      STACK_SECRET_SERVER_KEY: ${{ secrets.STACK_SECRET_SERVER_KEY }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Backend Docker Image
-        if: needs.changes.outputs.backend == 'true'
-        run: |
-          docker build \
-            -t tenantflow-backend:ci \
-            ./backend
-
       - name: Build Frontend Docker Image
-        if: needs.changes.outputs.frontend == 'true'
         run: |
           docker build \
-            --build-arg NEXT_PUBLIC_STACK_PROJECT_ID=${{ secrets.NEXT_PUBLIC_STACK_PROJECT_ID }} \
-            --build-arg NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY=${{ secrets.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY }} \
-            --build-arg STACK_SECRET_SERVER_KEY=${{ secrets.STACK_SECRET_SERVER_KEY }} \
+            --build-arg NEXT_PUBLIC_STACK_PROJECT_ID \
+            --build-arg NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY \
+            --secret id=stack_secret_server_key,env=STACK_SECRET_SERVER_KEY \
             -t tenantflow-frontend:ci \
             ./frontend
+
+      - name: Start Frontend Image
+        run: |
+          docker run -d --name tenantflow-frontend-ci \
+            -p 127.0.0.1:3137:3000 \
+            -e NEXT_PUBLIC_STACK_PROJECT_ID \
+            -e NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY \
+            -e STACK_SECRET_SERVER_KEY \
+            tenantflow-frontend:ci
+
+      - name: Smoke Check Frontend Image
+        run: curl --fail --silent --show-error --connect-timeout 2 --max-time 5 --retry 20 --retry-all-errors --retry-delay 1 --retry-max-time 60 http://127.0.0.1:3137/robots.txt
+
+      - name: Show Frontend Logs on Failure
+        if: failure()
+        run: docker logs --tail 100 tenantflow-frontend-ci 2>&1 || true
+
+      - name: Stop Frontend Image
+        if: always()
+        run: docker rm -f tenantflow-frontend-ci 2>/dev/null || true

@@ -1,443 +1,53 @@
-# Environment Variables & .gitignore Setup
+# Environment and Ignore Rules
 
-## 🔐 Setting Up .env for Local Development
+The backend currently has requirements and design references only. No backend database connection string, token-signing key, email, storage, or payment setting is consumed by this checkout.
 
-### Why .env?
+## Files and consumers
 
-Even though .NET has User Secrets, using a `.env` file is important for:
+| File | Consumer | Purpose |
+| --- | --- | --- |
+| `frontend/.env.local` | Next.js in `frontend/` | Local frontend development/build configuration; copy the adjacent `.env.local.example`. |
+| Root `.env` | Docker Compose interpolation and build-secret source | Frontend public build arguments, private build secret and runtime values; copy root `.env.example`. Compose does not automatically make this a Next.js local env file. |
+| Root `docker-compose.yml` | Docker Compose | PostgreSQL development settings and frontend container configuration. PostgreSQL values are currently set directly in this file. |
+| CI secrets | Frontend workflow | Project-specific Stack Auth settings used by the existing build steps. No values are committed in examples. |
 
-- **Team consistency** - Everyone uses the same file format
-- **Docker compatibility** - Easy to pass env vars to containers
-- **Production parity** - Production also uses environment variables
-- **Simplicity** - Single source of truth for all developers
+Both examples name the same three frontend settings:
 
-### Step 1: Create `.env` file in project root
+| Variable | Visibility and use |
+| --- | --- |
+| `NEXT_PUBLIC_STACK_PROJECT_ID` | Browser-public Stack Auth project identifier. |
+| `NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY` | Browser-public publishable client key. |
+| `STACK_SECRET_SERVER_KEY` | Private server-side key. Never rename it with a browser-public prefix or expose it in responses, logs, or client code. |
 
-**File: `backend/.env`** (do NOT commit this)
+Populate values from your Stack Auth project. Local and container startup commands are in [START_HERE](START_HERE.md). A build with fake credentials verifies compilation/configuration only; it does not verify real authentication or project membership.
 
-```env
-# Application
-ENVIRONMENT=Development
-API_PORT=5024
+## Container build and runtime contract
 
-# Database (PostgreSQL)
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_USER=postgres
-DATABASE_PASSWORD=your_local_password_123
-DATABASE_NAME=tenantflow_dev
-DATABASE_CONNECTION_STRING=Server=localhost;Port=5432;Database=tenantflow_dev;User Id=postgres;Password=your_local_password_123;Include Error Detail=true;
+- The two `NEXT_PUBLIC_` values are declared Docker build arguments and supplied by Compose or CI. Next.js embeds public settings during the build, so rebuild when changing them; runtime values must identify the same project.
+- `STACK_SECRET_SERVER_KEY` is supplied to the build using the `stack_secret_server_key` BuildKit secret, exposed only to the build command as an environment variable. It is not a Docker build argument or Dockerfile `ENV` instruction. Compose sources it from the root environment; CI passes it through the step's environment and `--secret`.
+- The running server still needs `STACK_SECRET_SERVER_KEY`; Compose passes it as a runtime environment variable. Build secrets do not configure the running container.
+- `frontend/.dockerignore` excludes local env files, keys, dependencies and generated output while keeping empty example templates. Do not copy local credentials into the build context.
+- Use BuildKit/buildx and Compose with environment-sourced build-secret support. A standalone Compose CLI without a working Docker engine/buildx can render configuration but cannot validate the image or database runtime.
 
-# JWT & Security
-JWT_SECRET=your-super-secret-jwt-key-that-is-very-long-and-random-change-in-production
-JWT_EXPIRATION_MINUTES=60
-REFRESH_TOKEN_EXPIRATION_DAYS=7
+This follows the [Next.js 15 build-time environment contract](https://nextjs.org/docs/15/app/guides/environment-variables#bundling-environment-variables-for-the-browser), [Docker BuildKit secret handling](https://docs.docker.com/build/building/secrets/), and [Compose build-secret specification](https://docs.docker.com/reference/compose-file/build/#secrets). Local rendering/artifact checks and corrected hosted image build/start/HTTP smoke passed. Real authenticated-flow validation remains open; see the [final evidence](../../BACKEND_CLEANUP_PLAN.md#10-step-7-pr-handoff).
 
-# Email (if implementing email verification later)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-SMTP_FROM_EMAIL=noreply@tenantflow.dev
+PostgreSQL's current local database/user are `tenantflow_dev`/`tenantflow`; its development password is visible in Compose. These are development defaults, not production credentials. Changing an initialization password does not update an already initialized database volume.
 
-# AWS (if implementing file uploads)
-AWS_ACCESS_KEY_ID=your_local_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_local_aws_secret_key
-AWS_REGION=us-east-1
-AWS_S3_BUCKET_NAME=tenantflow-dev-bucket
+## Ignore behavior
 
-# Stripe (when implementing billing)
-STRIPE_API_KEY=sk_test_your_local_stripe_key
-STRIPE_WEBHOOK_SECRET=whsec_your_local_webhook_secret
+Root ignore rules cover local env files, private key files, Node dependencies, Next/build outputs, logs, temporary files, and relevant OS/editor artifacts. Example env files remain trackable.
 
-# Optional: API Keys for external services
-RECAPTCHA_SECRET_KEY=your_local_recaptcha_key
+From the repository root, inspect representative paths without creating them:
+
+```powershell
+git check-ignore -v .env .env.local frontend/.env.local frontend/node_modules/example frontend/.next/example
+git check-ignore .env.example frontend/.env.local.example
 ```
 
-### Step 2: Create `.env.example` (committed to Git)
+The second command should print nothing and return exit code 1. An ignore rule does not untrack a file already in Git; inspect tracked files separately with `git ls-files`.
 
-**File: `backend/.env.example`**
+## Future backend configuration
 
-```env
-# .env.example - Copy this to .env and fill in your local values
+Define settings alongside actual NestJS consumers, document their loading source and precedence, and validate required values at startup. Keep database host/container distinctions explicit. Separate credentials between environments and use deployment secret management when needed. Provider-owned credentials and sessions must not be duplicated by default.
 
-# Application
-ENVIRONMENT=Development
-API_PORT=5024
-
-# Database (PostgreSQL)
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_USER=postgres
-DATABASE_PASSWORD=
-DATABASE_NAME=tenantflow_dev
-DATABASE_CONNECTION_STRING=
-
-# JWT & Security
-JWT_SECRET=
-JWT_EXPIRATION_MINUTES=60
-REFRESH_TOKEN_EXPIRATION_DAYS=7
-
-# Email
-SMTP_HOST=
-SMTP_PORT=
-SMTP_USER=
-SMTP_PASSWORD=
-SMTP_FROM_EMAIL=
-
-# AWS
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_REGION=
-AWS_S3_BUCKET_NAME=
-
-# Stripe
-STRIPE_API_KEY=
-STRIPE_WEBHOOK_SECRET=
-
-# Other
-RECAPTCHA_SECRET_KEY=
-```
-
----
-
-## 🛡️ Updating .gitignore
-
-### Step 1: Create/Update `.gitignore` in project root
-
-**File: `.gitignore`** (add/update with this content)
-
-```
-# Environment Variables
-.env
-.env.local
-.env.*.local
-.env.production.local
-
-# .NET Build Artifacts
-bin/
-obj/
-*.dll
-*.exe
-*.pdb
-*.so
-*.dylib
-
-# IDE & Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-*.swn
-*~
-.DS_Store
-
-# Visual Studio
-.vs/
-.vscode/settings.json
-*.user
-*.userprefs
-*.pidb
-*.suo
-
-# Build Logs
-*.log
-logs/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-*.mdf
-*.ldf
-
-# Node modules (for frontend, if applicable)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Python (if using for scripts)
-__pycache__/
-*.py[cod]
-*$py.class
-venv/
-.venv/
-
-# NuGet
-*.nuget.props
-*.nuget.targets
-packages/
-.nuget/
-
-# Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-[Ww][Ii][Nn]32/
-[Aa][Rr][Mm]/
-
-# User Secrets
-**/Properties/launchSettings.json
-**/secrets.json
-user-secrets-id
-
-# Dependencies
-.package-lock.json
-paket-files/
-
-# OS
-Thumbs.db
-.DS_Store
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# Temporary files
-*.tmp
-*.temp
-```
-
-### Step 2: Verify .env is ignored
-
-```bash
-# Test that .env is ignored
-git check-ignore -v .env
-
-# Should output: .env
-```
-
----
-
-## 📖 Using Environment Variables in Code
-
-### Reading from .env in Program.cs
-
-.NET automatically reads environment variables using `IConfiguration`:
-
-```csharp
-var builder = WebApplication.CreateBuilder(args);
-
-// This reads from (in order):
-// 1. Environment variables (Windows: set VAR=value)
-// 2. appsettings.Development.json
-// 3. appsettings.json
-// 4. .env (if you set it up)
-
-var databaseUrl = builder.Configuration["DATABASE_CONNECTION_STRING"];
-var jwtSecret = builder.Configuration["JWT_SECRET"];
-var stripeKey = builder.Configuration["STRIPE_API_KEY"];
-
-// Example: Validate required configuration
-if (string.IsNullOrEmpty(jwtSecret))
-{
-    throw new InvalidOperationException("JWT_SECRET is not configured!");
-}
-
-// Add DbContext with the connection string
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(databaseUrl));
-
-// Add other services...
-var app = builder.Build();
-app.Run();
-```
-
-### Using Configuration in Services
-
-```csharp
-public class UserService
-{
-    private readonly IConfiguration _configuration;
-
-    public UserService(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
-
-    public void DoSomething()
-    {
-        var apiKey = _configuration["STRIPE_API_KEY"];
-        // Use the key...
-    }
-}
-
-// In Program.cs, register it:
-builder.Services.AddScoped<UserService>();
-```
-
-### Creating a Settings Class (Best Practice)
-
-**File: `TenantFlow.Infrastructure/Settings/DatabaseSettings.cs`**
-
-```csharp
-namespace TenantFlow.Infrastructure.Settings;
-
-public class DatabaseSettings
-{
-    public string ConnectionString { get; set; } = string.Empty;
-    public string Host { get; set; } = string.Empty;
-    public int Port { get; set; }
-    public string User { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-}
-```
-
-**File: `TenantFlow.Infrastructure/Settings/JwtSettings.cs`**
-
-```csharp
-namespace TenantFlow.Infrastructure.Settings;
-
-public class JwtSettings
-{
-    public string Secret { get; set; } = string.Empty;
-    public int ExpirationMinutes { get; set; }
-    public int RefreshTokenExpirationDays { get; set; }
-}
-```
-
-**File: `TenantFlow.Infrastructure/Settings/AppSettings.cs`**
-
-```csharp
-namespace TenantFlow.Infrastructure.Settings;
-
-public class AppSettings
-{
-    public DatabaseSettings Database { get; set; } = new();
-    public JwtSettings Jwt { get; set; } = new();
-    public AwsSettings Aws { get; set; } = new();
-    public StripeSettings Stripe { get; set; } = new();
-}
-```
-
-**In Program.cs:**
-
-```csharp
-var appSettings = new AppSettings();
-builder.Configuration.Bind(appSettings);
-builder.Services.AddSingleton(appSettings);
-
-// Or shorter:
-builder.Services.Configure<AppSettings>(builder.Configuration);
-
-// Then use in services:
-public class FileService
-{
-    private readonly IOptions<AppSettings> _options;
-
-    public FileService(IOptions<AppSettings> options)
-    {
-        _options = options;
-        var s3BucketName = _options.Value.Aws.S3BucketName;
-    }
-}
-```
-
----
-
-## 🚀 For Different Environments
-
-### Development (Local)
-
-```env
-ENVIRONMENT=Development
-DATABASE_CONNECTION_STRING=Server=localhost;...
-JWT_SECRET=dev-secret-key
-```
-
-Load from `.env` file
-
-### Staging (Docker)
-
-```bash
-docker run \
-  -e ENVIRONMENT=Staging \
-  -e DATABASE_CONNECTION_STRING=postgres://prod-db-host:5432/... \
-  -e JWT_SECRET=staging-secret-key \
-  myapp:latest
-```
-
-### Production
-
-Use AWS Secrets Manager or environment variables from your deployment platform (Kubernetes, CloudRun, etc.)
-
----
-
-## ✅ Checklist
-
-- [ ] Created `.env` in `backend/` with your local values
-- [ ] Created `.env.example` with empty values
-- [ ] Updated `.gitignore` to exclude `.env`
-- [ ] Verified `git check-ignore .env` works
-- [ ] Never committed `.env` to Git
-- [ ] Shared `.env.example` with team for reference
-- [ ] All team members copy `.env.example` to `.env` and fill their local values
-
----
-
-## 🔒 Security Best Practices
-
-1. **Never commit `.env`** - Add to `.gitignore` immediately
-2. **Don't hardcode secrets** - Always read from environment
-3. **Rotate secrets regularly** - Especially in production
-4. **Use strong random values** - `JWT_SECRET` should be very long and random
-5. **Limit access** - Only share `.env` through secure channels (1Password, LastPass, etc.)
-6. **Different secrets per environment** - Dev and production keys should be different
-7. **Audit logs** - Log who accesses which secrets
-8. **Use managed secrets** - AWS Secrets Manager, Azure Key Vault for production
-
----
-
-## 🐋 Docker Integration
-
-When deploying with Docker:
-
-**File: `docker-compose.yml`**
-
-```yaml
-version: "3.8"
-
-services:
-  api:
-    build: .
-    ports:
-      - "5024:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - DATABASE_CONNECTION_STRING=${DATABASE_CONNECTION_STRING}
-      - JWT_SECRET=${JWT_SECRET}
-      - STRIPE_API_KEY=${STRIPE_API_KEY}
-    depends_on:
-      - db
-
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
-```
-
-**Run with .env:**
-
-```bash
-docker-compose --env-file .env up
-```
-
----
-
-Now you're ready to use environment variables securely across all environments!
+Do not log real values, commit local env files, or copy credentials into requirements and PR descriptions. See [backend requirements](../init/BACKEND_REQUIREMENTS.md) for the unresolved identity and integration boundaries.

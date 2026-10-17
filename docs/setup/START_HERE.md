@@ -1,402 +1,63 @@
-# 🚀 TenantFlow Backend Initialization - Complete Guide
+# Start Here
 
-**Status:** Version 0.0.0 Foundation Phase
-**Date:** June 19, 2026
-**Target:** Multi-tenant SaaS Platform with .NET 8 + PostgreSQL
+TenantFlow's backend is being restarted from requirements for NestJS. There is no backend application, migration runner, or API service to launch. The existing Next.js frontend starter and optional PostgreSQL container remain available for local work.
 
----
+## Read the requirements
 
-## 📚 Documentation Created
+1. Read the [SRS](../init/TenantFlow-SRS.md) for the product, tenant isolation, permissions, billing, and data-retention rules.
+2. Review [backend requirements and design notes](../init/BACKEND_REQUIREMENTS.md), including preserved constraint candidates and identity decisions.
+3. Compare the [schema references](../../schemas.ts) and [enums](../../enum.ts). They are provisional models, not database migrations or runtime validation.
+4. Follow the [implementation roadmap](../init/ROADMAP.md) and [cleanup tracker](../../BACKEND_CLEANUP_PLAN.md). Release dates and old milestone checkboxes are not proof of implementation.
 
-Your complete backend setup includes **5 comprehensive guides**:
+The frontend currently uses Stack Auth for users, sign-in, account management and teams. NestJS credential verification, provider-to-domain user mapping, team-to-tenant mapping, identifier compatibility, and server authorization remain requirements to design. Frontend team selection alone does not enforce backend tenant isolation.
 
-| Document                           | Purpose                                          | Read When                           |
-| ---------------------------------- | ------------------------------------------------ | ----------------------------------- |
-| `DOTNET_COMMANDS.md`               | Quick reference for all .NET CLI commands        | "How do I run migrations?"          |
-| `BUILDING_CORE_LAYER.md`           | Step-by-step guide to build business logic layer | Building the Core project           |
-| `BUILDING_INFRASTRUCTURE_LAYER.md` | Step-by-step guide to build data access layer    | Building the Infrastructure project |
-| `ENV_AND_GITIGNORE_SETUP.md`       | Complete credential management & security        | Setting up .env and secrets         |
-| `BACKEND_SETUP_COMPLETE.md`        | Summary of everything + learning path            | Understanding the big picture       |
+## Run the existing frontend locally
 
----
+Prerequisites: Git, Node.js 22 (matching the existing frontend CI/container), npm, and a configured Stack Auth project. These are frontend tooling choices, not a selected backend runtime contract.
 
-## ✅ What You've Already Done
+From the repository root:
 
-Your foundation is **complete and ready**:
-
-- ✅ Created `TenantFlow.Api` Web API project
-- ✅ Created `TenantFlow.Core` class library
-- ✅ Created `TenantFlow.Infrastructure` class library
-- ✅ Created `TenantFlow.sln` solution file
-- ✅ Verified everything builds: `dotnet build` ✔️
-- ✅ Organized project structure following Clean Architecture
-- ✅ Documented all decisions for your team
-
----
-
-## 🎯 Your Next Steps (In Order)
-
-### Phase 1: Core Layer ⚙️ (Start Here)
-
-**Time estimate:** 1-2 hours
-
-**What to do:**
-
-1. Open `BUILDING_CORE_LAYER.md`
-2. Navigate to `backend/TenantFlow.Core`
-3. Create folder structure:
-   ```
-   Entities/
-   Enums/
-   DTOs/Requests/
-   DTOs/Responses/
-   Services/
-   Exceptions/
-   ```
-4. Create all enum files (UserStatus, AuthFactorType, etc.)
-5. Create all entity files (User, Role, Permission, etc.)
-6. Create DTOs and service interfaces
-
-**Success criteria:**
-
-- All files compile without errors
-- `dotnet build` passes
-- No missing references
-
----
-
-### Phase 2: Infrastructure Layer 🛠️
-
-**Time estimate:** 1-2 hours
-
-**What to do:**
-
-1. Open `BUILDING_INFRASTRUCTURE_LAYER.md`
-2. Install Entity Framework Core packages
-3. Navigate to `backend/TenantFlow.Infrastructure`
-4. Create folder structure:
-   ```
-   Data/EntityConfigurations/
-   Repositories/
-   Services/
-   ```
-5. Create ApplicationDbContext
-6. Create all entity configurations
-7. Create repository interfaces and implementations
-8. Implement PasswordService
-
-**Success criteria:**
-
-- Solution compiles
-- No missing references between projects
-- `dotnet build` passes
-
----
-
-### Phase 3: Database Setup 🗄️
-
-**What to do:**
-
-1. Install PostgreSQL locally (or use Docker)
-2. Create `.env` file following `ENV_AND_GITIGNORE_SETUP.md`
-3. Fill in your local database credentials
-4. Add project references in `Program.cs`
-5. Create first migration:
-   ```bash
-   dotnet ef migrations add InitialCreate \
-     --startup-project TenantFlow.Api \
-     --project TenantFlow.Infrastructure
-   ```
-6. Apply migration to database:
-   ```bash
-   dotnet ef database update \
-     --startup-project TenantFlow.Api \
-     --project TenantFlow.Infrastructure
-   ```
-
-**Success criteria:**
-
-- Database created in PostgreSQL
-- All tables match your entities
-- No migration errors
-
----
-
-### Phase 4: API Endpoints 🌐
-
-**What to do:**
-
-1. Create `Controllers/` folder in `TenantFlow.Api`
-2. Create sample endpoints:
-   - `GET /api/health` - Health check
-   - `POST /api/auth/register` - User registration
-   - `POST /api/auth/login` - User login
-3. Wire up dependency injection
-4. Test with Postman or curl
-
-**Success criteria:**
-
-- `dotnet run` starts successfully
-- Endpoints respond correctly
-- No runtime errors
-
----
-
-## 🌐 Architecture Overview
-
-Your clean architecture ensures:
-
-```
-┌─────────────────────────────────────────┐
-│        TenantFlow.Api (HTTP)            │  ← User requests
-│  Controllers, Middleware, Program.cs    │
-└──────────────┬──────────────────────────┘
-               │ depends on
-┌──────────────▼──────────────────────────┐
-│   TenantFlow.Infrastructure (Data)      │  ← Database queries
-│   DbContext, Repositories, Services     │
-└──────────────┬──────────────────────────┘
-               │ depends on
-┌──────────────▼──────────────────────────┐
-│      TenantFlow.Core (Logic)            │  ← Business rules
-│ Entities, Enums, DTOs, Interfaces       │
-└─────────────────────────────────────────┘
+```powershell
+if (!(Test-Path frontend/.env.local)) { Copy-Item frontend/.env.local.example frontend/.env.local }
 ```
 
-**Benefits:**
+Fill in `frontend/.env.local` with your project's public identifiers and private server key, then run:
 
-- Easy to test (mock dependencies)
-- Easy to swap (change database? Just create new repository)
-- Easy to understand (clear separation of concerns)
-- Scalable (add new layers without breaking existing code)
-
----
-
-## 📊 Domain Model (Auth & Identity)
-
-**What you're building:**
-
-```
-User ──┬─ UserIdentity (passwords, OAuth)
-       ├─ UserProfile (name, avatar, bio)
-       ├─ UserSession (refresh tokens, login history)
-       ├─ AuthFactor (MFA, biometric, security keys)
-       ├─ UserToken (verification, password reset)
-       └─ UserRoleAssignment ──┐
-                               │
-                      ┌────────┴────────┐
-                      │                 │
-                     Role ────── RolePermission ──┬─── Permission
+```powershell
+Set-Location frontend
+npm ci
+npm run dev
 ```
 
-**Key concepts:**
+The starter's team-creation flow also needs client team creation enabled in the Stack Auth project. See the [frontend README](../../frontend/README.md) and [environment guide](ENV_AND_GITIGNORE_SETUP.md). In Windows PowerShell sessions that block `npm.ps1`, use `npm.cmd` for these commands; no execution-policy change is needed.
 
-- Users can have multiple roles (system, tenant, project scoped)
-- Roles have permissions (fine-grained access control)
-- Sessions track login history and refresh tokens
-- AuthFactors enable MFA and passwordless authentication
-- Tokens enable email verification, password reset, MFA enrollment
+Open `http://localhost:3000`. The dashboard contains demo figures and placeholder pages; customer/project/task/billing APIs are not implemented.
 
----
+## Optional development database
 
-## 🔐 Credential Management Strategy
+Docker with Compose is required only for the PostgreSQL container and optional container work. From the repository root:
 
-### Local Development
-
-- Use `.env` file (do NOT commit)
-- Use `.env.example` template (IS committed)
-- Read via `builder.Configuration["KEY"]`
-
-```env
-DATABASE_CONNECTION_STRING=Server=localhost;Database=tenantflow_dev;User Id=postgres;Password=yourpass
-JWT_SECRET=very-long-random-secret-key
+```powershell
+docker compose up -d --wait --wait-timeout 90 postgres
 ```
 
-### Docker (Staging)
+See the [PostgreSQL guide](POSTGRESQL_SETUP.md) for connection checks, DBeaver, and persistent-data handling. Starting the database does not create TenantFlow business tables. The frontend starter does not use this database directly.
 
-- Pass environment variables to container
-- Use `docker-compose.yml` with `--env-file .env`
+## Containers and checks
 
-### Production (AWS/K8s)
+The frontend Dockerfile declares both public build arguments and consumes the private key through a BuildKit secret during `next build`. Compose supplies these at build time and the three settings at runtime. Local env files and generated/dependency directories are excluded from the build context by `.dockerignore`.
 
-- AWS Secrets Manager / Parameter Store
-- Kubernetes Secrets
-- CI/CD platform environment variables
+For container work, use Docker with a working Linux engine, BuildKit/buildx, and Compose supporting environment-sourced build secrets. From the repository root, create root `.env` from `.env.example` if absent and populate it with the same project's settings. Then:
 
-**All read the same way:** `builder.Configuration["KEY"]`
-
----
-
-## 🛡️ Security Best Practices
-
-1. ✅ **Never commit `.env`** - It's in `.gitignore`
-2. ✅ **Use strong secrets** - Generate random keys for JWT_SECRET
-3. ✅ **Hash passwords** - Use PBKDF2 or bcrypt
-4. ✅ **Validate input** - Use DTOs with validation
-5. ✅ **Separate credentials by environment** - Dev/Staging/Prod keys differ
-6. ✅ **Use HTTPS in production** - TLS 1.2+ enforced
-7. ✅ **Implement rate limiting** - Coming in Version 0.2.0
-8. ✅ **Add audit logging** - Coming in Version 0.9.0
-
----
-
-## 📋 Comparison: Express vs .NET
-
-| Concept           | Express/NestJS        | .NET                                   |
-| ----------------- | --------------------- | -------------------------------------- |
-| **Project init**  | `npm init`            | `dotnet new`                           |
-| **Install deps**  | `npm install`         | `dotnet add package`                   |
-| **Project file**  | `package.json`        | `.csproj` (XML)                        |
-| **Config**        | `.env` file           | `appsettings.json` + env vars          |
-| **Routing**       | Express: `app.get()`  | `app.MapGet()`                         |
-| **Middleware**    | `app.use()`           | `app.Use()`                            |
-| **Database ORM**  | Typeorm, Sequelize    | Entity Framework Core                  |
-| **Testing**       | Jest, Mocha           | xUnit, NUnit, MSTest                   |
-| **Compilation**   | None (interpreted)    | Compiled to IL (intermediate language) |
-| **Async pattern** | Promises, async/await | async/await (same!)                    |
-| **DI Container**  | Manual or NestJS      | Built-in in ASP.NET Core               |
-
-**Key difference:** .NET is compiled (catch errors early), Node.js is interpreted (catch errors at runtime).
-
----
-
-## 🚀 Running Your First API
-
-Once Phase 4 is complete:
-
-```bash
-cd backend
-
-# Restore packages
-dotnet restore
-
-# Build
-dotnet build
-
-# Run
-dotnet run --project TenantFlow.Api/TenantFlow.Api.csproj
+```powershell
+docker compose config --quiet
+docker compose up -d --build frontend
 ```
 
-Expected output:
+Changing browser-public project settings requires rebuilding the image. See the [environment guide](ENV_AND_GITIGNORE_SETUP.md) for the exact build/runtime contract and references.
 
-```
-info: Microsoft.Hosting.Lifetime[14]
-      Now listening on: https://localhost:5024; http://localhost:5024
-```
+Frontend checks, from `frontend/`, are `npm run lint`, `npx tsc --noEmit`, and `npm run build`. The `npm test` script only prints a message and provides no test coverage. CI checks lint/build, builds the frontend image, renders Compose and waits for PostgreSQL before an actual SQL connection check; services are stopped afterward without deleting volumes. There are no backend checks to run.
 
-Test it:
+**Verification boundary:** Node.js 22 lint/type checks, a production build with explicit fake credentials, development startup and production HTTP smoke checks passed locally. Compose rendering passed with placeholders and the empty example file. Corrected hosted CI passed frontend lint/build, PostgreSQL readiness/SQL, and image build/start/HTTP smoke, including cleanup. Real sign-in/team/account flows remain unverified and need a configured project. See the [final evidence and follow-ups](../../BACKEND_CLEANUP_PLAN.md#10-step-7-pr-handoff); historical failed runs are retained there.
 
-```bash
-curl https://localhost:5024/api/health
-```
-
----
-
-## 📈 Version Roadmap Reminder
-
-You're building **Version 0.0.0 (Foundation)**:
-
-| Version   | Timeline         | Goal                 |
-| --------- | ---------------- | -------------------- |
-| **0.0.0** | Jun-16 to Jun-30 | Foundation (current) |
-| 0.1.0     | Jul-01 to Jul-21 | Authentication       |
-| 0.2.0     | Jul-22 to Aug-11 | Tenant Management    |
-| 0.3.0     | Aug-12 to Aug-25 | Customer Management  |
-| 0.4.0     | Aug-26 to Sep-15 | Project Management   |
-| 0.5.0     | Sep-16 to Oct-13 | Task Management      |
-| ...       | ...              | ...                  |
-| **1.0.0** | Dec-30 to Feb-09 | Production Release   |
-
----
-
-## 💡 Pro Tips for Your Team
-
-1. **Before pulling code:** `dotnet restore && dotnet build`
-2. **After schema changes:** `dotnet ef migrations add MigrationName`
-3. **Fresh database for testing:** `dotnet ef database drop --force`
-4. **Verbose build output:** `dotnet build --verbosity detailed`
-5. **F12 not working?** Try `dotnet restore` or restart OmniSharp
-6. **Want to inspect SQL?** Add `.EnableSensitiveDataLogging()` to DbContext
-7. **Struggling to understand:** Check `DOTNET_COMMANDS.md`
-
----
-
-## 🎓 Learning Resources
-
-- **Official .NET Docs:** https://learn.microsoft.com/en-us/dotnet/
-- **Entity Framework:** https://learn.microsoft.com/en-us/ef/core/
-- **Clean Architecture:** https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
-- **Repository Pattern:** https://martinfowler.com/eaaCatalog/repository.html
-
----
-
-## ❓ Troubleshooting
-
-### "Project not found" error
-
-```bash
-# Ensure you're in the backend directory
-cd backend
-# Verify solution file exists
-ls TenantFlow.sln
-```
-
-### "Package not found"
-
-```bash
-# Restore from NuGet
-dotnet restore
-
-# Clear NuGet cache if problems persist
-dotnet nuget locals all --clear
-```
-
-### "Build fails"
-
-```bash
-# Check for compilation errors
-dotnet build --verbosity detailed
-
-# Clean and rebuild
-dotnet clean
-dotnet build
-```
-
-### "Migration fails"
-
-```bash
-# Verify Entity Framework is installed
-dotnet tool update -g dotnet-ef
-
-# Check connection string in .env
-cat .env | grep DATABASE_CONNECTION_STRING
-```
-
----
-
-## 📞 When You Need Help
-
-1. Check the relevant guide in this folder
-2. Run `dotnet build --verbosity detailed` for error details
-3. Check Entity Framework migrations guide in `DOTNET_COMMANDS.md`
-4. Read the error message carefully (they're usually helpful!)
-
----
-
-## ✨ Final Checklist Before Starting
-
-- [ ] Read this document
-- [ ] Read `DOTNET_COMMANDS.md` for command reference
-- [ ] Reviewed the guides but **haven't** created files yet
-- [ ] Set up your `.env` file with local values
-- [ ] Updated `.gitignore` to protect `.env`
-- [ ] Verified `dotnet build` passes in current state
-- [ ] Ready to implement Core layer
-
----
-
-**You're all set! 🎉**
-
-Start with **BUILDING_CORE_LAYER.md** and let me know when you're ready for the next phase.
-
-This foundation will support your entire enterprise SaaS platform. Great architecture from day one!
+Before backend implementation, settle the decisions in the backend requirements document, then add real source, migrations, API contracts, configuration, health checks, and tests together. Do not add a service or a setup command for a backend that does not exist.
