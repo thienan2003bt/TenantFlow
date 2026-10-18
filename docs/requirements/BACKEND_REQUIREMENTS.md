@@ -1,6 +1,6 @@
 # Backend Requirements and Design Notes
 
-The backend is starting again from requirements. NestJS is the chosen direction; there is no backend implementation, dependency matrix, migration runner, API endpoint, or backend container in this checkout. The existing frontend remains a Stack Auth starter and is not evidence that these backend requirements are implemented.
+The backend is starting again from requirements with a developer-created NestJS scaffold in `backend/`. That scaffold is not evidence that the API, identity, persistence or operational requirements below are implemented or verified. The existing frontend remains a Stack Auth starter and likewise does not establish backend behavior.
 
 The developer will implement the backend inside `backend/`, alongside `frontend/`. Follow the [NestJS setup guide](../setup/NESTJS_BACKEND_SETUP.md) to build the minimum application with validated configuration and a `GET /health-check` endpoint returning HTTP 200; broader requirements below follow in later milestones. Use [engineering conventions](../architecture/BACKEND_CONVENTIONS.md) for responsibility and review rules. The assistant's role is documentation, guidance, review and feedback; recommendations do not establish installed dependencies or completed decisions.
 

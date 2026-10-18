@@ -1,6 +1,6 @@
 # TenantFlow Backend Engineering Conventions
 
-Version 1.2 · Reviewed 18 October 2026 · NestJS backend · Proposed implementation baseline
+Version 1.3 · Reviewed 18 October 2026 · NestJS backend · Proposed implementation baseline
 
 [Documentation index](../README.md) · [Backend setup guide](../setup/NESTJS_BACKEND_SETUP.md) · [Backend requirements](../requirements/BACKEND_REQUIREMENTS.md)
 
@@ -8,7 +8,7 @@ Version 1.2 · Reviewed 18 October 2026 · NestJS backend · Proposed implementa
 
 Use this guide when designing, implementing, reviewing, or modifying TenantFlow backend functionality. It defines shared conventions for human developers and AI agents so that request handling, business behavior, tenant isolation, and infrastructure integration remain consistent.
 
-This revision has been checked against the repository's requirements and configuration. There is no backend implementation yet. NestJS is the selected framework; PostgreSQL 17 is configured for development, and the product direction is shared tables with tenant-scoped access. The existing frontend uses Stack Auth. ORM/migrations, API credential verification, provider-to-domain mappings, and deployment details remain decisions to record before implementing them. The [SRS](../requirements/TenantFlow-SRS.md) owns product rules and release boundaries; this guide owns engineering conventions.
+This revision has been checked against the repository's requirements and scaffold structure. A developer-created NestJS 12 scaffold is present inside `backend/`; startup and health behavior have not been verified in this documentation review. PostgreSQL 17 is configured for development, and the product direction is shared tables with tenant-scoped access. The existing frontend uses Stack Auth. ORM/migrations, API credential verification, provider-to-domain mappings, and deployment details remain decisions to record before implementing them. The [SRS](../requirements/TenantFlow-SRS.md) owns product rules and release boundaries; this guide owns engineering conventions.
 
 **Authoring agreement:** You write every line of backend code. The assistant provides instructions, reviews, explanations, and feedback, and may maintain documentation. It must not scaffold, generate, patch, or auto-fix backend source, tests, migrations, dependencies, or runtime/build configuration unless you explicitly change that agreement. Commands and proposed structures in the setup guide are for you to execute and implement.
 
@@ -162,7 +162,7 @@ Nest integrations reduce wiring effort. They do not choose the application's sec
 
 ## Code organization and tooling
 
-- SHOULD use feature modules under `backend/src/modules/`, with controller and service folders inside each feature and other responsibilities added when needed. This follows Nest's feature-module pattern; the specific folder names are TenantFlow conventions. Export deliberate public providers instead of importing another module's private internals.
+- SHOULD use the Nest CLI's default feature folders under `backend/src/`, such as `health-check/` and `tenants/`, with each module, controller, service and related tests together. The developer runs the module generator first, then controller/service generators, and verifies their automatic registrations. Add subfolders such as `dto/` when needed. Export deliberate public providers instead of importing another module's private internals.
 - SHOULD keep `backend/src/common/` limited to small, reused transport concerns when needed and put startup validation in `backend/src/config/`. Add infrastructure wiring alongside actual consumers. Avoid a catch-all shared service, generic base repository, or mandatory interface for every class.
 - MUST enable TypeScript strict checking, keep promise/error handling explicit, and use the chosen module system consistently. Avoid disabling rules or adding `any` to bypass an unresolved contract.
 - MUST keep backend build, lint, format and test configuration inside `backend/` and scope it to that application. The independent `frontend/` project and provisional root model files must not enter backend compilation accidentally.

@@ -1,6 +1,6 @@
 ﻿# Build the minimum NestJS application in /backend
 
-Reviewed 18 October 2026 · Developer implementation guide · Backend not yet created
+Reviewed 18 October 2026 · Developer implementation guide · Backend scaffold present; health feature still to implement
 
 [Documentation index](../README.md) · [Engineering conventions](../architecture/BACKEND_CONVENTIONS.md) · [Backend requirements](../requirements/BACKEND_REQUIREMENTS.md)
 
@@ -9,6 +9,8 @@ You write the application; I provide instructions, reviews and feedback. The com
 The finish line for this guide is precise: start Nest from `backend/`, request `GET http://127.0.0.1:14400/health-check`, and receive **HTTP 200 OK** with `{"status":"ok"}`. PostgreSQL, authentication, business features, Docker and deployment are later milestones. They are not prerequisites for this first endpoint.
 
 ## 1. Create the project inside backend/
+
+**Continue from your current checkout:** `backend/` already contains a Nest 12 scaffold with the local CLI, ESM and Vitest configuration. Skip the project-generation commands below. From the repository root, enter `backend/` and install `@nestjs/config` if it is not yet in your dependencies, then continue with section 2. Keep your existing files, including your configuration validator. The fresh-project instructions remain below for a checkout without `backend/`.
 
 Use a supported Node.js 24 LTS patch and npm. Keep the existing frontend's Node.js 22 setup separate. Check both the CLI and application engine requirements against [Nest's prerequisites](https://docs.nestjs.com/first-steps).
 
@@ -35,13 +37,33 @@ Use TypeScript and the default Express adapter. If prompted for the module syste
 
 All remaining npm commands in this guide run from **`TenantFlow/backend/`**. Keep its `package.json`, lockfile, dependencies, Nest/TypeScript/tooling configuration, source and tests there. Keep the generated strict settings and compiler options. Use the lockfile with `npm.cmd ci` on subsequent clean installs.
 
-## 2. Organize a feature module with folders for its responsibilities
+## 2. Generate the health feature with the Nest CLI
 
-Nest recommends [feature modules](https://docs.nestjs.com/modules#feature-modules) that group related controllers and providers. [Controllers](https://docs.nestjs.com/controllers) handle HTTP requests, while injectable [services/providers](https://docs.nestjs.com/providers) hold reusable behavior. Nest does not mandate a universal folder hierarchy named Domain, Application and Infrastructure.
+Nest recommends [feature modules](https://docs.nestjs.com/modules#feature-modules) that group related controllers and providers. Use the CLI's standard feature folder, with the module, controller and service beside one another. The controller/service responsibilities remain separate classes; they do not require separate folders.
 
-For this project, use a feature module with `controllers/` and `services/` folders inside it. Those folder names are our organization choice; Nest's module registration and dependency injection make the boundaries work.
+From **`TenantFlow/backend/`**, run these commands in order:
 
-Create this minimum target structure yourself after generation:
+```powershell
+npx.cmd --no-install nest generate module health-check
+npx.cmd --no-install nest generate controller health-check
+npx.cmd --no-install nest generate service health-check
+```
+
+This invokes your project's installed CLI; a global `nest` installation is unnecessary. If you already have a global CLI, `nest generate module health-check` is the equivalent command, but the local CLI keeps generation aligned with this project. `generate` can also be shortened to `g`.
+
+With the current default configuration, expect:
+
+| Command | Creates | Updates |
+| --- | --- | --- |
+| `generate module health-check` | `src/health-check/health-check.module.ts` | Imports `HealthCheckModule` into `AppModule`. |
+| `generate controller health-check` | `src/health-check/health-check.controller.ts` and its `.spec.ts` | Adds the controller to `HealthCheckModule.controllers`. |
+| `generate service health-check` | `src/health-check/health-check.service.ts` and its `.spec.ts` | Adds the service to `HealthCheckModule.providers`. |
+
+Read the CLI's `CREATE` and `UPDATE` output and inspect the resulting imports/metadata. Generate the module first so the following commands can find their owning feature module. A module command alone does not create a controller, service or API endpoint. The service generator also does not inject the service into your controller or implement its methods; you do that in section 4.
+
+The [official CLI reference](https://docs.nestjs.com/cli/usages#nest-generate) documents these generators. You can append `--dry-run` to a command to preview its changes. `--flat` suppresses an additional directory; `--no-spec` skips test-file generation; `--skip-import` disables automatic registration. Keep the default behavior for this guide. Existing `generateOptions` overrides in `nest-cli.json` can change the output, so inspect those if yours differs. Do not repeat a generator over files you already created; continue by reviewing and editing those files yourself.
+
+Your target structure is now:
 
 ```text
 TenantFlow/
@@ -59,13 +81,12 @@ TenantFlow/
 |   |   |-- app.module.ts              # Compose configuration and features
 |   |   |-- config/
 |   |   |   +-- env.validation.ts       # Validate and normalize startup settings
-|   |   +-- modules/
-|   |       +-- health-check/
-|   |           |-- health-check.module.ts
-|   |           |-- controllers/
-|   |           |   +-- health-check.controller.ts
-|   |           +-- services/
-|   |               +-- health-check.service.ts
+|   |   +-- health-check/              # Generated feature folder
+|   |       |-- health-check.module.ts
+|   |       |-- health-check.controller.ts
+|   |       |-- health-check.controller.spec.ts
+|   |       |-- health-check.service.ts
+|   |       +-- health-check.service.spec.ts
 |   +-- test/
 |       +-- <generated HTTP test and runner configuration>
 |-- frontend/                          # Existing Next.js application
@@ -76,6 +97,16 @@ TenantFlow/
 ```
 
 The request path will be **HTTP → HealthCheckController → HealthCheckService → JSON response**. `HealthCheckModule` wires the controller and service; `AppModule` imports that feature. Modules organize dependencies rather than adding another request-processing stage.
+
+When you reach the tenant milestone, the same pattern is:
+
+```powershell
+npx.cmd --no-install nest generate module tenants
+npx.cmd --no-install nest generate controller tenants
+npx.cmd --no-install nest generate service tenants
+```
+
+That creates `src/tenants/tenants.module.ts`, its controller/service and their tests. This is an example for later; only the health feature is needed for the current milestone. Nest's feature-module examples use this colocated structure. Add a feature's `dto/` or other subfolders when they contain real responsibilities.
 
 No repository layer is needed for a health response with no data access. Add DTOs, persistence adapters and shared helpers when a real feature needs them. Keep the provisional root models outside backend compilation. In the generated ESM project, preserve its relative-import convention, including `.js` suffixes where required, and import injected classes as runtime values rather than type-only imports.
 
@@ -115,17 +146,19 @@ Nest documents this [custom validation hook](https://docs.nestjs.com/techniques/
 
 **Check before continuing:** identify where `PORT` becomes a number and where invalid configuration stops startup. Do not add database URLs or provider secrets before this application has consumers for them.
 
-## 4. Implement and register the health feature
+## 4. Implement behavior in the generated health feature
 
-Write these three files in order. The names below identify the classes and methods to implement; you author their bodies.
+Edit the files created in section 2. The CLI supplies class/decorator scaffolding and module registration; you supply the behavior and dependency injection.
 
 | File under `backend/src/` | What you implement |
 | --- | --- |
-| `modules/health-check/services/health-check.service.ts` | Export an `@Injectable()` class named `HealthCheckService`. Give it a synchronous `getStatus()` method returning an object with exactly `status: 'ok'`. Use an explicit return type. |
-| `modules/health-check/controllers/health-check.controller.ts` | Export `HealthCheckController`, decorated with `@Controller('health-check')`. Constructor-inject `HealthCheckService`. Add a parameterless `@Get()` handler named `check()` that returns the result of `getStatus()`. |
-| `modules/health-check/health-check.module.ts` | Export `HealthCheckModule`, decorated with `@Module()`. Register `HealthCheckController` in `controllers` and `HealthCheckService` in `providers`. No provider export is needed because no other feature consumes this service. |
+| `health-check/health-check.service.ts` | Keep the generated `@Injectable()` class `HealthCheckService`. Add a synchronous `getStatus()` method returning an object with exactly `status: 'ok'`. Use an explicit return type. |
+| `health-check/health-check.controller.ts` | Keep `HealthCheckController` and `@Controller('health-check')`. Constructor-inject `HealthCheckService`. Add a parameterless `@Get()` handler named `check()` that returns the result of `getStatus()`. |
+| `health-check/health-check.module.ts` | Verify the generated `@Module()` already registers `HealthCheckController` in `controllers` and `HealthCheckService` in `providers`. No provider export is needed because no other feature consumes this service. |
 
-Import `Controller`, `Get`, `Injectable` and `Module` from `@nestjs/common` in the files that use them. Use normal class imports for the service that Nest must inject. Finally, add `HealthCheckModule` to `AppModule`'s `imports`, alongside configured `ConfigModule`.
+The generator provides the basic decorator imports. Add `Get` from `@nestjs/common` when adding the handler, and import the sibling `HealthCheckService` as a runtime class when injecting it. In ESM, follow the generated `.js` import suffix convention. Verify `AppModule.imports` contains the automatically added `HealthCheckModule` alongside configured `ConfigModule`; do not duplicate existing registrations.
+
+After adding constructor injection, update `health-check.controller.spec.ts` so its testing module provides `HealthCheckService` or an appropriate test double. The generated controller test initially has no service dependency, so leaving it unchanged would fail. Keep the service test and update it for the behavior you add.
 
 Nest returns **200** for a normal successful GET handler and serializes the returned object as JSON. Use Nest-managed responses; no raw Express response, manual `res.send`, custom interceptor or explicit status decorator is required. See the official [controller response handling](https://docs.nestjs.com/controllers#routing) and [module metadata](https://docs.nestjs.com/modules).
 
@@ -213,6 +246,7 @@ Update the generated e2e test to initialize an application using `AppModule`, re
 After reviewing the generated script, run from `backend/`:
 
 ```powershell
+npm.cmd test
 npm.cmd run test:e2e
 ```
 

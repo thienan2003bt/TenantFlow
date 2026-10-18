@@ -1,6 +1,6 @@
 # Start Here
 
-TenantFlow's backend is being restarted from requirements for NestJS. There is no backend application, migration runner, or API service to launch. The existing Next.js frontend starter and optional PostgreSQL container remain available for local work.
+TenantFlow now has a developer-created NestJS scaffold in `backend/`. Follow the backend setup guide to complete configuration and health behavior and verify startup; that work has not been runtime-verified by this documentation review. The existing Next.js frontend starter and optional PostgreSQL container remain available for local work.
 
 Use the [documentation index](../README.md) to navigate the repository guides. To build the minimum Nest application inside `backend/` and verify `GET /health-check` returns HTTP 200, follow [NestJS Backend Setup](NESTJS_BACKEND_SETUP.md). You write the backend code; the assistant provides guidance, reviews and feedback.
 
