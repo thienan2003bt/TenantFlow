@@ -8,7 +8,7 @@ Version 1.4 · Reviewed 18 October 2026 · NestJS backend · Engineering baselin
 
 Use this guide when designing, implementing, reviewing, or modifying TenantFlow backend functionality. It defines shared conventions for human developers and AI agents so that request handling, business behavior, tenant isolation, and infrastructure integration remain consistent.
 
-This revision has been checked against the repository's requirements and NestJS 12 application. Startup and HTTP health smoke have been verified; the [implementation review](BACKEND_REVIEW.md) records remaining findings. PostgreSQL 17 is configured for development, and the product direction is shared tables with tenant-scoped access. The existing frontend uses Stack Auth. ORM/migrations, API credential verification, provider-to-domain mappings, and deployment details remain decisions to record before implementing them. The [SRS](../requirements/TenantFlow-SRS.md) owns product rules and release boundaries; this guide owns engineering conventions.
+This revision has been checked against the repository's requirements and NestJS 12 application. Startup and HTTP health smoke have been verified; the [backend README](../../backend/README.md) records current commands, behavior and test coverage. PostgreSQL 17 is configured for development, and the product direction is shared tables with tenant-scoped access. The existing frontend uses Stack Auth. ORM/migrations, API credential verification, provider-to-domain mappings, and deployment details remain decisions to record before implementing them. The [SRS](../requirements/TenantFlow-SRS.md) owns product rules and release boundaries; this guide owns engineering conventions.
 
 **Authoring agreement:** You write backend behavior. The assistant provides researched instructions, reviews, explanations and feedback, and may maintain documentation. Explicitly requested tooling/configuration/import changes authorize that scope and its verification. Review findings remain for you to implement unless you request fixes. Follow [backend guidance instructions](../../backend/AGENTS.md) for source verification and step-by-step objectives/actions/checks.
 
@@ -168,6 +168,7 @@ Nest integrations reduce wiring effort. They do not choose the application's sec
 - MUST keep backend build, lint, format and test configuration inside `backend/` and scope it to that application. The independent `frontend/` project and provisional root model files must not enter backend compilation accidentally.
 - SHOULD retain generated tooling that fits the chosen Nest version, then define reproducible scripts and `backend/package-lock.json`. Tool names and defaults can change across Nest releases; do not assume every generator uses the same lint or test runner.
 - MUST use double quotes for backend import/export specifiers, enforced through backend Prettier formatting/checks. The requested `@enums/environment.enum.ts` source alias depends on the ordered paths mapping and Nest's build transformer documented in the backend README. Verify type-check, build, compiled/watch startup and tests before changing that mapping.
+- SHOULD use Prettier `printWidth: 120`, `tabWidth: 2` and spaces for indentation. ESLint owns backend lint checks; the staged-backend pre-commit gate runs lint, unit tests and e2e tests without altering the index or applying fixes.
 
 ## Testing and completion criteria
 
@@ -199,7 +200,7 @@ Follow applicable system and user instructions, repository policies, and approve
 
 ## Decisions to confirm in the repository
 
-The table distinguishes existing direction from decisions still needed. Recommendations become project decisions when recorded and implemented; consult the backend README and implementation review for current tooling and verified behavior.
+The table distinguishes existing direction from decisions still needed. Recommendations become project decisions when recorded and implemented; consult the backend README for current tooling and behavior. Give review findings in the conversation rather than separate review documents.
 
 | Decision | What must be recorded |
 | --- | --- |

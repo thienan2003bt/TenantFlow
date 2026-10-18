@@ -1,12 +1,5 @@
 import { plainToInstance } from "class-transformer";
-import {
-  IsEnum,
-  IsNumber,
-  Max,
-  Min,
-  validateSync,
-  ValidationError,
-} from "class-validator";
+import { IsEnum, IsNumber, Max, Min, validateSync, ValidationError } from "class-validator";
 import { Environment } from "@enums/environment.enum.ts";
 
 class EnvironmentVariables {
@@ -19,16 +12,10 @@ class EnvironmentVariables {
   PORT: number;
 }
 
-export function validateEnvironment(
-  config: Record<string, unknown>,
-): EnvironmentVariables {
-  const validatedConfig: EnvironmentVariables = plainToInstance(
-    EnvironmentVariables,
-    config,
-    {
-      enableImplicitConversion: true,
-    },
-  );
+export function validateEnvironment(config: Record<string, unknown>): EnvironmentVariables {
+  const validatedConfig: EnvironmentVariables = plainToInstance(EnvironmentVariables, config, {
+    enableImplicitConversion: true,
+  });
 
   const errors: ValidationError[] = validateSync(validatedConfig, {
     skipMissingProperties: false,

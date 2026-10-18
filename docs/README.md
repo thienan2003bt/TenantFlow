@@ -1,11 +1,11 @@
 # TenantFlow documentation
 
-Reviewed 18 October 2026. The developer's NestJS application in `backend/` has passed startup and HTTP health smoke checks. Use the implementation review for remaining findings; successful smoke checks do not complete the broader backend requirements.
+Reviewed 18 October 2026. The developer's NestJS application in `backend/` has passed startup and HTTP health smoke checks. Successful smoke checks do not complete the broader backend requirements.
 
 ## Where to start
 
 - Run the existing frontend or PostgreSQL: [Start Here](setup/START_HERE.md).
-- Continue backend implementation: [commands and configuration](../backend/README.md), [implementation review](architecture/BACKEND_REVIEW.md), and [Backend Conventions](architecture/BACKEND_CONVENTIONS.md).
+- Continue backend implementation: [commands and configuration](../backend/README.md) and [Backend Conventions](architecture/BACKEND_CONVENTIONS.md).
 - Check product behavior and MVP scope: [Software Requirements Specification](requirements/TenantFlow-SRS.md).
 - Choose the next milestone: [Implementation Roadmap](planning/ROADMAP.md).
 
@@ -18,7 +18,6 @@ Reviewed 18 October 2026. The developer's NestJS application in `backend/` has p
 | `architecture/` | [Backend Conventions](architecture/BACKEND_CONVENTIONS.md) | Responsibilities, Nest request lifecycle diagram, security/data conventions, review agreement |
 | `setup/` | [Start Here](setup/START_HERE.md) | Commands for the existing checkout and onboarding order |
 | `backend/` | [Backend README](../backend/README.md) | Current commands, environment loading, formatting, aliases and runtime limitations |
-| `architecture/` | [Backend Review](architecture/BACKEND_REVIEW.md) | Evidence-backed findings and checks for the current implementation |
 | `setup/` | [Environment and Ignore Rules](setup/ENV_AND_GITIGNORE_SETUP.md) | Actual environment consumers, secret handling, build/runtime boundaries |
 | `setup/` | [PostgreSQL Setup](setup/POSTGRESQL_SETUP.md) | Development database operation and persistent data |
 | `planning/` | [Implementation Roadmap](planning/ROADMAP.md) | Current milestone status and sequencing |
@@ -43,4 +42,4 @@ The former `docs/init/` content now lives in `requirements/` and `planning/`. Th
 
 The completed backend cleanup plan has been removed. Its final verification summary and F-01 through F-04 follow-ups are retained in [Validation and Follow-ups](planning/VALIDATION.md). This reorganization changes documentation, not application implementation or delivery status.
 
-The completed NestJS setup walkthrough has also been removed. The backend README now owns current commands and configuration; the implementation review retains unresolved findings. Future backend guidance follows [backend agent instructions](../backend/AGENTS.md).
+The completed NestJS setup walkthrough has also been removed. The backend README owns current commands and configuration. Review feedback belongs in the conversation rather than separate review documents. Future backend guidance follows [backend agent instructions](../backend/AGENTS.md).

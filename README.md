@@ -2,7 +2,7 @@
 
 TenantFlow is a planned multi-tenant B2B SaaS workspace. The repository contains product requirements, provisional TypeScript domain models, a Next.js frontend starter using Stack Auth, optional PostgreSQL development storage, and a developer-created NestJS scaffold in `backend/`. Backend business features remain to be implemented; scaffold presence does not establish verified API behavior.
 
-Start with the [documentation index](docs/README.md) for requirements, architecture, setup and planning. Use [backend commands and configuration](backend/README.md) for the implemented Nest application and [implementation review](docs/architecture/BACKEND_REVIEW.md) for remaining findings. You write backend behavior; the assistant supplies researched instructions, reviews and feedback and makes explicitly requested tooling changes.
+Start with the [documentation index](docs/README.md) for requirements, architecture, setup and planning. Use [backend commands and configuration](backend/README.md) for the Nest application, formatting and backend-only pre-commit checks. You write backend behavior; the assistant supplies researched instructions, reviews and feedback and makes explicitly requested tooling changes.
 
 The project is intentionally designed to exercise the same concerns that appear in real business software:
 
@@ -75,9 +75,9 @@ Earlier candidates for additional frontend tooling include TanStack Query, Zusta
 
 ### 4.2 Backend and Data Access
 
-The backend has a NestJS 12 application with ESM, validated environment loading, a local CLI and Vitest. Compiled and watch-mode startup returned HTTP 200 from `/health-check`; the current body is plain text. The implementation review records configuration and coverage gaps. Persistence, migrations, identity/tenant features and backend Docker/CI remain subsequent work. PostgreSQL remains the planned database. The root model files are design references, not executable migrations.
+The backend has a NestJS 12 application with ESM, validated environment loading, a local CLI and Vitest. Compiled and watch-mode startup returned HTTP 200 from `/health-check`; the current body is plain text. The backend README documents current configuration and test coverage. Persistence, migrations, identity/tenant features and backend Docker/CI remain subsequent work. PostgreSQL remains the planned database. The root model files are design references, not executable migrations.
 
-Review the [backend requirements and design notes](docs/requirements/BACKEND_REQUIREMENTS.md), [engineering conventions](docs/architecture/BACKEND_CONVENTIONS.md), and [backend commands and configuration](backend/README.md) before further implementation. The completed setup walkthrough has been removed; current behavior and open findings are recorded in the implementation review.
+Review the [backend requirements and design notes](docs/requirements/BACKEND_REQUIREMENTS.md), [engineering conventions](docs/architecture/BACKEND_CONVENTIONS.md), and [backend commands and configuration](backend/README.md) before further implementation. Current commands and behavior belong beside the backend; review feedback is provided in the conversation.
 
 ### 4.3 Authentication and Authorization
 
@@ -97,7 +97,7 @@ Enforce tenant boundaries, coarse-grained roles, and fine-grained permission pol
 - Document implemented APIs with OpenAPI and an exploration interface.
 - Add meaningful domain/API/database tests, especially isolation, authorization, sessions and webhook idempotency. Container-based integration tests can be considered later.
 
-The backend currently includes Nest configuration and class-based environment validation. Other capability-specific libraries and services remain future choices; current runtime behavior and gaps are recorded in the implementation review.
+The backend currently includes Nest configuration and class-based environment validation. Other capability-specific libraries and services remain future choices; current runtime behavior and limits are documented in the backend README.
 
 ### 4.5 Payment Module
 

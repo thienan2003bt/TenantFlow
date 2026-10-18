@@ -27,7 +27,7 @@ The supplied request-lifecycle image was inspected and linked into the revised c
 
 ## Open follow-ups
 
-Current backend review evidence is recorded in [Backend Implementation Review](../architecture/BACKEND_REVIEW.md): type/lint/format/build checks, the existing one-test unit/e2e suites, compiled/watch startup, HTTP health smoke and synthetic validator cases. Findings remain open; the completed setup walkthrough has been removed.
+The backend passed type/lint/format/build checks, the existing one-test unit/e2e suites, compiled/watch startup and HTTP health smoke during the implementation review. The current suites still only cover Hello World; their success does not certify health/configuration coverage. The completed setup walkthrough has been removed, and review feedback is kept in the conversation.
 
 These are local tracking IDs, not GitHub issues. Completing backend retirement does not complete any of these items.
 
@@ -36,6 +36,6 @@ These are local tracking IDs, not GitHub issues. Completing backend retirement d
 | F-01 | Verify real Stack Auth sign-in/out, account management, team creation/selection and tenant-switch UI with a configured project. | Record environment/commit and observed outcomes without credentials or account data. Follow [Start Here](../setup/START_HERE.md). Status: unverified. |
 | F-02 | Decide NestJS credential verification and provider-user/team to domain-user/tenant mappings. | Record identifier compatibility, membership/permissions, lifecycle ownership, synchronization and revocation policy in a decision record. See [backend requirements](../requirements/BACKEND_REQUIREMENTS.md). Status: open design. |
 | F-03 | Review provisional model names, constraints, joins, deletion/timestamp policy and ERD/migration design. | Resolve the candidates in [backend requirements section 2](../requirements/BACKEND_REQUIREMENTS.md#2-data-integrity-and-lifecycle), including tenant safety and history retention. Status: open design. |
-| F-04 | Complete the NestJS foundation inside `backend/`. | Minimal startup and HTTP health smoke passed. Address the [review findings](../architecture/BACKEND_REVIEW.md), then continue database/migrations, identity/tenant contracts, CI/container wiring and meaningful auth/isolation tests under the [roadmap](ROADMAP.md). Status: in progress. |
+| F-04 | Complete the NestJS foundation inside `backend/`. | Minimal startup and HTTP health smoke passed. Add configuration/health coverage and continue database/migrations, identity/tenant contracts, CI/container wiring and meaningful auth/isolation tests under the [roadmap](ROADMAP.md). Status: in progress. |
 
 Keep milestone status in the roadmap and product/release scope in the SRS. Update this register when evidence changes; do not treat an intended command or placeholder smoke check as a completed product flow.

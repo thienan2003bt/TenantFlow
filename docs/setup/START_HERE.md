@@ -1,8 +1,8 @@
 # Start Here
 
-TenantFlow has a developer-created NestJS application in `backend/`, with startup and HTTP health smoke verified. Current commands are in the backend README; remaining findings are in the implementation review. The existing Next.js frontend starter and optional PostgreSQL container remain available for local work.
+TenantFlow has a developer-created NestJS application in `backend/`, with startup and HTTP health smoke verified. Current commands, test coverage and configuration are in the backend README. The existing Next.js frontend starter and optional PostgreSQL container remain available for local work.
 
-Use the [documentation index](../README.md), [backend commands and configuration](../../backend/README.md), and [implementation review](../architecture/BACKEND_REVIEW.md). The completed setup walkthrough has been removed. You write backend behavior; the assistant provides researched guidance, reviews and feedback.
+Use the [documentation index](../README.md) and [backend commands and configuration](../../backend/README.md). The completed setup walkthrough has been removed. You write backend behavior; the assistant provides researched guidance, reviews and feedback in the conversation.
 
 ## Read the requirements
 
@@ -62,4 +62,4 @@ Frontend checks, from `frontend/`, are `npm run lint`, `npx tsc --noEmit`, and `
 
 **Verification boundary:** Recorded local/hosted check results and their limits live in [Validation and Follow-ups](../planning/VALIDATION.md). Real sign-in/team/account flows remain unverified and need a configured project. Placeholder build/startup checks do not establish authenticated behavior or validate your current environment.
 
-Continue the backend milestone by addressing the implementation review's findings and adding meaningful configuration/health regression tests. Database migrations, authentication and tenant features remain later work under the roadmap.
+Continue the backend milestone by adding meaningful configuration/health regression tests and addressing review feedback. Database migrations, authentication and tenant features remain later work under the roadmap.

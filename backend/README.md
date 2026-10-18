@@ -2,11 +2,11 @@
 
 The developer implements this NestJS application. The assistant provides researched instructions, reviews and feedback under [backend agent instructions](AGENTS.md).
 
-This application currently exposes `GET /` (Hello World) and `GET /health-check` (HTTP 200 with the text `Service is healthy!`). The current health endpoint is HTTP liveness only. See the [implementation review](../docs/architecture/BACKEND_REVIEW.md) for open findings and verification limits.
+This application currently exposes `GET /` (Hello World) and `GET /health-check` (HTTP 200 with the text `Service is healthy!`). The current health endpoint is HTTP liveness only.
 
 ## Local configuration and commands
 
-Use Node.js compatible with the installed Nest/CLI versions; checks in the review used Node.js 24.21.0. Run commands from **`TenantFlow/backend/`**. For a clean dependency installation, use `npm.cmd ci`.
+Use Node.js compatible with the installed Nest/CLI and ESLint versions; recent checks used Node.js 24.21.0. Run commands from **`TenantFlow/backend/`**. For a clean dependency installation, use `npm.cmd ci`.
 
 The application loads `.env` from this working directory. Current validation requires `NODE_ENV` and `PORT`; process variables override env-file values. The environment enum allows `development`, `production`, `test` and `provisioning`. The documented local port is `14400`.
 
@@ -17,7 +17,7 @@ NODE_ENV=development
 PORT=14400
 ```
 
-The tracked `.env.example` is currently empty; populating that example is an open review finding. Real `.env` values remain ignored by Git. Root `.env` is for Compose, and `frontend/.env.local` is for Next.js.
+The tracked `.env.example` is currently empty; use the values above for local startup. Real `.env` values remain ignored by Git. Root `.env` is for Compose, and `frontend/.env.local` is for Next.js.
 
 Start development mode:
 
@@ -38,11 +38,11 @@ npm.cmd run build
 npm.cmd run start:prod
 ```
 
-The current bootstrap omits an explicit listening host and enables unrestricted CORS; these are open findings, not loopback-only guarantees. The printed localhost URL does not restrict exposure.
+The current bootstrap omits an explicit listening host and enables unrestricted CORS. The printed localhost URL does not restrict exposure.
 
 ## Formatting and checks
 
-Backend Prettier configuration uses double quotes for imports. Run formatting after editing or generation:
+Backend Prettier configuration uses double quotes for imports, `printWidth: 120` and two spaces per indentation level (`tabWidth: 2`, `useTabs: false`). `printWidth` is Prettier's wrapping preference, not a hard limit on every line. Run formatting after editing or generation:
 
 ```powershell
 npm.cmd run format
@@ -62,7 +62,29 @@ npm.cmd test
 npm.cmd run test:e2e
 ```
 
-The existing tests cover Hello World, not health/configuration behavior. See the review before interpreting a green test run as completion of those cases.
+ESLint uses its flat configuration and the TypeScript recommended rules, with type-aware floating-promise checks. The existing Nest tests cover Hello World, not health/configuration behavior. Their green results do not establish coverage of those cases. Both Vitest configurations supply synthetic `NODE_ENV=test` and `PORT=14400`, so test startup does not require a developer's local env file.
+
+## Pre-commit checks
+
+The tracked hook at `.githooks/pre-commit` invokes the backend's Node runner. It reads **staged** paths with `git diff --cached`, including deletions and both sides of renames. With no `backend/` changes it exits immediately. Otherwise it runs these commands from `backend/`, in order:
+
+1. `npm run lint` — ESLint without auto-fixes; any warning or error fails.
+2. `npm test` — Nest unit tests in one-shot mode.
+3. `npm run test:e2e` — Nest e2e tests in one-shot mode.
+
+Any failure stops the commit. Frontend commands are never run. The checks examine the backend working tree; if you partially stage a file, they do not create a staged snapshot or stash your other edits. They do not install dependencies, auto-fix or stage files.
+
+**Activate once per clone**, from the **repository root**:
+
+```powershell
+git config --local core.hooksPath .githooks
+```
+
+Git configuration changes are left to the developer under repository policy; preparing the tracked hook does not activate it automatically. On Linux/macOS also run `chmod +x .githooks/pre-commit` before use. Hook files use LF line endings for Git's shell, including Git for Windows. Node and npm must be available to the Git client.
+
+After installing backend dependencies, manually check the hook from the repository root with `node backend/scripts/pre-commit.mjs`. It skips when no backend changes are staged and runs the checks when backend paths are staged. Run `npm.cmd run test:hook` from `backend/` for the runner's path-gating and failure-propagation tests without changing the Git index.
+
+The setup follows [Git's pre-commit hook contract](https://git-scm.com/docs/githooks#_pre_commit), [ESLint configuration](https://eslint.org/docs/latest/use/configure/configuration-files), and [typescript-eslint guidance](https://typescript-eslint.io/getting-started/).
 
 ## Enum imports and compiled output
 

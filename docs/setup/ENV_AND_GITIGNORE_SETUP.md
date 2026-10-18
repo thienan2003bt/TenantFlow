@@ -51,6 +51,6 @@ The second command should print nothing and return exit code 1. An ignore rule d
 
 Define settings alongside actual NestJS consumers, document their loading source and precedence, and validate required values at startup. Keep database host/container distinctions explicit. Separate credentials between environments and use deployment secret management when needed. Provider-owned credentials and sessions must not be duplicated by default.
 
-The [backend README](../../backend/README.md) documents the existing loader, required `NODE_ENV` and local `PORT=14400` settings. `backend/.env.example` exists but is empty; see the [implementation review](../architecture/BACKEND_REVIEW.md) for the onboarding and validation gaps. The root `.env.example` remains the separate Compose contract above.
+The [backend README](../../backend/README.md) documents the existing loader, required `NODE_ENV` and local `PORT=14400` settings. `backend/.env.example` exists but is empty, so use the documented safe development values for local startup. Vitest supplies synthetic test settings independently. The root `.env.example` remains the separate Compose contract above.
 
 Do not log real values, commit local env files, or copy credentials into requirements and PR descriptions. See [backend requirements](../requirements/BACKEND_REQUIREMENTS.md) for the unresolved identity and integration boundaries.

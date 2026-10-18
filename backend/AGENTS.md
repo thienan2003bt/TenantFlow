@@ -1,6 +1,6 @@
 # Backend guidance and review instructions
 
-These instructions apply to `backend/` and to guidance about this application. Read the repository's [AGENT.md](../AGENT.md) as well.
+These instructions apply to `backend/` and to guidance about this application. Read the repository's [AGENTS.md](../AGENTS.md) as well.
 
 ## Developer ownership
 
@@ -29,9 +29,12 @@ Keep steps small and ordered. Clearly separate generator-created files/registrat
 
 For reviews, lead with actionable findings ordered by severity, including file/line references, observed impact, evidence and a correction the developer can implement. Distinguish correctness/security findings from optional structure or style preferences. If tests pass but miss relevant behavior, explain that coverage limit.
 
+Give review findings in the conversation. Do not create a separate review document unless the user asks for one. Keep current runtime commands/configuration in the backend README and milestone state in the existing roadmap.
+
 ## Current formatting and import conventions
 
-- Use double quotes for import/export specifiers. Prettier owns formatting; use `npm.cmd run format` and `npm.cmd run format:check` from `backend/`.
+- Use double quotes for import/export specifiers, Prettier `printWidth: 120`, and `tabWidth: 2` with spaces. Use `npm.cmd run format` and `npm.cmd run format:check` from `backend/`.
+- `npm.cmd run lint` runs ESLint. The pre-commit hook runs backend ESLint, unit tests and e2e tests only when staged paths include `backend/`. Do not auto-stage, stash, commit or change Git hook configuration; provide activation commands for the developer.
 - Source enum imports use `@enums/environment.enum.ts`, backed by the ordered `paths` mapping in `tsconfig.json`. Do not simplify that mapping without proving type-check, Nest build/watch, compiled Node startup and Vitest behavior together.
 - Build through the Nest CLI. Plain `tsc` does not perform Nest's alias rewrite. Do not disable TypeScript diagnostics or change the module system to hide an unresolved alias.
 - Keep the backend port configurable, with `14400` as the documented local choice. Treat listener host and CORS policy as explicit decisions; a port number does not enforce access control.
