@@ -2,12 +2,14 @@
 
 TenantFlow's backend is being restarted from requirements for NestJS. There is no backend application, migration runner, or API service to launch. The existing Next.js frontend starter and optional PostgreSQL container remain available for local work.
 
+Use the [documentation index](../README.md) to navigate the repository guides. To build the future backend at the repository root, follow [NestJS Backend Setup](NESTJS_BACKEND_SETUP.md). You write the backend code; the assistant provides guidance, reviews and feedback.
+
 ## Read the requirements
 
-1. Read the [SRS](../init/TenantFlow-SRS.md) for the product, tenant isolation, permissions, billing, and data-retention rules.
-2. Review [backend requirements and design notes](../init/BACKEND_REQUIREMENTS.md), including preserved constraint candidates and identity decisions.
+1. Read the [SRS](../requirements/TenantFlow-SRS.md) for the product, tenant isolation, permissions, billing, and data-retention rules.
+2. Review [backend requirements and design notes](../requirements/BACKEND_REQUIREMENTS.md), including preserved constraint candidates and identity decisions.
 3. Compare the [schema references](../../schemas.ts) and [enums](../../enum.ts). They are provisional models, not database migrations or runtime validation.
-4. Follow the [implementation roadmap](../init/ROADMAP.md) and [cleanup tracker](../../BACKEND_CLEANUP_PLAN.md). Release dates and old milestone checkboxes are not proof of implementation.
+4. Follow the [implementation roadmap](../planning/ROADMAP.md) and [validation evidence and follow-ups](../planning/VALIDATION.md#recorded-foundation-checks). Release dates and old milestone checkboxes are not proof of implementation.
 
 The frontend currently uses Stack Auth for users, sign-in, account management and teams. NestJS credential verification, provider-to-domain user mapping, team-to-tenant mapping, identifier compatibility, and server authorization remain requirements to design. Frontend team selection alone does not enforce backend tenant isolation.
 
@@ -58,6 +60,6 @@ Changing browser-public project settings requires rebuilding the image. See the 
 
 Frontend checks, from `frontend/`, are `npm run lint`, `npx tsc --noEmit`, and `npm run build`. The `npm test` script only prints a message and provides no test coverage. CI checks lint/build, builds the frontend image, renders Compose and waits for PostgreSQL before an actual SQL connection check; services are stopped afterward without deleting volumes. There are no backend checks to run.
 
-**Verification boundary:** Node.js 22 lint/type checks, a production build with explicit fake credentials, development startup and production HTTP smoke checks passed locally. Compose rendering passed with placeholders and the empty example file. Corrected hosted CI passed frontend lint/build, PostgreSQL readiness/SQL, and image build/start/HTTP smoke, including cleanup. Real sign-in/team/account flows remain unverified and need a configured project. See the [final evidence and follow-ups](../../BACKEND_CLEANUP_PLAN.md#10-step-7-pr-handoff); historical failed runs are retained there.
+**Verification boundary:** Recorded local/hosted check results and their limits live in [Validation and Follow-ups](../planning/VALIDATION.md). Real sign-in/team/account flows remain unverified and need a configured project. Placeholder build/startup checks do not establish authenticated behavior or validate your current environment.
 
-Before backend implementation, settle the decisions in the backend requirements document, then add real source, migrations, API contracts, configuration, health checks, and tests together. Do not add a service or a setup command for a backend that does not exist.
+Before backend implementation, work through the decisions and review checkpoints in the [NestJS setup guide](NESTJS_BACKEND_SETUP.md). Its commands describe work you will perform; the commands above describe the existing frontend/PostgreSQL checkout. Add backend source, migrations, API contracts, configuration, health checks and tests as you reach those steps.

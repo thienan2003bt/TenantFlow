@@ -2,6 +2,8 @@
 
 TenantFlow is a planned multi-tenant B2B SaaS workspace. The repository contains product requirements, provisional TypeScript domain models, a Next.js frontend starter using Stack Auth, and optional PostgreSQL development storage. The backend is restarting from requirements for NestJS; no backend implementation or business API is currently present.
 
+Start with the [documentation index](docs/README.md) for requirements, architecture, setup and planning. The [NestJS setup guide](docs/setup/NESTJS_BACKEND_SETUP.md) walks through building the backend directly at the repository root. You write the backend; the assistant supplies instructions, reviews and feedback.
+
 The project is intentionally designed to exercise the same concerns that appear in real business software:
 
 - tenant isolation
@@ -75,7 +77,7 @@ Earlier candidates for additional frontend tooling include TanStack Query, Zusta
 
 NestJS is the chosen backend direction. Backend code, packages, API routes, persistence, migrations, health endpoints, and backend Docker/CI jobs are absent. PostgreSQL remains the planned database. The root model files are design references, not executable migrations.
 
-Review the [backend requirements and design notes](docs/init/BACKEND_REQUIREMENTS.md) before implementation. Runtime versions, ORM, module layout, configuration, and validation/testing libraries remain future decisions.
+Review the [backend requirements and design notes](docs/requirements/BACKEND_REQUIREMENTS.md), [engineering conventions](docs/architecture/BACKEND_CONVENTIONS.md), and [setup guide](docs/setup/NESTJS_BACKEND_SETUP.md) before implementation. The guide recommends tooling and a feature-based root application layout; exact versions, ORM, identity verification and integration choices still need recorded decisions and implementation.
 
 ### 4.3 Authentication and Authorization
 
@@ -95,11 +97,11 @@ Enforce tenant boundaries, coarse-grained roles, and fine-grained permission pol
 - Document implemented APIs with OpenAPI and an exploration interface.
 - Add meaningful domain/API/database tests, especially isolation, authorization, sessions and webhook idempotency. Container-based integration tests can be considered later.
 
-No backend libraries or services for these capabilities are selected by this cleanup.
+No backend libraries or services for these capabilities are installed. Setup recommendations become project decisions when recorded and implemented by the developer.
 
 ### 4.5 Payment Module
 
-Preserve the subscription-based billing model and planned Stripe test-mode integration. Store only necessary payment metadata and never handle raw card data. Provider client selection belongs to backend implementation; the [SRS](docs/init/TenantFlow-SRS.md) retains billing and webhook requirements.
+Preserve the subscription-based billing model and planned Stripe test-mode integration. Store only necessary payment metadata and never handle raw card data. Provider client selection belongs to backend implementation; the [SRS](docs/requirements/TenantFlow-SRS.md) retains billing and webhook requirements.
 
 ---
 
@@ -272,18 +274,20 @@ Roles must be implemented through authorization policies, not by relying only on
 ```text
 .
 |-- README.md
-|-- BACKEND_CLEANUP_PLAN.md
 |-- docs/
-|   |-- init/        # SRS, backend requirements, implementation roadmap
-|   +-- setup/       # Current onboarding, environment, PostgreSQL
+|   |-- README.md    # Documentation index and document ownership
+|   |-- requirements/ # SRS and backend requirements
+|   |-- architecture/ # Backend engineering conventions
+|   |-- setup/       # Current onboarding and future NestJS setup guide
+|   +-- planning/    # Roadmap, validation, release plans and future scope
+|-- assets/images/  # Shared documentation images
 |-- frontend/       # Existing Next.js / Stack Auth starter
-|-- versions/       # Release intent and future scope
 |-- schemas.ts      # Provisional model reference
 |-- enum.ts         # Domain lifecycle vocabulary
 +-- docker-compose.yml
 ```
 
-No backend source, tests, or deployment layout is prescribed as if it already exists. Keep domain rules, use cases, request/response contracts, persistence and integrations separated when the backend is designed; concrete modules and paths are future decisions.
+The planned NestJS backend will add root `package.json`, `src/`, `test/` and related configuration alongside `frontend/`. These do not exist yet. Follow the setup guide for the proposed structure and review checkpoints; keep domain rules, transport contracts, persistence and integrations deliberately separated.
 
 ---
 
@@ -318,7 +322,7 @@ The project should be run like a small professional product, not like a folder o
 
 ### Planning flow
 
-1. Read the [implementation roadmap](docs/init/ROADMAP.md).
+1. Read the [implementation roadmap](docs/planning/ROADMAP.md).
 2. Pick one milestone.
 3. Create a small set of issues for that milestone.
 4. Implement one task at a time.
@@ -353,7 +357,7 @@ Follow [START_HERE](docs/setup/START_HERE.md) for the existing frontend and opti
 
 Node.js 22/npm are the existing frontend tooling baseline. Docker with Compose is needed for PostgreSQL/container work. Keep local secrets out of Git and separate credentials between environments. Backend database, identity, email, storage and billing configuration will be defined alongside actual implementations.
 
-Frontend build-time configuration is wired through public build arguments and a private BuildKit secret. Local Node.js 22 lint/type/build and HTTP smoke checks passed using fake credentials; hosted CI passed frontend validation, PostgreSQL readiness/SQL, and image build/start/HTTP smoke. Real authenticated flows remain unverified as a manual follow-up; see the [cleanup tracker](BACKEND_CLEANUP_PLAN.md#10-step-7-pr-handoff).
+Frontend build-time configuration uses public build arguments and a private BuildKit secret. Recorded frontend/database/image checks and the outstanding real-authentication follow-up are maintained in [Validation and Follow-ups](docs/planning/VALIDATION.md). Historical results do not certify a new environment or completed product behavior.
 
 ---
 
@@ -406,9 +410,9 @@ The project should eventually make it easy for a reviewer to answer these questi
 
 ## 16. Link to Progress Tracking
 
-Track implementation status in the [implementation roadmap](docs/init/ROADMAP.md) and retirement work in the [cleanup tracker](BACKEND_CLEANUP_PLAN.md).
+Track implementation status in the [implementation roadmap](docs/planning/ROADMAP.md) and remaining validation in [Validation and Follow-ups](docs/planning/VALIDATION.md). Release grouping and historical schedules live under [release planning](docs/planning/releases/1.0.0/VERSION-PLANNING.md).
 
-That file is the source of truth for:
+The implementation roadmap is the source of truth for:
 
 - milestone order
 - feature completion status

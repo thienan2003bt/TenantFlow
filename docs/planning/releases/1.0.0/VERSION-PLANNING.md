@@ -4,7 +4,7 @@
 
 TenantFlow 1.0.0 aims to deliver a production-ready multi-tenant SaaS platform for customer management, project management, task tracking, tenant administration, subscription billing, and collaboration.
 
-**Restart status (2026-10-17):** Backend work is requirements-only for NestJS. Release boundaries follow the [canonical SRS scope](../../docs/init/TenantFlow-SRS.md#24-canonical-release-boundaries). The original dates are preserved once in the [historical schedule](#historical-schedule); no replacement dates are committed. Checkboxes distinguish repository artifacts from verified behavior. Use the [implementation roadmap](../../docs/init/ROADMAP.md) for current sequencing and [backend requirements](../../docs/init/BACKEND_REQUIREMENTS.md) for open technical decisions.
+**Restart status (2026-10-17):** Backend work is requirements-only for NestJS. Release boundaries follow the [canonical SRS scope](../../../requirements/TenantFlow-SRS.md#24-canonical-release-boundaries). The original dates are preserved once in the [historical schedule](#historical-schedule); no replacement dates are committed. Checkboxes distinguish repository artifacts from verified behavior. Use the [implementation roadmap](../../ROADMAP.md) for current sequencing and [backend requirements](../../../requirements/BACKEND_REQUIREMENTS.md) for open technical decisions.
 
 ---
 
@@ -21,7 +21,7 @@ Project bootstrap and technical foundation.
 - [x] PostgreSQL Compose configuration, readiness/SQL and cleanup verified in hosted CI
 - [x] React/Next.js frontend scaffold present
 - [x] Frontend/PostgreSQL container configuration verified by image/start/HTTP and database smoke checks
-- [x] Corrected CI passed frontend lint/build/image smoke and Compose/PostgreSQL checks (implementation commit 979d4bd; see the [cleanup tracker](../../BACKEND_CLEANUP_PLAN.md#10-step-7-pr-handoff))
+- [x] Corrected CI passed frontend lint/build/image smoke and Compose/PostgreSQL checks (implementation commit 979d4bd; see the [validation evidence and follow-ups](../../VALIDATION.md#recorded-foundation-checks))
 - [ ] Deployment automation
 - [x] Initial TypeScript domain model references drafted
 - [ ] Domain constraints and model consistency reviewed
@@ -201,7 +201,7 @@ Monetization system.
 - [ ] Required billing alert delivery
 - [ ] Tenant subscription/usage summaries
 
-Operational task/member/project/activity summaries remain MVP reporting work in the [implementation roadmap](../../docs/init/ROADMAP.md#milestone-11--reporting-and-dashboarding). Revenue, retention and advanced productivity analytics remain later enhancements; the placeholder frontend dashboard is not their implementation.
+Operational task/member/project/activity summaries remain MVP reporting work in the [implementation roadmap](../../ROADMAP.md#milestone-11--reporting-and-dashboarding). Revenue, retention and advanced productivity analytics remain later enhancements; the placeholder frontend dashboard is not their implementation.
 
 ## Exit Criteria
 

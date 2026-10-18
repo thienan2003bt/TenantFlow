@@ -2,7 +2,9 @@
 
 The backend is starting again from requirements. NestJS is the chosen direction; there is no backend implementation, dependency matrix, migration runner, API endpoint, or backend container in this checkout. The existing frontend remains a Stack Auth starter and is not evidence that these backend requirements are implemented.
 
-Use the [SRS](TenantFlow-SRS.md) for product rules, [schema references](../../schemas.ts) and [enums](../../enum.ts) for the provisional model vocabulary, and [roadmap](ROADMAP.md) for implementation sequencing. This document preserves backend-specific design knowledge and unresolved decisions from retired tutorials; it does not prescribe a finished architecture.
+The developer will implement the backend at the repository root, alongside `frontend/`. Follow the [NestJS setup guide](../setup/NESTJS_BACKEND_SETUP.md) for ordered instructions and [engineering conventions](../architecture/BACKEND_CONVENTIONS.md) for responsibility and review rules. The assistant's role is documentation, guidance, review and feedback; recommendations do not establish installed dependencies or completed decisions.
+
+Use the [SRS](TenantFlow-SRS.md) for product rules, [schema references](../../schemas.ts) and [enums](../../enum.ts) for the provisional model vocabulary, and [roadmap](../planning/ROADMAP.md) for implementation sequencing. This document preserves backend-specific design knowledge and unresolved decisions from retired tutorials; it does not prescribe a finished architecture.
 
 ## 1. Boundaries and identity ownership
 

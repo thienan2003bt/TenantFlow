@@ -103,7 +103,7 @@ Use this SRS to resolve scope differences in the implementation roadmap and vers
 | Administration | Required core admin operations, tenant lifecycle and basic settings (sections 2.1 and 3). | Feature flags/rollout controls, support tools, enterprise integrations and advanced retention automation. |
 | Billing | Standard subscription plans, status/history, limits and provider integration (sections 5.5 and 9.2). | Coupons, flexible trial policies, usage-based billing and multiple subscriptions per tenant. |
 
-The [version plan](../../versions/1.0.0/VERSION-PLANNING.md) maps these requirements to milestones; the [future roadmap](../../versions/1.0.0/FUTURE-ROADMAP.md) retains the enhancements. Dates in the archived original schedule do not set a new delivery deadline. Identity ownership, model consistency and technical choices remain decisions before implementation.
+The [version plan](../planning/releases/1.0.0/VERSION-PLANNING.md) maps these requirements to milestones; the [future roadmap](../planning/releases/1.0.0/FUTURE-ROADMAP.md) retains the enhancements. Dates in the archived original schedule do not set a new delivery deadline. Identity ownership, model consistency and technical choices remain decisions before implementation.
 
 ---
 

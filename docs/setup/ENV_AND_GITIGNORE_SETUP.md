@@ -29,7 +29,7 @@ Populate values from your Stack Auth project. Local and container startup comman
 - `frontend/.dockerignore` excludes local env files, keys, dependencies and generated output while keeping empty example templates. Do not copy local credentials into the build context.
 - Use BuildKit/buildx and Compose with environment-sourced build-secret support. A standalone Compose CLI without a working Docker engine/buildx can render configuration but cannot validate the image or database runtime.
 
-This follows the [Next.js 15 build-time environment contract](https://nextjs.org/docs/15/app/guides/environment-variables#bundling-environment-variables-for-the-browser), [Docker BuildKit secret handling](https://docs.docker.com/build/building/secrets/), and [Compose build-secret specification](https://docs.docker.com/reference/compose-file/build/#secrets). Local rendering/artifact checks and corrected hosted image build/start/HTTP smoke passed. Real authenticated-flow validation remains open; see the [final evidence](../../BACKEND_CLEANUP_PLAN.md#10-step-7-pr-handoff).
+This follows the [Next.js 15 build-time environment contract](https://nextjs.org/docs/15/app/guides/environment-variables#bundling-environment-variables-for-the-browser), [Docker BuildKit secret handling](https://docs.docker.com/build/building/secrets/), and [Compose build-secret specification](https://docs.docker.com/reference/compose-file/build/#secrets). Recorded build/image checks and outstanding real-authentication validation are maintained in [Validation and Follow-ups](../planning/VALIDATION.md).
 
 PostgreSQL's current local database/user are `tenantflow_dev`/`tenantflow`; its development password is visible in Compose. These are development defaults, not production credentials. Changing an initialization password does not update an already initialized database volume.
 
@@ -50,4 +50,6 @@ The second command should print nothing and return exit code 1. An ignore rule d
 
 Define settings alongside actual NestJS consumers, document their loading source and precedence, and validate required values at startup. Keep database host/container distinctions explicit. Separate credentials between environments and use deployment secret management when needed. Provider-owned credentials and sessions must not be duplicated by default.
 
-Do not log real values, commit local env files, or copy credentials into requirements and PR descriptions. See [backend requirements](../init/BACKEND_REQUIREMENTS.md) for the unresolved identity and integration boundaries.
+The [NestJS setup guide](NESTJS_BACKEND_SETUP.md#4-add-configuration-and-safe-http-behavior) proposes a separate root `.env.backend` with `.env.backend.example`, explicitly loaded by the future API. Neither file nor its consumers exist yet; the current root `.env.example` remains the Compose contract above.
+
+Do not log real values, commit local env files, or copy credentials into requirements and PR descriptions. See [backend requirements](../requirements/BACKEND_REQUIREMENTS.md) for the unresolved identity and integration boundaries.
