@@ -6,7 +6,7 @@ Reviewed 18 October 2026 · Developer implementation guide · Backend not yet cr
 
 You write the application; I provide instructions, reviews and feedback. The commands below are for you to run. This document does not create backend files or claim the application has been tested.
 
-The finish line for this guide is precise: start Nest from `backend/`, request `GET http://127.0.0.1:3001/health-check`, and receive **HTTP 200 OK** with `{"status":"ok"}`. PostgreSQL, authentication, business features, Docker and deployment are later milestones. They are not prerequisites for this first endpoint.
+The finish line for this guide is precise: start Nest from `backend/`, request `GET http://127.0.0.1:14400/health-check`, and receive **HTTP 200 OK** with `{"status":"ok"}`. PostgreSQL, authentication, business features, Docker and deployment are later milestones. They are not prerequisites for this first endpoint.
 
 ## 1. Create the project inside backend/
 
@@ -85,7 +85,7 @@ Create `backend/.env.example` with these safe development defaults:
 
 ```dotenv
 NODE_ENV=development
-PORT=3001
+PORT=14400
 ```
 
 Then create your local copy from **`backend/`**:
@@ -101,7 +101,7 @@ In `src/config/env.validation.ts`, write a synchronous exported function named `
 | Setting | Default when absent | Validation and normalized result |
 | --- | --- | --- |
 | `NODE_ENV` | `development` | Accept only `development`, `test` or `production`; return a string. |
-| `PORT` | `3001` | Accept a decimal integer from 1 to 65535; convert it to a number before returning it. Reject blank strings, nonnumeric values, fractions and values outside the range. |
+| `PORT` | `14400` | Accept a decimal integer from 1 to 65535; convert it to a number before returning it. Reject blank strings, nonnumeric values, fractions and values outside the range. |
 
 Return a configuration object preserving other environment entries and replacing these two keys with their validated values. Throw a clear error naming the invalid setting; avoid printing the whole environment. A custom validator keeps this milestone to one additional package, `@nestjs/config`.
 
@@ -143,7 +143,9 @@ In `backend/src/main.ts`, retain the generated async bootstrap pattern and imple
 4. Enable graceful shutdown with `app.enableShutdownHooks()`.
 5. Await `app.listen(port, '127.0.0.1')` for local development.
 
-Keep Nest's default logger and exception handling for this milestone. Await bootstrap and let startup errors produce a failed process rather than swallowing them. The expected local URL is `http://127.0.0.1:3001/health-check`.
+Keep Nest's default logger and exception handling for this milestone. Await bootstrap and let startup errors produce a failed process rather than swallowing them. The expected local URL is `http://127.0.0.1:14400/health-check`.
+
+Use `14400` as the project's local backend port. `15000` is also a valid alternative if you update your configuration and request URLs consistently and the port is available. An unfamiliar port is a preference, not an access-control boundary: [port scans can cover the full TCP port range](https://nmap.org/book/man-port-specification.html). Keep the explicit `127.0.0.1` loopback binding for local development; it restricts direct access to this machine. The [Node listen documentation](https://nodejs.org/api/net.html#serverlistenport-host-backlog-callback) explains the listening host option.
 
 Keep this route public and unversioned. Do not set a global `/api` prefix for this milestone; otherwise the route would become `/api/health-check`. CORS is unnecessary for the terminal/browser-navigation check below; add a deliberate frontend origin policy when you connect the frontend. Input DTO validation belongs with the first endpoint that accepts input.
 
@@ -160,7 +162,7 @@ Wait for Nest's startup logs. Confirm the health route is mapped and there is no
 In terminal B, run:
 
 ```powershell
-curl.exe --noproxy "*" -i http://127.0.0.1:3001/health-check
+curl.exe --noproxy "*" -i http://127.0.0.1:14400/health-check
 ```
 
 Expected response, with additional normal headers omitted:
@@ -175,7 +177,7 @@ Content-Type: application/json; charset=utf-8
 You can also open that URL in a browser. The following PowerShell check fails explicitly if the status or JSON body is wrong:
 
 ```powershell
-$healthResponse = Invoke-WebRequest -Uri 'http://127.0.0.1:3001/health-check' -UseBasicParsing
+$healthResponse = Invoke-WebRequest -Uri 'http://127.0.0.1:14400/health-check' -UseBasicParsing
 if ($healthResponse.StatusCode -ne 200) { throw 'Expected HTTP 200.' }
 if (($healthResponse.Content | ConvertFrom-Json).status -ne 'ok') { throw 'Expected status ok.' }
 ```
