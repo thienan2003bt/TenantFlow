@@ -17,7 +17,7 @@ Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`. The retiremen
 | Hosted frontend image | Image build, container start, bounded-retry HTTP smoke and cleanup passed in that run. | A previous probe failed during startup; the corrected run is the successful evidence. |
 | Secret boundary | A fake private-key marker was absent from 32 generated browser assets during the local review. | This is a targeted artifact check, not a security certification. |
 
-The frontend source/license, provisional root models, and PostgreSQL data configuration were preserved. The backend remains unimplemented. The original tracker and detailed investigation are available in Git history; they are no longer active setup instructions.
+The frontend source/license, provisional root models, and PostgreSQL data configuration were preserved. At that historical retirement checkpoint the backend remained unimplemented. The original tracker and detailed investigation are available in Git history; they are no longer active setup instructions.
 
 ## Documentation review on 18 October 2026
 
@@ -27,6 +27,8 @@ The supplied request-lifecycle image was inspected and linked into the revised c
 
 ## Open follow-ups
 
+Current backend review evidence is recorded in [Backend Implementation Review](../architecture/BACKEND_REVIEW.md): type/lint/format/build checks, the existing one-test unit/e2e suites, compiled/watch startup, HTTP health smoke and synthetic validator cases. Findings remain open; the completed setup walkthrough has been removed.
+
 These are local tracking IDs, not GitHub issues. Completing backend retirement does not complete any of these items.
 
 | ID | Work still needed | Completion evidence / owning document |
@@ -34,6 +36,6 @@ These are local tracking IDs, not GitHub issues. Completing backend retirement d
 | F-01 | Verify real Stack Auth sign-in/out, account management, team creation/selection and tenant-switch UI with a configured project. | Record environment/commit and observed outcomes without credentials or account data. Follow [Start Here](../setup/START_HERE.md). Status: unverified. |
 | F-02 | Decide NestJS credential verification and provider-user/team to domain-user/tenant mappings. | Record identifier compatibility, membership/permissions, lifecycle ownership, synchronization and revocation policy in a decision record. See [backend requirements](../requirements/BACKEND_REQUIREMENTS.md). Status: open design. |
 | F-03 | Review provisional model names, constraints, joins, deletion/timestamp policy and ERD/migration design. | Resolve the candidates in [backend requirements section 2](../requirements/BACKEND_REQUIREMENTS.md#2-data-integrity-and-lifecycle), including tenant safety and history retention. Status: open design. |
-| F-04 | Implement the NestJS foundation inside `backend/`. | First, the developer follows the [setup guide](../setup/NESTJS_BACKEND_SETUP.md) to run the minimum application with validated configuration and `GET /health-check` returning HTTP 200. Database/migrations, identity/tenant contracts, CI/container wiring and meaningful auth/isolation tests then follow the [roadmap](ROADMAP.md). Status: not started. |
+| F-04 | Complete the NestJS foundation inside `backend/`. | Minimal startup and HTTP health smoke passed. Address the [review findings](../architecture/BACKEND_REVIEW.md), then continue database/migrations, identity/tenant contracts, CI/container wiring and meaningful auth/isolation tests under the [roadmap](ROADMAP.md). Status: in progress. |
 
 Keep milestone status in the roadmap and product/release scope in the SRS. Update this register when evidence changes; do not treat an intended command or placeholder smoke check as a completed product flow.

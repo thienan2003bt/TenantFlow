@@ -1,11 +1,11 @@
 # TenantFlow documentation
 
-Reviewed 18 October 2026. A developer-created NestJS scaffold is present inside `backend/`, alongside `frontend/`. The first setup target is validated configuration and a running application with `GET /health-check` returning HTTP 200; the scaffold's presence does not verify that target.
+Reviewed 18 October 2026. The developer's NestJS application in `backend/` has passed startup and HTTP health smoke checks. Use the implementation review for remaining findings; successful smoke checks do not complete the broader backend requirements.
 
 ## Where to start
 
 - Run the existing frontend or PostgreSQL: [Start Here](setup/START_HERE.md).
-- Build the backend yourself: [NestJS Backend Setup](setup/NESTJS_BACKEND_SETUP.md), then use [Backend Conventions](architecture/BACKEND_CONVENTIONS.md) during implementation and review.
+- Continue backend implementation: [commands and configuration](../backend/README.md), [implementation review](architecture/BACKEND_REVIEW.md), and [Backend Conventions](architecture/BACKEND_CONVENTIONS.md).
 - Check product behavior and MVP scope: [Software Requirements Specification](requirements/TenantFlow-SRS.md).
 - Choose the next milestone: [Implementation Roadmap](planning/ROADMAP.md).
 
@@ -17,7 +17,8 @@ Reviewed 18 October 2026. A developer-created NestJS scaffold is present inside 
 | `requirements/` | [Backend Requirements](requirements/BACKEND_REQUIREMENTS.md) | Backend constraints, provisional model findings, unresolved design choices |
 | `architecture/` | [Backend Conventions](architecture/BACKEND_CONVENTIONS.md) | Responsibilities, Nest request lifecycle diagram, security/data conventions, review agreement |
 | `setup/` | [Start Here](setup/START_HERE.md) | Commands for the existing checkout and onboarding order |
-| `setup/` | [NestJS Backend Setup](setup/NESTJS_BACKEND_SETUP.md) | Minimum app in `backend/`, Nest CLI feature generation, validated configuration, `/health-check` verification |
+| `backend/` | [Backend README](../backend/README.md) | Current commands, environment loading, formatting, aliases and runtime limitations |
+| `architecture/` | [Backend Review](architecture/BACKEND_REVIEW.md) | Evidence-backed findings and checks for the current implementation |
 | `setup/` | [Environment and Ignore Rules](setup/ENV_AND_GITIGNORE_SETUP.md) | Actual environment consumers, secret handling, build/runtime boundaries |
 | `setup/` | [PostgreSQL Setup](setup/POSTGRESQL_SETUP.md) | Development database operation and persistent data |
 | `planning/` | [Implementation Roadmap](planning/ROADMAP.md) | Current milestone status and sequencing |
@@ -41,3 +42,5 @@ The root [README](../README.md) owns the project overview. Root [schemas](../sch
 The former `docs/init/` content now lives in `requirements/` and `planning/`. The supplied `docs/tenantflow_backend_conventions.md` is now `architecture/BACKEND_CONVENTIONS.md`, with its diagram linked from the shared image directory. The former root `versions/1.0.0/` documents now live in `planning/releases/1.0.0/`; their scope and historical dates are retained.
 
 The completed backend cleanup plan has been removed. Its final verification summary and F-01 through F-04 follow-ups are retained in [Validation and Follow-ups](planning/VALIDATION.md). This reorganization changes documentation, not application implementation or delivery status.
+
+The completed NestJS setup walkthrough has also been removed. The backend README now owns current commands and configuration; the implementation review retains unresolved findings. Future backend guidance follows [backend agent instructions](../backend/AGENTS.md).

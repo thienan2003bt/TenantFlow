@@ -1,8 +1,8 @@
 # Start Here
 
-TenantFlow now has a developer-created NestJS scaffold in `backend/`. Follow the backend setup guide to complete configuration and health behavior and verify startup; that work has not been runtime-verified by this documentation review. The existing Next.js frontend starter and optional PostgreSQL container remain available for local work.
+TenantFlow has a developer-created NestJS application in `backend/`, with startup and HTTP health smoke verified. Current commands are in the backend README; remaining findings are in the implementation review. The existing Next.js frontend starter and optional PostgreSQL container remain available for local work.
 
-Use the [documentation index](../README.md) to navigate the repository guides. To build the minimum Nest application inside `backend/` and verify `GET /health-check` returns HTTP 200, follow [NestJS Backend Setup](NESTJS_BACKEND_SETUP.md). You write the backend code; the assistant provides guidance, reviews and feedback.
+Use the [documentation index](../README.md), [backend commands and configuration](../../backend/README.md), and [implementation review](../architecture/BACKEND_REVIEW.md). The completed setup walkthrough has been removed. You write backend behavior; the assistant provides researched guidance, reviews and feedback.
 
 ## Read the requirements
 
@@ -58,8 +58,8 @@ docker compose up -d --build frontend
 
 Changing browser-public project settings requires rebuilding the image. See the [environment guide](ENV_AND_GITIGNORE_SETUP.md) for the exact build/runtime contract and references.
 
-Frontend checks, from `frontend/`, are `npm run lint`, `npx tsc --noEmit`, and `npm run build`. The `npm test` script only prints a message and provides no test coverage. CI checks lint/build, builds the frontend image, renders Compose and waits for PostgreSQL before an actual SQL connection check; services are stopped afterward without deleting volumes. There are no backend checks to run.
+Frontend checks, from `frontend/`, are `npm run lint`, `npx tsc --noEmit`, and `npm run build`. The `npm test` script only prints a message and provides no test coverage. CI checks lint/build, builds the frontend image, renders Compose and waits for PostgreSQL before an actual SQL connection check; services are stopped afterward without deleting volumes. Backend type/lint/format/build/test commands now exist under `backend/` and are listed in its README; they are not yet backend CI jobs.
 
 **Verification boundary:** Recorded local/hosted check results and their limits live in [Validation and Follow-ups](../planning/VALIDATION.md). Real sign-in/team/account flows remain unverified and need a configured project. Placeholder build/startup checks do not establish authenticated behavior or validate your current environment.
 
-For the first backend milestone, follow the [NestJS setup guide](NESTJS_BACKEND_SETUP.md) through validated configuration, module wiring and the `/health-check` response. Its commands describe work you will perform; the commands above describe the existing frontend/PostgreSQL checkout. Database migrations, authentication and tenant features follow after the minimal application runs.
+Continue the backend milestone by addressing the implementation review's findings and adding meaningful configuration/health regression tests. Database migrations, authentication and tenant features remain later work under the roadmap.

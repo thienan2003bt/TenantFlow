@@ -2,7 +2,7 @@
 
 TenantFlow is a planned multi-tenant B2B SaaS workspace. The repository contains product requirements, provisional TypeScript domain models, a Next.js frontend starter using Stack Auth, optional PostgreSQL development storage, and a developer-created NestJS scaffold in `backend/`. Backend business features remain to be implemented; scaffold presence does not establish verified API behavior.
 
-Start with the [documentation index](docs/README.md) for requirements, architecture, setup and planning. The [NestJS setup guide](docs/setup/NESTJS_BACKEND_SETUP.md) walks through building a minimal application inside `backend/`, ending with `GET /health-check` returning HTTP 200. You write the backend; the assistant supplies instructions, reviews and feedback.
+Start with the [documentation index](docs/README.md) for requirements, architecture, setup and planning. Use [backend commands and configuration](backend/README.md) for the implemented Nest application and [implementation review](docs/architecture/BACKEND_REVIEW.md) for remaining findings. You write backend behavior; the assistant supplies researched instructions, reviews and feedback and makes explicitly requested tooling changes.
 
 The project is intentionally designed to exercise the same concerns that appear in real business software:
 
@@ -75,9 +75,9 @@ Earlier candidates for additional frontend tooling include TanStack Query, Zusta
 
 ### 4.2 Backend and Data Access
 
-The backend now has a NestJS 12 scaffold with ESM, Vitest and the local Nest CLI. Validated startup and `/health-check` behavior are the first implementation target and have not been runtime-verified in this documentation review. Persistence, migrations, identity/tenant features and backend Docker/CI remain subsequent work. PostgreSQL remains the planned database. The root model files are design references, not executable migrations.
+The backend has a NestJS 12 application with ESM, validated environment loading, a local CLI and Vitest. Compiled and watch-mode startup returned HTTP 200 from `/health-check`; the current body is plain text. The implementation review records configuration and coverage gaps. Persistence, migrations, identity/tenant features and backend Docker/CI remain subsequent work. PostgreSQL remains the planned database. The root model files are design references, not executable migrations.
 
-Review the [backend requirements and design notes](docs/requirements/BACKEND_REQUIREMENTS.md), [engineering conventions](docs/architecture/BACKEND_CONVENTIONS.md), and [setup guide](docs/setup/NESTJS_BACKEND_SETUP.md) before implementation. The guide covers the minimum Nest application, feature-module folders and validated startup configuration. Database access, identity verification and integrations are subsequent work.
+Review the [backend requirements and design notes](docs/requirements/BACKEND_REQUIREMENTS.md), [engineering conventions](docs/architecture/BACKEND_CONVENTIONS.md), and [backend commands and configuration](backend/README.md) before further implementation. The completed setup walkthrough has been removed; current behavior and open findings are recorded in the implementation review.
 
 ### 4.3 Authentication and Authorization
 
@@ -97,7 +97,7 @@ Enforce tenant boundaries, coarse-grained roles, and fine-grained permission pol
 - Document implemented APIs with OpenAPI and an exploration interface.
 - Add meaningful domain/API/database tests, especially isolation, authorization, sessions and webhook idempotency. Container-based integration tests can be considered later.
 
-No backend libraries or services for these capabilities are installed. Setup recommendations become project decisions when recorded and implemented by the developer.
+The backend currently includes Nest configuration and class-based environment validation. Other capability-specific libraries and services remain future choices; current runtime behavior and gaps are recorded in the implementation review.
 
 ### 4.5 Payment Module
 
@@ -278,7 +278,7 @@ Roles must be implemented through authorization policies, not by relying only on
 |   |-- README.md    # Documentation index and document ownership
 |   |-- requirements/ # SRS and backend requirements
 |   |-- architecture/ # Backend engineering conventions
-|   |-- setup/       # Current onboarding and future NestJS setup guide
+|   |-- setup/       # Current onboarding, environment and PostgreSQL
 |   +-- planning/    # Roadmap, validation, release plans and future scope
 |-- assets/images/  # Shared documentation images
 |-- backend/        # Developer-created NestJS scaffold
@@ -288,7 +288,7 @@ Roles must be implemented through authorization policies, not by relying only on
 +-- docker-compose.yml
 ```
 
-The NestJS scaffold lives in `backend/`, with its own `package.json`, `src/`, `test/` and related configuration. Use the local Nest CLI generators for colocated feature modules, controllers and services. Follow the setup guide to implement and verify the first `/health-check` endpoint; keep the existing frontend and root infrastructure configuration independent.
+The NestJS application lives in `backend/`, with its own `package.json`, `src/`, `test/` and related configuration. Prefer local Nest CLI generators when adding feature modules, controllers and services. The current health route lives in the root controller/service; the review distinguishes that valid minimal structure from the earlier feature-module exercise.
 
 ---
 
@@ -354,7 +354,7 @@ Use conventional commit style:
 
 ## 12. Local Development
 
-Follow [START_HERE](docs/setup/START_HERE.md) for the existing frontend and optional PostgreSQL container. The [environment guide](docs/setup/ENV_AND_GITIGNORE_SETUP.md) explains actual files and consumers. No backend startup or migration command exists yet.
+Follow [START_HERE](docs/setup/START_HERE.md) for the frontend and optional PostgreSQL container, and the [backend README](backend/README.md) for Nest startup and checks. The [environment guide](docs/setup/ENV_AND_GITIGNORE_SETUP.md) explains actual files and consumers. No backend migration command exists yet.
 
 Node.js 22/npm are the existing frontend tooling baseline. Docker with Compose is needed for PostgreSQL/container work. Keep local secrets out of Git and separate credentials between environments. Backend database, identity, email, storage and billing configuration will be defined alongside actual implementations.
 

@@ -2,7 +2,7 @@
 
 This roadmap tracks the implementation of TenantFlow from architecture decisions to public deployment. The file is meant to stay current and should be updated whenever a milestone changes status.
 
-**Authoring and location (2026-10-18):** The developer implements NestJS inside `backend/`, beside `frontend/`; the assistant supplies documentation, instructions, reviews and feedback. Follow [NestJS Backend Setup](../setup/NESTJS_BACKEND_SETUP.md) for the first runnable application with validated configuration and `GET /health-check` returning HTTP 200, and [Backend Conventions](../architecture/BACKEND_CONVENTIONS.md) for engineering rules. This initial setup is part of Milestone 1; it does not complete that milestone's broader database, API documentation or frontend-integration criteria. Documentation preparation does not complete implementation work.
+**Authoring and location (2026-10-18):** The developer implements NestJS inside `backend/`, beside `frontend/`; the assistant provides researched guidance/reviews and explicitly requested tooling changes. The minimal application has passed compiled/watch startup and HTTP health smoke. Current commands are in the [backend README](../../backend/README.md), and remaining validation/configuration/contract findings are in the [implementation review](../architecture/BACKEND_REVIEW.md). This does not complete Milestone 1's broader database, API documentation or frontend-integration criteria.
 
 **Restart baseline (2026-10-17):** The backend has requirements and design references only; NestJS implementation has not started. A Next.js/Stack Auth frontend scaffold, PostgreSQL Compose configuration, and CI definitions exist. Their presence does not satisfy the API, migration, isolation, or end-to-end exit criteria below. Use [backend requirements](../requirements/BACKEND_REQUIREMENTS.md) for open decisions and [validation evidence and follow-ups](VALIDATION.md#recorded-foundation-checks) for retained verification evidence. Release dates in version planning are original estimates awaiting review.
 
@@ -52,7 +52,7 @@ NestJS is the selected backend direction. Identity provider ownership, user/team
 
 ## Milestone 1 — Solution Skeleton
 
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
 ### Goal
 Create the basic runnable application structure.
@@ -67,7 +67,7 @@ Create the basic runnable application structure.
 - OpenAPI enabled
 - health check endpoints
 
-The existing frontend and CI definitions are partial foundation work. A backend scaffold, application configuration, migrations, API documentation, health endpoints, and verified frontend-to-API access must be implemented anew.
+The frontend and CI definitions remain partial foundation work. The developer has added the Nest backend, environment validation and `/health-check`; startup and HTTP smoke passed, with open review findings. Migrations, API documentation, backend CI/container wiring and verified frontend-to-API access remain unfinished.
 
 ### Exit criteria
 

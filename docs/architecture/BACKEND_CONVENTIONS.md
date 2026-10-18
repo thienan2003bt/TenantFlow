@@ -1,16 +1,16 @@
 # TenantFlow Backend Engineering Conventions
 
-Version 1.3 · Reviewed 18 October 2026 · NestJS backend · Proposed implementation baseline
+Version 1.4 · Reviewed 18 October 2026 · NestJS backend · Engineering baseline
 
-[Documentation index](../README.md) · [Backend setup guide](../setup/NESTJS_BACKEND_SETUP.md) · [Backend requirements](../requirements/BACKEND_REQUIREMENTS.md)
+[Documentation index](../README.md) · [backend commands and configuration](../../backend/README.md) · [Backend requirements](../requirements/BACKEND_REQUIREMENTS.md)
 
 ## Purpose and scope
 
 Use this guide when designing, implementing, reviewing, or modifying TenantFlow backend functionality. It defines shared conventions for human developers and AI agents so that request handling, business behavior, tenant isolation, and infrastructure integration remain consistent.
 
-This revision has been checked against the repository's requirements and scaffold structure. A developer-created NestJS 12 scaffold is present inside `backend/`; startup and health behavior have not been verified in this documentation review. PostgreSQL 17 is configured for development, and the product direction is shared tables with tenant-scoped access. The existing frontend uses Stack Auth. ORM/migrations, API credential verification, provider-to-domain mappings, and deployment details remain decisions to record before implementing them. The [SRS](../requirements/TenantFlow-SRS.md) owns product rules and release boundaries; this guide owns engineering conventions.
+This revision has been checked against the repository's requirements and NestJS 12 application. Startup and HTTP health smoke have been verified; the [implementation review](BACKEND_REVIEW.md) records remaining findings. PostgreSQL 17 is configured for development, and the product direction is shared tables with tenant-scoped access. The existing frontend uses Stack Auth. ORM/migrations, API credential verification, provider-to-domain mappings, and deployment details remain decisions to record before implementing them. The [SRS](../requirements/TenantFlow-SRS.md) owns product rules and release boundaries; this guide owns engineering conventions.
 
-**Authoring agreement:** You write every line of backend code. The assistant provides instructions, reviews, explanations, and feedback, and may maintain documentation. It must not scaffold, generate, patch, or auto-fix backend source, tests, migrations, dependencies, or runtime/build configuration unless you explicitly change that agreement. Commands and proposed structures in the setup guide are for you to execute and implement.
+**Authoring agreement:** You write backend behavior. The assistant provides researched instructions, reviews, explanations and feedback, and may maintain documentation. Explicitly requested tooling/configuration/import changes authorize that scope and its verification. Review findings remain for you to implement unless you request fixes. Follow [backend guidance instructions](../../backend/AGENTS.md) for source verification and step-by-step objectives/actions/checks.
 
 **Rule language:** MUST indicates a required convention. SHOULD indicates the default unless a concrete reason justifies an exception. MAY indicates an optional technique. Record material deviations and their rationale in the relevant change or architecture decision.
 
@@ -167,6 +167,7 @@ Nest integrations reduce wiring effort. They do not choose the application's sec
 - MUST enable TypeScript strict checking, keep promise/error handling explicit, and use the chosen module system consistently. Avoid disabling rules or adding `any` to bypass an unresolved contract.
 - MUST keep backend build, lint, format and test configuration inside `backend/` and scope it to that application. The independent `frontend/` project and provisional root model files must not enter backend compilation accidentally.
 - SHOULD retain generated tooling that fits the chosen Nest version, then define reproducible scripts and `backend/package-lock.json`. Tool names and defaults can change across Nest releases; do not assume every generator uses the same lint or test runner.
+- MUST use double quotes for backend import/export specifiers, enforced through backend Prettier formatting/checks. The requested `@enums/environment.enum.ts` source alias depends on the ordered paths mapping and Nest's build transformer documented in the backend README. Verify type-check, build, compiled/watch startup and tests before changing that mapping.
 
 ## Testing and completion criteria
 
@@ -198,7 +199,7 @@ Follow applicable system and user instructions, repository policies, and approve
 
 ## Decisions to confirm in the repository
 
-The table distinguishes existing direction from decisions still needed. Recommendations in the setup guide become project decisions only when the developer records and implements them.
+The table distinguishes existing direction from decisions still needed. Recommendations become project decisions when recorded and implemented; consult the backend README and implementation review for current tooling and verified behavior.
 
 | Decision | What must be recorded |
 | --- | --- |

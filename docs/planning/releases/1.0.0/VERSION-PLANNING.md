@@ -17,7 +17,7 @@ Project bootstrap and technical foundation.
 ## Deliverables
 
 - [x] Repository initialization
-- [ ] NestJS backend implementation (requirements and design notes only)
+- [ ] Complete NestJS backend foundation (minimal app and HTTP health smoke present; review findings, database and integration work remain)
 - [x] PostgreSQL Compose configuration, readiness/SQL and cleanup verified in hosted CI
 - [x] React/Next.js frontend scaffold present
 - [x] Frontend/PostgreSQL container configuration verified by image/start/HTTP and database smoke checks

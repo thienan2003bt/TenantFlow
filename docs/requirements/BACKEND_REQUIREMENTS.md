@@ -2,7 +2,7 @@
 
 The backend is starting again from requirements with a developer-created NestJS scaffold in `backend/`. That scaffold is not evidence that the API, identity, persistence or operational requirements below are implemented or verified. The existing frontend remains a Stack Auth starter and likewise does not establish backend behavior.
 
-The developer will implement the backend inside `backend/`, alongside `frontend/`. Follow the [NestJS setup guide](../setup/NESTJS_BACKEND_SETUP.md) to build the minimum application with validated configuration and a `GET /health-check` endpoint returning HTTP 200; broader requirements below follow in later milestones. Use [engineering conventions](../architecture/BACKEND_CONVENTIONS.md) for responsibility and review rules. The assistant's role is documentation, guidance, review and feedback; recommendations do not establish installed dependencies or completed decisions.
+The developer implements the backend inside `backend/`, alongside `frontend/`. The [backend README](../../backend/README.md) documents current startup/configuration and the [implementation review](../architecture/BACKEND_REVIEW.md) records verified health behavior and open findings. Broader requirements below follow in later milestones. Use [engineering conventions](../architecture/BACKEND_CONVENTIONS.md) for responsibility and review rules; explicit tooling requests do not authorize automatically implementing review findings.
 
 Use the [SRS](TenantFlow-SRS.md) for product rules, [schema references](../../schemas.ts) and [enums](../../enum.ts) for the provisional model vocabulary, and [roadmap](../planning/ROADMAP.md) for implementation sequencing. This document preserves backend-specific design knowledge and unresolved decisions from retired tutorials; it does not prescribe a finished architecture.
 
@@ -68,4 +68,4 @@ The root model files remain design references, not migrations or runtime validat
 4. Review the data-integrity candidates above and produce a consistent schema/ERD with tenant-aware constraints and retention rules.
 5. Define the first API contracts, environment contract, startup commands, health checks, container/CI wiring and meaningful tests alongside the actual backend source.
 
-Until those decisions and implementation exist, the supported local work is requirements/model review, the existing frontend starter, and optional PostgreSQL development storage. See [START_HERE](../setup/START_HERE.md).
+Supported local work now includes the minimal backend, requirements/model review, the existing frontend starter and optional PostgreSQL development storage. The backend has no domain persistence or identity/tenant integration yet. See [START_HERE](../setup/START_HERE.md) and the implementation review before treating the broader requirements as delivered.

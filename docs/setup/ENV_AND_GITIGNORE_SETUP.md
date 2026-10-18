@@ -1,12 +1,13 @@
 # Environment and Ignore Rules
 
-The backend currently has requirements and design references only. No backend database connection string, token-signing key, email, storage, or payment setting is consumed by this checkout.
+The backend now loads and validates startup configuration through Nest's ConfigModule. Database, identity, email, storage and payment configuration remain later implementation work.
 
 ## Files and consumers
 
 | File | Consumer | Purpose |
 | --- | --- | --- |
 | `frontend/.env.local` | Next.js in `frontend/` | Local frontend development/build configuration; copy the adjacent `.env.local.example`. |
+| `backend/.env` | Nest ConfigModule when run from `backend/` | Required `NODE_ENV` and integer-port intent; documented local `PORT=14400`. The current example is empty and integer validation remains an open review finding. |
 | Root `.env` | Docker Compose interpolation and build-secret source | Frontend public build arguments, private build secret and runtime values; copy root `.env.example`. Compose does not automatically make this a Next.js local env file. |
 | Root `docker-compose.yml` | Docker Compose | PostgreSQL development settings and frontend container configuration. PostgreSQL values are currently set directly in this file. |
 | CI secrets | Frontend workflow | Project-specific Stack Auth settings used by the existing build steps. No values are committed in examples. |
@@ -46,10 +47,10 @@ git check-ignore .env.example frontend/.env.local.example
 
 The second command should print nothing and return exit code 1. An ignore rule does not untrack a file already in Git; inspect tracked files separately with `git ls-files`.
 
-## Future backend configuration
+## Backend configuration
 
 Define settings alongside actual NestJS consumers, document their loading source and precedence, and validate required values at startup. Keep database host/container distinctions explicit. Separate credentials between environments and use deployment secret management when needed. Provider-owned credentials and sessions must not be duplicated by default.
 
-The [NestJS setup guide](NESTJS_BACKEND_SETUP.md#3-configure-and-validate-the-environment) proposes `backend/.env` and `backend/.env.example`, loaded and validated by the API when run from `backend/`. Its minimum settings are `NODE_ENV` and `PORT=14400`. Neither file nor its consumers exist yet; the current root `.env.example` remains the Compose contract above.
+The [backend README](../../backend/README.md) documents the existing loader, required `NODE_ENV` and local `PORT=14400` settings. `backend/.env.example` exists but is empty; see the [implementation review](../architecture/BACKEND_REVIEW.md) for the onboarding and validation gaps. The root `.env.example` remains the separate Compose contract above.
 
 Do not log real values, commit local env files, or copy credentials into requirements and PR descriptions. See [backend requirements](../requirements/BACKEND_REQUIREMENTS.md) for the unresolved identity and integration boundaries.
