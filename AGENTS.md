@@ -20,10 +20,13 @@ Apply these repository conventions within the current task instructions. The use
 
 ## Repository context and scope
 
-- The backend is restarting from requirements for NestJS. Keep backend work at requirements/documentation level until implementation is requested; do not introduce a replacement scaffold, ORM, auth service, or migration runner during cleanup.
+- The developer owns backend implementation. Default to instructions, documentation, reviews and feedback; do not automatically fix review findings. Explicit requests for configuration, formatting or import changes authorize that scope and its necessary verification. Do not scaffold features, generate migrations, install dependencies or change unrelated application behavior without authorization.
+- The NestJS application belongs inside `backend/`, alongside the independent `frontend/` project. Keep its package/lockfile, source, tests and configuration there. Use [backend commands and configuration](backend/README.md) and [engineering conventions](docs/architecture/BACKEND_CONVENTIONS.md). Give review findings in the conversation; do not create a separate review document unless requested. The completed setup walkthrough has been removed.
+- Prefer instructions for the developer to run the local Nest CLI generators: module first, then controller and service. Keep the default colocated feature structure under `backend/src/<feature>/` and explain automatic registration versus behavior the developer must implement. Do not impose extra `modules/`, `controllers/` or `services/` folders by default, and do not run generators on the developer's behalf.
+- Follow [backend guidance instructions](backend/AGENTS.md) for research and reviews: verify usage against official documentation and relevant maintainer/developer discussions, then present each step's objective, action, command/working directory and expected check. State verification limits explicitly.
 - Preserve the existing Next.js/Stack Auth frontend, its assets/license, root TypeScript model references, and PostgreSQL data/volume configuration unless the task explicitly changes them.
-- Read [BACKEND_CLEANUP_PLAN.md](BACKEND_CLEANUP_PLAN.md) before continuing cleanup. Work on the next unfinished item and update its status and evidence without marking unrelated tasks complete.
-- Use the [SRS](docs/init/TenantFlow-SRS.md) for product rules and release boundaries, [backend requirements](docs/init/BACKEND_REQUIREMENTS.md) for backend design candidates/open decisions, and [roadmap](docs/init/ROADMAP.md) for implementation sequencing. Version documents express release intent; historical dates are not current delivery commitments.
+- Backend retirement is complete and its temporary plan has been removed. Use the [documentation index](docs/README.md) for document ownership and [validation and follow-ups](docs/planning/VALIDATION.md) for retained evidence and open manual/design work. Do not recreate the retired tracker.
+- Use the [SRS](docs/requirements/TenantFlow-SRS.md) for product rules and release boundaries, [backend requirements](docs/requirements/BACKEND_REQUIREMENTS.md) for backend design candidates/open decisions, and [roadmap](docs/planning/ROADMAP.md) for implementation sequencing. Version documents express release intent; historical dates are not current delivery commitments.
 - Resolve conflicting documentation against the canonical requirements. Preserve useful displaced ideas in the future backlog or design notes, record the reconciliation, and keep genuinely unresolved implementation decisions explicit.
 - Extract useful framework-independent requirements before deleting a mixed document. Remove stale references and broken links together with retired files; inspect tracked files even when ignore rules hide them.
 
@@ -33,7 +36,7 @@ Apply these repository conventions within the current task instructions. The use
 - Run checks appropriate to the change. For documentation edits, review scope consistency, local links/anchors, reference accuracy, and whitespace; do not install application dependencies solely to test prose.
 - For configuration or code changes, check affected behavior and required build/test workflows where available. Record missing tools, credentials, dependencies, or external access as unverified checks with concrete next actions.
 - Keep requirements, design candidates, and implemented database behavior distinct. Do not treat schema comments or tutorial examples as approved constraints or executable migrations.
-- Leave each batch concrete and reviewable. Identify the next unfinished cleanup step and keep remaining runtime/CI/PR work visible in the tracker.
+- Leave each batch concrete and reviewable. Identify the next implementation/review checkpoint in the roadmap and keep outstanding validation visible in the follow-up register. Update the owning document rather than adding duplicate status summaries.
 
 ## Suggested commit messages
 

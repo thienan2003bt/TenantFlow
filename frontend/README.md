@@ -2,7 +2,7 @@
 
 A minimalistic multi-tenant Next.js starter template with minimal setup and a modular design. Bring your own backend and database.
 
-This directory preserves the Stack Auth starter while the TenantFlow backend restarts from requirements for NestJS. Business APIs are absent; dashboard metrics and placeholder routes are demo content. Follow the root [START_HERE](../docs/setup/START_HERE.md) for repository onboarding and [backend requirements](../docs/init/BACKEND_REQUIREMENTS.md) for the planned backend.
+This directory preserves the Stack Auth starter while the TenantFlow backend restarts from requirements for NestJS. Business APIs are absent; dashboard metrics and placeholder routes are demo content. Follow the root [START_HERE](../docs/setup/START_HERE.md) for repository onboarding and [backend requirements](../docs/requirements/BACKEND_REQUIREMENTS.md) for the planned backend.
 
 [Demo](https://stack-template.vercel.app/)
 

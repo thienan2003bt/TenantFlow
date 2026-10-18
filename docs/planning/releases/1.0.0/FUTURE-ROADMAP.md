@@ -4,7 +4,7 @@
 
 This backlog preserves enhancements beyond the 1.0.0 MVP. Consider them after the core product is stable and its needs are validated. No feature is implemented by its presence here, and no delivery date is committed.
 
-Use the [canonical SRS release boundaries](../../docs/init/TenantFlow-SRS.md#24-canonical-release-boundaries) for the distinction between required base behavior and these enhancements. The [version plan](VERSION-PLANNING.md) retains the MVP milestones; it does not postpone their required base features to this backlog.
+Use the [canonical SRS release boundaries](../../../requirements/TenantFlow-SRS.md#24-canonical-release-boundaries) for the distinction between required base behavior and these enhancements. The [version plan](VERSION-PLANNING.md) retains the MVP milestones; it does not postpone their required base features to this backlog.
 
 Required customer tags/notes/history, operational dashboard summaries, in-app notifications, lifecycle/invitation emails, billing alerts, application API documentation and payment-provider webhooks remain MVP scope. The entries below extend those capabilities.
 
