@@ -50,6 +50,6 @@ The second command should print nothing and return exit code 1. An ignore rule d
 
 Define settings alongside actual NestJS consumers, document their loading source and precedence, and validate required values at startup. Keep database host/container distinctions explicit. Separate credentials between environments and use deployment secret management when needed. Provider-owned credentials and sessions must not be duplicated by default.
 
-The [NestJS setup guide](NESTJS_BACKEND_SETUP.md#4-add-configuration-and-safe-http-behavior) proposes a separate root `.env.backend` with `.env.backend.example`, explicitly loaded by the future API. Neither file nor its consumers exist yet; the current root `.env.example` remains the Compose contract above.
+The [NestJS setup guide](NESTJS_BACKEND_SETUP.md#3-configure-and-validate-the-environment) proposes `backend/.env` and `backend/.env.example`, loaded and validated by the API when run from `backend/`. Its minimum settings are `NODE_ENV` and `PORT=3001`. Neither file nor its consumers exist yet; the current root `.env.example` remains the Compose contract above.
 
 Do not log real values, commit local env files, or copy credentials into requirements and PR descriptions. See [backend requirements](../requirements/BACKEND_REQUIREMENTS.md) for the unresolved identity and integration boundaries.

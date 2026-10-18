@@ -2,7 +2,7 @@
 
 TenantFlow's backend is being restarted from requirements for NestJS. There is no backend application, migration runner, or API service to launch. The existing Next.js frontend starter and optional PostgreSQL container remain available for local work.
 
-Use the [documentation index](../README.md) to navigate the repository guides. To build the future backend at the repository root, follow [NestJS Backend Setup](NESTJS_BACKEND_SETUP.md). You write the backend code; the assistant provides guidance, reviews and feedback.
+Use the [documentation index](../README.md) to navigate the repository guides. To build the minimum Nest application inside `backend/` and verify `GET /health-check` returns HTTP 200, follow [NestJS Backend Setup](NESTJS_BACKEND_SETUP.md). You write the backend code; the assistant provides guidance, reviews and feedback.
 
 ## Read the requirements
 
@@ -62,4 +62,4 @@ Frontend checks, from `frontend/`, are `npm run lint`, `npx tsc --noEmit`, and `
 
 **Verification boundary:** Recorded local/hosted check results and their limits live in [Validation and Follow-ups](../planning/VALIDATION.md). Real sign-in/team/account flows remain unverified and need a configured project. Placeholder build/startup checks do not establish authenticated behavior or validate your current environment.
 
-Before backend implementation, work through the decisions and review checkpoints in the [NestJS setup guide](NESTJS_BACKEND_SETUP.md). Its commands describe work you will perform; the commands above describe the existing frontend/PostgreSQL checkout. Add backend source, migrations, API contracts, configuration, health checks and tests as you reach those steps.
+For the first backend milestone, follow the [NestJS setup guide](NESTJS_BACKEND_SETUP.md) through validated configuration, module wiring and the `/health-check` response. Its commands describe work you will perform; the commands above describe the existing frontend/PostgreSQL checkout. Database migrations, authentication and tenant features follow after the minimal application runs.

@@ -2,7 +2,7 @@
 
 TenantFlow is a planned multi-tenant B2B SaaS workspace. The repository contains product requirements, provisional TypeScript domain models, a Next.js frontend starter using Stack Auth, and optional PostgreSQL development storage. The backend is restarting from requirements for NestJS; no backend implementation or business API is currently present.
 
-Start with the [documentation index](docs/README.md) for requirements, architecture, setup and planning. The [NestJS setup guide](docs/setup/NESTJS_BACKEND_SETUP.md) walks through building the backend directly at the repository root. You write the backend; the assistant supplies instructions, reviews and feedback.
+Start with the [documentation index](docs/README.md) for requirements, architecture, setup and planning. The [NestJS setup guide](docs/setup/NESTJS_BACKEND_SETUP.md) walks through building a minimal application inside `backend/`, ending with `GET /health-check` returning HTTP 200. You write the backend; the assistant supplies instructions, reviews and feedback.
 
 The project is intentionally designed to exercise the same concerns that appear in real business software:
 
@@ -77,7 +77,7 @@ Earlier candidates for additional frontend tooling include TanStack Query, Zusta
 
 NestJS is the chosen backend direction. Backend code, packages, API routes, persistence, migrations, health endpoints, and backend Docker/CI jobs are absent. PostgreSQL remains the planned database. The root model files are design references, not executable migrations.
 
-Review the [backend requirements and design notes](docs/requirements/BACKEND_REQUIREMENTS.md), [engineering conventions](docs/architecture/BACKEND_CONVENTIONS.md), and [setup guide](docs/setup/NESTJS_BACKEND_SETUP.md) before implementation. The guide recommends tooling and a feature-based root application layout; exact versions, ORM, identity verification and integration choices still need recorded decisions and implementation.
+Review the [backend requirements and design notes](docs/requirements/BACKEND_REQUIREMENTS.md), [engineering conventions](docs/architecture/BACKEND_CONVENTIONS.md), and [setup guide](docs/setup/NESTJS_BACKEND_SETUP.md) before implementation. The guide covers the minimum Nest application, feature-module folders and validated startup configuration. Database access, identity verification and integrations are subsequent work.
 
 ### 4.3 Authentication and Authorization
 
@@ -287,7 +287,7 @@ Roles must be implemented through authorization policies, not by relying only on
 +-- docker-compose.yml
 ```
 
-The planned NestJS backend will add root `package.json`, `src/`, `test/` and related configuration alongside `frontend/`. These do not exist yet. Follow the setup guide for the proposed structure and review checkpoints; keep domain rules, transport contracts, persistence and integrations deliberately separated.
+The planned NestJS application will live in `backend/`, with its own `package.json`, `src/`, `test/` and related configuration. That directory does not exist yet. Follow the setup guide to implement and verify the first `/health-check` endpoint; keep the existing frontend and root infrastructure configuration independent.
 
 ---
 

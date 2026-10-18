@@ -1,6 +1,6 @@
 # TenantFlow Backend Engineering Conventions
 
-Version 1.1 · Reviewed 18 October 2026 · NestJS backend · Proposed implementation baseline
+Version 1.2 · Reviewed 18 October 2026 · NestJS backend · Proposed implementation baseline
 
 [Documentation index](../README.md) · [Backend setup guide](../setup/NESTJS_BACKEND_SETUP.md) · [Backend requirements](../requirements/BACKEND_REQUIREMENTS.md)
 
@@ -162,11 +162,11 @@ Nest integrations reduce wiring effort. They do not choose the application's sec
 
 ## Code organization and tooling
 
-- SHOULD use feature modules under root `src/modules/`, with transport DTOs, application services, policies, and data access close to their feature. Export deliberate public providers instead of importing another module's private internals.
-- SHOULD keep `src/common/` limited to small, reused transport concerns and put configuration/infrastructure wiring in their own modules. Avoid a catch-all shared service, generic base repository, or mandatory interface for every class.
+- SHOULD use feature modules under `backend/src/modules/`, with controller and service folders inside each feature and other responsibilities added when needed. This follows Nest's feature-module pattern; the specific folder names are TenantFlow conventions. Export deliberate public providers instead of importing another module's private internals.
+- SHOULD keep `backend/src/common/` limited to small, reused transport concerns when needed and put startup validation in `backend/src/config/`. Add infrastructure wiring alongside actual consumers. Avoid a catch-all shared service, generic base repository, or mandatory interface for every class.
 - MUST enable TypeScript strict checking, keep promise/error handling explicit, and use the chosen module system consistently. Avoid disabling rules or adding `any` to bypass an unresolved contract.
-- MUST limit root build, lint, format, and test globs to backend paths. The independent `frontend/` project and provisional root model files must not enter backend compilation accidentally.
-- SHOULD retain generated tooling that fits the chosen Nest version, then define reproducible scripts and a root lockfile. Tool names and defaults can change across Nest releases; do not assume every generator uses the same lint or test runner.
+- MUST keep backend build, lint, format and test configuration inside `backend/` and scope it to that application. The independent `frontend/` project and provisional root model files must not enter backend compilation accidentally.
+- SHOULD retain generated tooling that fits the chosen Nest version, then define reproducible scripts and `backend/package-lock.json`. Tool names and defaults can change across Nest releases; do not assume every generator uses the same lint or test runner.
 
 ## Testing and completion criteria
 
@@ -203,7 +203,7 @@ The table distinguishes existing direction from decisions still needed. Recommen
 | Decision | What must be recorded |
 | --- | --- |
 | Framework and HTTP adapter | NestJS selected; exact supported version and Express or Fastify choice still needed |
-| Application location and tooling | Backend at repository root beside `frontend/`; record Node/npm versions, module system, compiler/lint/test boundaries |
+| Application location and tooling | Backend inside `backend/`, beside `frontend/`; keep package/configuration/source/tests within that directory and record supported tooling versions |
 | Database and data library | PostgreSQL 17 development service exists; ORM/query builder and migration workflow still needed |
 | Tenancy storage | Shared database with tenant IDs is the product direction; record constraints and any additional RLS decision |
 | Authentication | Stack Auth is used by the frontend; backend verification, domain mappings, lifecycle ownership, and revocation policy still needed |

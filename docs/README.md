@@ -1,6 +1,6 @@
 # TenantFlow documentation
 
-Reviewed 18 October 2026. Backend work is documentation and design only; the developer will implement NestJS at the repository root, alongside `frontend/`.
+Reviewed 18 October 2026. Backend work is documentation and design only; the developer will implement NestJS inside `backend/`, alongside `frontend/`. The first setup target is a running application with `GET /health-check` returning HTTP 200.
 
 ## Where to start
 
@@ -17,7 +17,7 @@ Reviewed 18 October 2026. Backend work is documentation and design only; the dev
 | `requirements/` | [Backend Requirements](requirements/BACKEND_REQUIREMENTS.md) | Backend constraints, provisional model findings, unresolved design choices |
 | `architecture/` | [Backend Conventions](architecture/BACKEND_CONVENTIONS.md) | Responsibilities, Nest request lifecycle diagram, security/data conventions, review agreement |
 | `setup/` | [Start Here](setup/START_HERE.md) | Commands for the existing checkout and onboarding order |
-| `setup/` | [NestJS Backend Setup](setup/NESTJS_BACKEND_SETUP.md) | Proposed root backend structure, implementation steps, review checkpoints |
+| `setup/` | [NestJS Backend Setup](setup/NESTJS_BACKEND_SETUP.md) | Minimum app in `backend/`, feature/controller/service folders, validated configuration, `/health-check` verification |
 | `setup/` | [Environment and Ignore Rules](setup/ENV_AND_GITIGNORE_SETUP.md) | Actual environment consumers, secret handling, build/runtime boundaries |
 | `setup/` | [PostgreSQL Setup](setup/POSTGRESQL_SETUP.md) | Development database operation and persistent data |
 | `planning/` | [Implementation Roadmap](planning/ROADMAP.md) | Current milestone status and sequencing |
