@@ -2,6 +2,8 @@
 
 Created 22 October 2026. Temporary working tracker for the first application-owned authentication slice. **Current step: 1 — define the contract.** No authentication, ORM integration or migrations have been implemented by this plan.
 
+**Stack accepted 23 October 2026:** [ADR 0001](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) selects TypeORM repositories/Data Mapper with PostgreSQL, reviewed migrations, application-owned database sessions, Argon2id and the supporting Nest tooling. The earlier Prisma command outline is superseded. Detailed contract values and package/runtime compatibility still need review; implementation has not started.
+
 [Documentation index](README.md) · [Roadmap](planning/ROADMAP.md#current-priorities-and-learning-preferences) · [Backend requirements](requirements/BACKEND_REQUIREMENTS.md#current-identity-and-database-options) · [Validation register](planning/VALIDATION.md#open-follow-ups)
 
 ## Confirmed direction and remaining choices
@@ -10,7 +12,7 @@ Created 22 October 2026. Temporary working tracker for the first application-own
 | --- | --- | --- |
 | Ownership | TenantFlow owns credentials, authentication and sessions. Stack Auth is inherited template code intended for later removal. | Replacement frontend integration and account migration, if actual accounts/data need preserving. |
 | Authentication | Session-based authentication. | Opaque credential format/storage, browser transport, expiry, renewal, revocation and CSRF details below. JWT access/refresh tokens are not the selected starting design. |
-| Persistence | PostgreSQL with an ORM, to gain practical ORM experience. | ORM/package versions, migration workflow and schema mappings. Prisma, TypeORM and Drizzle may be evaluated in Step 2; none is selected or installed. |
+| Persistence | PostgreSQL with TypeORM repositories/Data Mapper and reviewed TypeORM migrations. | Compatible released versions, ESM CLI wiring, schema mappings and execution checks; no ORM is installed. |
 | Hosting | Compare effective cost, capability and maintenance across suitable providers. Cloudflare is a candidate, not a restriction. | API/frontend/database/email hosting. Compare the relevant services from providers such as Cloudflare, Vercel and Supabase; do not assume each offers equivalent runtime/database products. |
 | First feature | Registration, login, authenticated caller read and current-session logout. | Exact contract must pass Step 1 review. Full SRS account lifecycle follows this initial slice. |
 
@@ -35,7 +37,7 @@ The checkout was on `dev` when this tracker was prepared, with earlier documenta
 | Step | Status | Deliverable / completion evidence |
 | --- | --- | --- |
 | 1. Define the auth contract | CURRENT — awaiting developer decisions | Complete the worksheet below. Required outcomes, proposed API, state transitions, data invariants and security/failure checks agree. No unresolved choice changes the initial schema or browser trust boundary. |
-| 2. Select the ORM and migration workflow | NOT STARTED | Choose one ORM with versions compatible with the existing Node/ESM/Nest/testing setup; prove migration and transaction behavior on an isolated PostgreSQL database. Keep reviewed migration SQL and tests alongside the backend. |
+| 2. Validate TypeORM integration and migration workflow | ARCHITECTURE ACCEPTED — implementation not started | Select compatible released TypeORM/adapter/driver versions for Node/ESM/Nest/testing; wire runtime and standalone CLI configuration and prove migration/transaction behavior on isolated PostgreSQL. Use the accepted repository/Data Mapper style. |
 | 3. Establish persistence | NOT STARTED | Implement the agreed minimal schema, migration apply/status workflow, connection/shutdown handling and database readiness. Prove constraints and rollback without resetting the existing development volume. |
 | 4. Implement the initial auth slice | NOT STARTED | Add registration, password verification, session creation/resolution and current-session logout. Verify the real Nest request pipeline and PostgreSQL behavior. Include boundary validation, safe responses, CSRF and abuse controls with their consumers. |
 | 5. Verify browser behavior and failure cases | NOT STARTED | Confirm cookie issuance/sending/clearing, origin/CSRF rejection, expired/revoked sessions, concurrent registration, hash secrecy and transaction rollback. Reuse relevant backend checks and add meaningful CI coverage. A test client alone does not prove browser cookie policy. |
@@ -119,7 +121,7 @@ All routes/statuses below are proposals, not existing endpoints. Select an API p
 - [ ] Define registration/login abuse limits and how the API determines client IP behind a future trusted proxy. Exact thresholds/store/package are a follow-up implementation choice before exposing the routes publicly, not an implicit Redis requirement.
 - [ ] List acceptance cases: duplicate/concurrent registration; invalid password; account states; safe response fields; cookie settings; session expiry/renewal/revocation; repeated logout; failed persistence; CSRF rejection; missing/invalid input; log redaction. Add later browser and real-PostgreSQL checks to the relevant step rather than treating this list as tests already run.
 
-**Step 1 exit:** a reviewed contract, state-flow sketch, minimal entity sketch and acceptance matrix with every schema/security-affecting choice resolved. Record chosen values here and preserve durable decisions in backend requirements. Then select the ORM in Step 2. Generators and installation commands are deliberately not part of Step 1.
+**Step 1 exit:** a reviewed contract, state-flow sketch, minimal entity sketch and acceptance matrix with every schema/security-affecting choice resolved. Record chosen values here and preserve durable decisions in backend requirements. Then validate the selected TypeORM integration in Step 2. Generators and installation commands are deliberately not part of Step 1.
 
 ## Follow-up boundaries and handoff
 
