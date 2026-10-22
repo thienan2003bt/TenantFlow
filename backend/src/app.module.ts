@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { AppController } from "./app.controller.js";
 import { AppService } from "./app.service.js";
 import { validateEnvironment } from "./config/env.validation.js";
+import { DatabaseModule } from "./database/database.module.js";
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { validateEnvironment } from "./config/env.validation.js";
       envFilePath: ".env",
       validate: validateEnvironment,
     }),
+    DatabaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
