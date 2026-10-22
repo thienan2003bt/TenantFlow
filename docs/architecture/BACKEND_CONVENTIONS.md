@@ -8,7 +8,7 @@ Version 1.4 · Reviewed 18 October 2026 · NestJS backend · Engineering baselin
 
 Use this guide when designing, implementing, reviewing, or modifying TenantFlow backend functionality. It defines shared conventions for human developers and AI agents so that request handling, business behavior, tenant isolation, and infrastructure integration remain consistent.
 
-This revision has been checked against the repository's requirements and NestJS 12 application. Startup and HTTP health smoke have been verified; the [backend README](../../backend/README.md) records current commands, behavior and test coverage. PostgreSQL 17 is configured for development, and the product direction is shared tables with tenant-scoped access. The existing frontend uses Stack Auth. ORM/migrations, API credential verification, provider-to-domain mappings, and deployment details remain decisions to record before implementing them. The [SRS](../requirements/TenantFlow-SRS.md) owns product rules and release boundaries; this guide owns engineering conventions.
+This revision has been checked against the repository's requirements and NestJS 12 application. Startup and HTTP health smoke have been verified; the [backend README](../../backend/README.md) records current commands, behavior and test coverage. PostgreSQL 17 is configured for development, and the product direction is shared tables with tenant-scoped access. The user's 22 October 2026 direction confirms application-owned session authentication and PostgreSQL with an ORM. Template Stack Auth remains until later frontend replacement. Detailed session contract, ORM/migrations and provider-neutral hosting selection remain open; see [backend design options](../requirements/BACKEND_REQUIREMENTS.md#current-identity-and-database-options). The [SRS](../requirements/TenantFlow-SRS.md) owns product rules and release boundaries; this guide owns engineering conventions.
 
 **Authoring agreement:** You write backend behavior. The assistant provides researched instructions, reviews, explanations and feedback, and may maintain documentation. Explicitly requested tooling/configuration/import changes authorize that scope and its verification. Review findings remain for you to implement unless you request fixes. Follow [backend guidance instructions](../../backend/AGENTS.md) for source verification and step-by-step objectives/actions/checks.
 
@@ -125,7 +125,7 @@ Authentication establishes the actor. Tenant authorization establishes whether t
 
 Guards MAY reject unauthorized HTTP requests early, but data access MUST retain the required isolation predicates. Business invariants and isolation must also hold when application behavior is invoked by workers or scheduled tasks.
 
-Credential verification MUST follow the chosen provider's supported protocol, including signature or session validity, expiry, intended audience/issuer where applicable, and the agreed revocation policy. Never treat decoding a token as verification. If authentication uses browser cookies, define CSRF protection, cookie attributes, and credentialed CORS together. A Nest authentication tutorial or package does not change Stack Auth ownership by itself.
+Credential verification MUST follow the selected application-owned session/token contract, including session validity or verified signatures, expiry, intended audience/issuer where applicable, and the agreed revocation policy. Use maintained cryptographic primitives/libraries. Never treat decoding a token as verification. If authentication uses browser cookies, define CSRF protection, cookie attributes, and credentialed CORS together. The user has selected application-owned identity; Stack Auth remains only in the frontend template until replacement is implemented.
 
 ## Persistence and reliable side effects
 
@@ -204,11 +204,11 @@ The table distinguishes existing direction from decisions still needed. Recommen
 
 | Decision | What must be recorded |
 | --- | --- |
-| Framework and HTTP adapter | NestJS selected; exact supported version and Express or Fastify choice still needed |
+| Framework and HTTP adapter | Nest 12/Express is implemented; verify cloud-runtime compatibility before proposing a runtime or framework change |
 | Application location and tooling | Backend inside `backend/`, beside `frontend/`; keep package/configuration/source/tests within that directory and record supported tooling versions |
-| Database and data library | PostgreSQL 17 development service exists; ORM/query builder and migration workflow still needed |
+| Database and data library | PostgreSQL with an ORM is selected; the PostgreSQL 17 development service exists; ORM/version and migration workflow remain open |
 | Tenancy storage | Shared database with tenant IDs is the product direction; record constraints and any additional RLS decision |
-| Authentication | Stack Auth is used by the frontend; backend verification, domain mappings, lifecycle ownership, and revocation policy still needed |
+| Authentication | Application-owned session auth selected; detailed password/session/recovery and revocation contract remains open; template Stack Auth replacement is later work |
 | Authorization | Membership, permissions, resource policy, and administrative access |
 | API contracts | Versioning, response shape, error schema, pagination conventions |
 | Background execution | Whether a durable queue is needed and its operational ownership |

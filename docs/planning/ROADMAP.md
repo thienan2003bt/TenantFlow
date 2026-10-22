@@ -4,7 +4,7 @@ This roadmap tracks the implementation of TenantFlow from architecture decisions
 
 **Authoring and location (2026-10-18):** The developer implements NestJS inside `backend/`, beside `frontend/`; the assistant provides researched guidance/reviews and explicitly requested tooling changes. The minimal application has passed compiled/watch startup and HTTP health smoke. The [backend README](../../backend/README.md) owns current commands, configuration and test coverage. This does not complete Milestone 1's broader database, API documentation or frontend-integration criteria.
 
-**Restart baseline (2026-10-17):** The backend has requirements and design references only; NestJS implementation has not started. A Next.js/Stack Auth frontend scaffold, PostgreSQL Compose configuration, and CI definitions exist. Their presence does not satisfy the API, migration, isolation, or end-to-end exit criteria below. Use [backend requirements](../requirements/BACKEND_REQUIREMENTS.md) for open decisions and [validation evidence and follow-ups](VALIDATION.md#recorded-foundation-checks) for retained verification evidence. Release dates in version planning are original estimates awaiting review.
+**Historical restart baseline (2026-10-17):** Before the minimum NestJS setup, the backend had requirements and design references only. A Next.js/Stack Auth frontend scaffold, PostgreSQL Compose configuration, and CI definitions were retained. Their presence does not satisfy the API, migration, isolation, or end-to-end exit criteria below. Use [backend requirements](../requirements/BACKEND_REQUIREMENTS.md) for open decisions and [validation evidence and follow-ups](VALIDATION.md#recorded-foundation-checks) for retained verification evidence. Release dates in version planning are original estimates awaiting review.
 
 The [canonical SRS release boundaries](../requirements/TenantFlow-SRS.md#24-canonical-release-boundaries) govern MVP versus future scope. The [version plan](releases/1.0.0/VERSION-PLANNING.md) groups release work; its archived original schedule is retained for history only.
 
@@ -16,6 +16,28 @@ Status legend:
 - `BLOCKED` — waiting on a decision or dependency
 - `DONE` — completed and verified
 - `DEFERRED` — intentionally postponed
+
+---
+
+## Current priorities and learning preferences
+
+**User direction, 22 October 2026:** This is a portfolio project for comprehensive backend learning. Application-owned session auth, PostgreSQL with an ORM and the first register/login/caller/logout slice are confirmed. Stack Auth comes from the frontend template and is intended for later removal; removal has not happened. Compare effective cost/capabilities across suitable providers; Cloudflare is a candidate rather than a restriction. ORM, detailed session contract and hosting remain open. Preserve the existing frontend/license and PostgreSQL volume during planning.
+
+The user selected **identity design and database choice first**, then confirmed sessions/PostgreSQL/ORM use. The [temporary auth development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns the active slice checklist and current Step 1 worksheet; durable choices and tradeoffs live in [backend requirements](../requirements/BACKEND_REQUIREMENTS.md#current-identity-and-database-options). Use the table below when asked what to do next; compare actual completion evidence with these preferences instead of repeating the minimum setup or recommending provider integration by default.
+
+| Order | Task and state | Concrete scope / next checkpoint |
+| --- | --- | --- |
+| 1 | Session-auth contract — current Step 1; implementation not started | Complete the temporary plan's account rules, credential/cookie/CSRF contract, expiry/renewal/revocation, minimal data sketch and HTTP acceptance matrix. Session auth is confirmed; detailed values still need review. |
+| 2 | ORM/migration selection — next after the contract | PostgreSQL and ORM use are confirmed. Select one ORM/version/migration workflow compatible with the backend and test constraints/transactions. Hosting remains a separate cost/capability comparison; do not reopen D1 selection by default. |
+| 3 | API foundation and backend CI — queued; can proceed independently where contracts allow | Complete env example and configuration/health coverage, integer port validation, explicit listener/CORS policy, request validation, response/error conventions, OpenAPI and redacted logging. Add backend-triggered locked install/type/lint/format/unit/e2e/hook/build CI checks and standardize runtime versions. A hosted result must be observed after the developer publishes it. |
+| 4 | Persistence and first local-auth slice — queued after 1-2 | Add the chosen provider, migration checks on an isolated database, readiness, then registration/login, session verification and `GET /me` (proposed). Test rollback, concurrent duplicate registration, expired/revoked sessions and cleanup. Add verification/reset/change/logout-all flows to complete SRS account lifecycle. |
+| 5 | Organization management and tenant isolation — queued after authenticated persistence | Create organization plus initial owner membership/permissions atomically; list/read/rename authorized organizations; integrate frontend switching after template-auth replacement. Test two tenants, different memberships, forged tenant IDs, permission denial and baseline audit evidence. |
+| 6 | Invitations and full membership/RBAC management — queued after 5 | Invitation delivery/expiry/revocation/single-use acceptance; member removal/role assignment; prevent cross-tenant assignments and loss of the last owner. Verify permission and session/membership-revocation policy. |
+| Later | Remaining MVP sequence — retained | Plans/subscriptions and test-mode billing; customers/contacts; projects/tasks; attachments; in-app notifications; audit viewer and reporting. Add required audit, validation and authorization safeguards with each earlier feature; later milestones expand their coverage. |
+
+Do not introduce queues, distributed cache, live push, multiple API instances or a managed load balancer merely to use available products. Evaluate them when a feature or operational exercise needs them. R2 is a later file-storage candidate. Hosted API compute, frontend auth replacement/deployment and transactional email delivery remain explicit follow-ups, not verified free-tier capabilities.
+
+**Next review checkpoint:** Complete Step 1 of the temporary session-auth plan, then select the ORM/migration workflow before implementing the first schema. Detailed proposals still need acceptance; do not install packages, run generators, change the framework, remove Stack Auth or migrate data as a consequence of this plan. Record actual checks and unresolved feasibility questions in [Validation and Follow-ups](VALIDATION.md).
 
 ---
 
@@ -46,7 +68,7 @@ Define the product boundaries before writing the first table or endpoint.
 - free-tier-conscious deployment strategy
 - Stripe test-mode billing strategy
 
-NestJS is the selected backend direction. Identity provider ownership, user/team-to-domain mapping, persistence, and runtime/dependency choices still need decisions; Stack Auth is already used by the frontend.
+NestJS is the selected backend direction. Application-owned session auth and PostgreSQL with an ORM are confirmed; detailed credential/session design, ORM/migrations and hosting remain open. Stack Auth is still present only as the inherited frontend integration pending replacement. See the current priorities above.
 
 ---
 
@@ -91,7 +113,7 @@ Implement secure account and session management.
 - email verification
 - login
 - logout
-- refresh token flow
+- session renewal (refresh-token flow if that design is selected)
 - password reset flow
 - password change flow
 - session revocation
@@ -99,15 +121,15 @@ Implement secure account and session management.
 
 ### Notes
 
-- define identity ownership and backend credential verification using the existing frontend Stack Auth integration as context; do not assume a second identity store is required
-- decide the API credential/token contract with the identity provider before implementation; do not introduce a parallel token issuer by default
-- rotate refresh tokens rather than reusing them
+- implement application-owned identity and account lifecycle, per the user's 22 October 2026 direction; template Stack Auth removal/replacement is separate frontend work
+- session-based authentication is selected; finalize opaque credential, cookie/CSRF, expiry/renewal and revocation details before implementation
+- access JWT/refresh-token architecture is not the initial design; preserve SRS session renewal/revocation outcomes in the selected session contract
 
 ### Exit criteria
 
 - user can register and sign in
 - protected endpoints reject unauthenticated callers
-- token refresh works safely
+- session renewal works safely under the selected session/token contract
 
 ---
 
