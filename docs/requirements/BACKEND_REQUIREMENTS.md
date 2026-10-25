@@ -91,7 +91,7 @@ Accepted on 25 October 2026. These policies define the initial slice; authentica
 | HTTP contract | POST `/auth/register`: generic 202, invalid input 400. POST `/auth/login`: 200 with safe user fields and cookie, generic credential/eligibility failure 401. GET `/auth/me`: 200 with approved caller fields, invalid/missing/expired/revoked session 401. POST `/auth/logout`: 204 with revocation/clearing, subject to CSRF and persistence-error rules. These are planned routes. |
 | Acceptance matrix | Cover canonical/concurrent duplicates, invalid input/password, all account states and status changes, rollback, secret-free responses/logs, cookie issuance/sending/clearing, expiry/renewal, independent sessions, replay/concurrent logout, CSRF/origin denial, throttling and database failure. Future tests must use real PostgreSQL and a browser where their behavior is the subject. |
 
-The [Step 1 worksheet](../SESSION_AUTH_DEVELOPMENT_PLAN.md#remaining-step-1-close-out-decisions) owns the remaining proposed defaults. Settle those choices before Step 2; accepted policies above remain in force.
+The [Step 1 worksheet](../SESSION_AUTH_DEVELOPMENT_PLAN.md#remaining-step-1-close-out-decisions) owns the remaining proposed defaults. Settle those choices before auth mappings/handlers; independent database connection checks can proceed meanwhile. Accepted policies above remain in force.
 
 Reference: [NIST password guidance](https://pages.nist.gov/800-63-4/sp800-63b.html). Project timeout values and endpoint names are accepted choices rather than standards-mandated values.
 

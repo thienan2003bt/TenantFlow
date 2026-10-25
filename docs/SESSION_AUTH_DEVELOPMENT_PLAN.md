@@ -1,6 +1,6 @@
 # Session authentication development plan
 
-**Current step: 1 — accepted baseline; remaining decisions pending.** Finish Step 1 before starting Step 2, as requested by the developer. Working branch: `feat/session-auth`.
+**Current checkpoint: Step 2 — PostgreSQL connectivity.** Docker/Compose/WSL readiness is user-reported. Remaining Step 1 decisions stay open and must be settled before auth mappings/handlers. Working branch: `feat/session-auth`.
 
 [Documentation index](README.md) · [Roadmap](planning/ROADMAP.md#current-priorities-and-learning-preferences) · [Accepted contract](requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) · [Validation register](planning/VALIDATION.md#open-follow-ups)
 
@@ -16,8 +16,8 @@ Keep implementation in `backend/`, preserve the frontend/assets/license and Post
 
 | Step | State | Completion evidence |
 | --- | --- | --- |
-| 1. Define the auth contract | CURRENT — baseline accepted; remaining decisions pending | Resolve the table below, then confirm the state flow, minimal entity sketch and acceptance matrix agree. No unresolved choice may change the initial schema or browser trust boundary. |
-| 2. Validate TypeORM integration and migration workflow | Configuration implemented; runtime verification pending | Runtime/CLI wiring and static/loading checks are recorded in the validation register. Later, prove connection, shutdown and migration/transaction behavior against isolated PostgreSQL. |
+| 1. Define the auth contract | Baseline accepted; remaining decisions pending | Resolve the table below before auth mappings/handlers, then confirm the state flow, minimal entity sketch and acceptance matrix agree. No unresolved choice may change the initial schema or browser trust boundary. |
+| 2. Validate TypeORM integration and migration workflow | CURRENT — connection checkpoint | Verify container health, SQL execution and Windows client access first, then Nest/compiled DataSource connection. Runtime/CLI wiring and earlier static/loading results are recorded in the validation register. Migration/transaction checks follow with isolated PostgreSQL and reviewed mappings. |
 | 3. Establish persistence | NOT STARTED | Implement the agreed entities and reviewed migration; prove uniqueness, foreign keys, rollback and database readiness without resetting the development volume. |
 | 4. Implement the initial auth slice | NOT STARTED | Implement registration, password verification, sessions, caller read and logout with boundary validation, safe responses, CSRF and abuse controls. Verify the Nest request pipeline and real PostgreSQL. |
 | 5. Verify browser behavior and failure cases | NOT STARTED | Verify cookie issuance/sending/clearing, origin/CSRF denial, expiry/revocation, concurrent registration/logout, hash secrecy and rollback. Add meaningful CI coverage. |
@@ -47,7 +47,7 @@ The accepted topology uses credentialed local origins and a future single HTTPS 
 
 The accepted contract defines the user/credential/session concepts and register/login/me/logout routes. Settle exact persistence ownership, response fields/errors and abuse limits below. Keep global identity separate from tenant memberships and permission checks; defer verification/reset-token tables until their consuming flows are designed.
 
-**Step 1 exit check:** walk through canonical/concurrent duplicate registration, invalid input/password, every account state and state change, transaction rollback, independent sessions, idle/absolute expiry, renewal overlapping logout, replay, persistence failure, CSRF/origin denial, throttling and secret-free responses/logs. This is a future test matrix, not executed validation. Record settled policies in the owning requirements document before moving to Step 2.
+**Step 1 exit check:** walk through canonical/concurrent duplicate registration, invalid input/password, every account state and state change, transaction rollback, independent sessions, idle/absolute expiry, renewal overlapping logout, replay, persistence failure, CSRF/origin denial, throttling and secret-free responses/logs. This is a future test matrix, not executed validation. Record settled policies in the owning requirements document before auth mappings/handlers; independent connection checks can proceed meanwhile.
 
 ### Remaining Step 1 close-out decisions
 

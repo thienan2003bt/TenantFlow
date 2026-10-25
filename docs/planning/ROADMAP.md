@@ -21,7 +21,7 @@ Status legend:
 
 This portfolio project prioritizes comprehensive backend learning through application-owned auth and ORM experience. [ADR 0001](../architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) selects TypeORM repositories/Data Mapper, reviewed migrations, PostgreSQL-backed opaque sessions, Argon2id and the supporting Nest stack. Hosting remains open; compare suitable providers by cost, capability and maintenance. Preserve the frontend/license and PostgreSQL volume.
 
-The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns the account/password/session/browser/API policies, including password length 6-128. The [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md#remaining-step-1-close-out-decisions) owns remaining Step 1 proposals. **Finish Step 1 before proceeding to Step 2**, as requested by the developer. Stack Auth replacement remains later frontend work.
+The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns the account/password/session/browser/API policies, including password length 6-128. The [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md#remaining-step-1-close-out-decisions) owns remaining Step 1 proposals. The developer has moved to Step 2's independent connection checks; settle schema/security-affecting Step 1 choices before auth mappings and handlers. Build confidence through small checkpoints rather than requiring every milestone criterion at once. Stack Auth replacement remains later frontend work.
 
 | Order | Task and state | Concrete scope / next checkpoint |
 | --- | --- | --- |
@@ -35,7 +35,7 @@ The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial
 
 Do not introduce queues, distributed cache, live push, multiple API instances or a managed load balancer merely to use available products. Evaluate them when a feature or operational exercise needs them. R2 is a later file-storage candidate. Hosted API compute, frontend auth replacement/deployment and transactional email delivery remain explicit follow-ups, not verified free-tier capabilities.
 
-**Next review checkpoint:** Close the remaining Step 1 details. Step 2 follows later: verify the wired database configuration/DataSource against local PostgreSQL, then review the three initial entities and migration before auth handlers. Record actual checks in [Validation and Follow-ups](VALIDATION.md); the developer implements and runs generators/migrations.
+**Next review checkpoint:** Verify PostgreSQL container health, SQL execution and a Windows client connection using the [PostgreSQL guide](../setup/POSTGRESQL_SETUP.md). Docker/Compose/WSL readiness is user-reported; PostgreSQL checks remain pending. The next increment is the Nest/compiled DataSource connection. Later, settle remaining Step 1 details and review entities/migration before auth handlers. Record actual results in [Validation and Follow-ups](VALIDATION.md); the developer implements and runs generators/migrations.
 
 ---
 

@@ -15,7 +15,9 @@ This register owns observed verification results, their limits and open checks. 
 | Compiled CLI loading | The installed TypeORM loader loaded the compiled DataSource with synthetic database-only settings; it remained uninitialized. | No database connection or feature migration was executed. |
 | Application startup | Compiled/watch startup and HTTP health smoke have earlier recorded evidence. | Real application/CLI PostgreSQL startup and connection cleanup remain unverified. Docker was unavailable and no local listener was reachable on port 5432 during the database review. |
 
-Next database check, after Step 1 closes: prepare Docker Desktop/PostgreSQL, confirm backend environment settings, and verify compiled startup, migration status and shutdown using the backend README. Configuration tests do not substitute for that check.
+Next database checks: verify PostgreSQL container health, SQL execution and Windows client access using the [PostgreSQL guide](../setup/POSTGRESQL_SETUP.md), then confirm backend environment settings and verify compiled startup, migration status and shutdown using the backend README. Configuration tests do not substitute for these checks.
+
+On 25 October 2026 the developer reported successful Docker Client/Server, Compose and Linux-engine checks after setup. This is user-reported readiness, not an agent-executed Docker check. PostgreSQL startup, SQL/client access and the Nest connection remain pending; pgAdmin is an optional local client.
 
 ### Frontend and Compose — 17 October 2026
 
@@ -32,7 +34,7 @@ Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared thro
 
 ## Open follow-ups
 
-These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns auth policies, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns the active slice and remaining proposals, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. Step 1 remains current; the developer requested Step 2 later.
+These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns auth policies, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns the active slice and remaining proposals, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. Step 2's independent connection checkpoint is current; remaining Step 1 choices are still pending before auth mappings/handlers.
 
 | ID | Work still needed | Completion evidence / owning document |
 | --- | --- | --- |
@@ -55,5 +57,6 @@ Historical documentation-only checks are retained below. Their counts describe t
 | 23 October 2026 stack decision | 18 Markdown documents, 147 local links and 30 anchors passed; whitespace/final-newline checks passed. |
 | 25 October 2026 contract acceptance | Four changed documents, 48 local links and 21 anchors passed; whitespace/final-newline checks passed. Accepted policies and remaining proposals were recorded separately. |
 | 25 October 2026 documentation cleanup | All 150 local links and 33 anchors across 18 tracked Markdown documents resolved, including tracked paths hidden by ignore rules. Whitespace/final-newline checks passed for five changed documents, and `git diff --check` passed. Stale instructions and duplicate draft wording were removed; accepted policies, pending proposals and useful dated evidence were preserved. |
+| 25 October 2026 incremental PostgreSQL guidance | All 153 local links and 33 anchors across 18 tracked Markdown documents resolved; whitespace/final-newline checks passed for six changed documents, and `git diff --check` passed. Added the gradual-checkpoint rule and pgAdmin/connection instructions; recorded Docker readiness as user-reported. PostgreSQL/pgAdmin/Nest runtime checks were not executed. |
 
 No application tests, Docker runtime, database migrations, auth flows or browser checks were run for these documentation updates. Keep future runtime evidence attached to its actual command/environment and observed outcome.
