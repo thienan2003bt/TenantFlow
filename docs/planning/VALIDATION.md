@@ -11,13 +11,29 @@ This register owns observed verification results, their limits and open checks. 
 | Check | Recorded result | Boundary |
 | --- | --- | --- |
 | Static/build checks | Typecheck, ESLint, formatting and Nest build passed. | Does not establish real database or auth behavior. |
-| Unit and HTTP tests | 14 unit tests and one HTTP smoke test passed. Current source includes configuration/database validation and Hello World tests. | The HTTP suite stubs the DataSource and checks GET /; it does not cover health HTTP behavior, PostgreSQL or auth. |
+| Unit and HTTP tests | 14 unit tests and one HTTP smoke test passed, covering configuration/database validation and Hello World. | The HTTP suite stubs the DataSource and checks GET /; it does not cover health HTTP behavior, PostgreSQL or auth. |
 | Compiled CLI loading | The installed TypeORM loader loaded the compiled DataSource with synthetic database-only settings; it remained uninitialized. | No database connection or feature migration was executed. |
 | Application startup | Compiled/watch startup and HTTP health smoke have earlier recorded evidence. | Real application/CLI PostgreSQL startup and connection cleanup remain unverified. Docker was unavailable and no local listener was reachable on port 5432 during the database review. |
 
 Next database checks: verify PostgreSQL container health, SQL execution and Windows client access using the [PostgreSQL guide](../setup/POSTGRESQL_SETUP.md), then confirm backend environment settings and verify compiled startup, migration status and shutdown using the backend README. Configuration tests do not substitute for these checks.
 
 On 25 October 2026 the developer reported successful Docker Client/Server, Compose and Linux-engine checks after setup. This is user-reported readiness, not an agent-executed Docker check. PostgreSQL startup, SQL/client access and the Nest connection remain pending; pgAdmin is an optional local client.
+
+### Password service — 25 October 2026
+
+The developer implemented `AuthModule` and `PasswordService` and installed `argon2`. The requested testing work replaced the generated construction-only test with seven real-Argon2 cases and added two injected-library-failure cases. The service implementation was left unchanged during review.
+
+| Check | Observed result | Boundary |
+| --- | --- | --- |
+| Typecheck and ESLint | Passed after adding the tests. | These do not establish account/session behavior. |
+| Unit tests with V8 coverage | All 23 tests passed. Password cases cover encoded algorithm/work factors, correct/incorrect passwords, independent salts, spaces, Unicode, persisted work factors, malformed hashes and preserved library errors. | Valid hashing/verification cases use real Argon2; the two library-failure cases use isolated mocks. |
+| Password-service coverage | Coverage JSON records all 11 statements and three functions hit; the scoped report has 100% line/statement/function coverage. | There are zero instrumented branches in this service. Coverage does not prove security or full auth behavior. Reports are generated under ignored `backend/coverage/`. |
+| HTTP smoke | One test passed. | The DataSource remains stubbed; this checks app/module assembly and GET /, not PostgreSQL or auth endpoints. |
+| Hook-runner tests | Seven tests passed. | Runner path/failure behavior only; no Git index/configuration changes or actual commit. |
+| Nest build and compiled Node ESM smoke | Build passed; importing the compiled service, hashing with real Argon2 and verifying match/mismatch passed. | Service execution only; this does not start the database-dependent Nest application. |
+| Formatting | `npm.cmd run format:check` failed on `src/auth/password.service.ts`. The test files are formatted. | Open developer action: format the service and rerun the formatting check. No automatic service fix was made. |
+
+The current local hashing profile is Argon2id, 64 MiB, two iterations and parallelism one. Deployment-runtime benchmarking, registration/credential persistence, browser/session behavior and real database integration remain later checkpoints.
 
 ### Frontend and Compose — 17 October 2026
 
@@ -34,12 +50,12 @@ Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared thro
 
 ## Open follow-ups
 
-These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns auth policies, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns the active slice and remaining proposals, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. Step 2's independent connection checkpoint is current; remaining Step 1 choices are still pending before auth mappings/handlers.
+These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns auth policies, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns the active slice and remaining proposals, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. The password-service increment is current, with formatting still open. Database checks and remaining Step 1 choices stay visible before auth mappings/handlers.
 
 | ID | Work still needed | Completion evidence / owning document |
 | --- | --- | --- |
 | F-01 | Replace inherited frontend Stack Auth with TenantFlow account/session and organization flows. | After backend contracts exist, verify registration/login/logout, recovery/account settings and authorized organization switching while preserving template assets/license. Status: queued frontend transition. |
-| F-02 | Complete application-owned auth design and account lifecycle. | Settle the [remaining Step 1 proposals](../SESSION_AUTH_DEVELOPMENT_PLAN.md#remaining-step-1-close-out-decisions); preserve the [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract). Hashing feasibility, auth/browser tests and the broader verification/recovery lifecycle remain unfinished. Status: baseline accepted, Step 1 close-out pending. |
+| F-02 | Complete application-owned auth design and account lifecycle. | Settle the [remaining Step 1 proposals](../SESSION_AUTH_DEVELOPMENT_PLAN.md#remaining-step-1-close-out-decisions); preserve the [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract). Local password hashing/tests pass; service formatting, deployment hashing parameters, auth/browser workflows and verification/recovery remain unfinished. Status: password primitive implemented, contract/workflows pending. |
 | F-03 | Review provisional model names, constraints, joins, deletion/timestamp policy and ERD/migration design. | Resolve the candidates in [backend requirements section 2](../requirements/BACKEND_REQUIREMENTS.md#2-data-integrity-and-lifecycle), including tenant safety and history retention. Status: open design. |
 | F-04 | Complete the NestJS foundation inside `backend/`. | Configuration validation/tests and TypeORM wiring exist. Add health HTTP coverage, database readiness, backend CI/container wiring and meaningful auth/isolation tests under the [roadmap](ROADMAP.md). Status: in progress. |
 | F-05 | Verify TypeORM/PostgreSQL behavior and select feasible hosting. | Prove real startup/shutdown, migrations, transactions, constraints, session concurrency and cleanup. Compare provider cost/capability and verify deployment compatibility while preserving local PostgreSQL data. Status: configuration implemented, runtime integration pending. |
@@ -58,5 +74,6 @@ Historical documentation-only checks are retained below. Their counts describe t
 | 25 October 2026 contract acceptance | Four changed documents, 48 local links and 21 anchors passed; whitespace/final-newline checks passed. Accepted policies and remaining proposals were recorded separately. |
 | 25 October 2026 documentation cleanup | All 150 local links and 33 anchors across 18 tracked Markdown documents resolved, including tracked paths hidden by ignore rules. Whitespace/final-newline checks passed for five changed documents, and `git diff --check` passed. Stale instructions and duplicate draft wording were removed; accepted policies, pending proposals and useful dated evidence were preserved. |
 | 25 October 2026 incremental PostgreSQL guidance | All 153 local links and 33 anchors across 18 tracked Markdown documents resolved; whitespace/final-newline checks passed for six changed documents, and `git diff --check` passed. Added the gradual-checkpoint rule and pgAdmin/connection instructions; recorded Docker readiness as user-reported. PostgreSQL/pgAdmin/Nest runtime checks were not executed. |
+| 25 October 2026 password-service documentation sync | All 153 local links and 33 anchors across 18 tracked Markdown documents resolved; whitespace/final-newline checks passed for five changed documents and two test files, and `git diff --check` passed. Runtime test results and the outstanding service formatting check are recorded separately above. |
 
 No application tests, Docker runtime, database migrations, auth flows or browser checks were run for these documentation updates. Keep future runtime evidence attached to its actual command/environment and observed outcome.

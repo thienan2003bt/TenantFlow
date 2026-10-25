@@ -1,6 +1,6 @@
 # Backend Requirements and Design Notes
 
-The NestJS application in `backend/` has configuration validation, HTTP liveness, TypeORM runtime wiring and a standalone migration DataSource. Domain entities, feature migrations and authentication are not implemented; real PostgreSQL behavior remains unverified. The frontend still uses the inherited Stack Auth integration pending replacement.
+The NestJS application in `backend/` has configuration validation, HTTP liveness, TypeORM runtime wiring, a standalone migration DataSource and a tested Argon2id password service. Domain entities, feature migrations and auth workflows are not implemented; agent-run real PostgreSQL checks remain unverified. The frontend still uses the inherited Stack Auth integration pending replacement.
 
 The developer implements the backend inside `backend/`, alongside `frontend/`. The [backend README](../../backend/README.md) documents current startup, configuration, health behavior and test coverage. Broader requirements below follow in later milestones. Use [engineering conventions](../architecture/BACKEND_CONVENTIONS.md) for responsibility and review rules; explicit tooling requests do not authorize automatically implementing review findings.
 
@@ -104,7 +104,7 @@ Reference: [NIST password guidance](https://pages.nist.gov/800-63-4/sp800-63b.ht
 | Identity ownership | Application-owned credentials and account lifecycle. | Implement and verify the accepted first slice, then the remaining SRS lifecycle. Replace template Stack Auth separately. |
 | Sessions | Opaque cookie credentials, PostgreSQL digest storage, a session service and a Nest guard. | Settle the remaining Step 1 defaults; implement expiry, renewal, revocation, browser protection and meaningful concurrency tests. |
 | Persistence | PostgreSQL, TypeORM repositories/Data Mapper, reviewed migrations, synchronization disabled. | Runtime/CLI configuration is wired and dependencies are installed. Verify real connections/shutdown, entity mappings, migration execution and transaction behavior. |
-| Password hashing | Argon2id through a maintained implementation. | Install with its consumer, benchmark parameters and verify target-runtime support. No hashing implementation is verified yet. |
+| Password hashing | Argon2id through `argon2`, behind `PasswordService`. | The current 64 MiB/two-iteration/parallelism-one implementation passed real hashing/verification tests and compiled Node execution locally. Resolve formatting; benchmark parameters on the deployment runtime before exposure. |
 | Supporting tools | Existing DTO validation/configuration/Vitest plus the ADR-selected Swagger, Helmet, throttling and built-in JSON logging. | Introduce missing integrations with their consumers; verify error contracts, redaction and abuse controls. |
 | Hosting | Compare suitable API/frontend/PostgreSQL/email providers by effective cost, capability and maintenance. | Verify runtime/hashing compatibility, deployment topology, delivery support, current prices and quotas before selection. No provider is selected. |
 

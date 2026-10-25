@@ -1,6 +1,6 @@
 # Session authentication development plan
 
-**Current checkpoint: Step 2 — PostgreSQL connectivity.** Docker/Compose/WSL readiness is user-reported. Remaining Step 1 decisions stay open and must be settled before auth mappings/handlers. Working branch: `feat/session-auth`.
+**Current checkpoint: password service review.** Argon2id hashing/verification and their tests are implemented; the service formatting check remains open. Remaining Step 1 decisions must be settled before auth mappings/handlers. Working branch: `feat/session-auth`.
 
 [Documentation index](README.md) · [Roadmap](planning/ROADMAP.md#current-priorities-and-learning-preferences) · [Accepted contract](requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) · [Validation register](planning/VALIDATION.md#open-follow-ups)
 
@@ -8,7 +8,7 @@
 
 The first slice covers registration, login, authenticated caller read and current-session logout. The developer accepted its baseline on 25 October 2026, including passwords of 6-128 Unicode code points. The [backend requirements](requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) own the accepted account, password, session, browser and HTTP policies; the table below owns the remaining proposals.
 
-[ADR 0001](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) selects Nest/Express, TypeORM repositories with PostgreSQL, reviewed migrations, opaque database sessions and Argon2id. Runtime database configuration and a compiled CLI DataSource exist. Auth entities, feature migrations and auth handlers do not exist; real PostgreSQL and browser behavior remain unverified.
+[ADR 0001](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) selects Nest/Express, TypeORM repositories with PostgreSQL, reviewed migrations, opaque database sessions and Argon2id. Runtime database configuration, a compiled CLI DataSource, `AuthModule` and `PasswordService` exist. Real Argon2 unit tests and compiled-service execution passed; see the validation register for scope and results. Auth entities, feature migrations and auth handlers do not exist; agent-run real PostgreSQL and browser checks remain unverified.
 
 Keep implementation in `backend/`, preserve the frontend/assets/license and PostgreSQL volume, and use the [backend README](../backend/README.md) for commands. The developer writes backend behavior and runs generators/migrations.
 
@@ -17,9 +17,9 @@ Keep implementation in `backend/`, preserve the frontend/assets/license and Post
 | Step | State | Completion evidence |
 | --- | --- | --- |
 | 1. Define the auth contract | Baseline accepted; remaining decisions pending | Resolve the table below before auth mappings/handlers, then confirm the state flow, minimal entity sketch and acceptance matrix agree. No unresolved choice may change the initial schema or browser trust boundary. |
-| 2. Validate TypeORM integration and migration workflow | CURRENT — connection checkpoint | Verify container health, SQL execution and Windows client access first, then Nest/compiled DataSource connection. Runtime/CLI wiring and earlier static/loading results are recorded in the validation register. Migration/transaction checks follow with isolated PostgreSQL and reviewed mappings. |
+| 2. Validate TypeORM integration and migration workflow | Runtime verification pending | Verify container health, SQL execution and Windows client access, then Nest/compiled DataSource connection. Runtime/CLI wiring and earlier static/loading results are recorded in the validation register. Migration/transaction checks follow with isolated PostgreSQL and reviewed mappings. |
 | 3. Establish persistence | NOT STARTED | Implement the agreed entities and reviewed migration; prove uniqueness, foreign keys, rollback and database readiness without resetting the development volume. |
-| 4. Implement the initial auth slice | NOT STARTED | Implement registration, password verification, sessions, caller read and logout with boundary validation, safe responses, CSRF and abuse controls. Verify the Nest request pipeline and real PostgreSQL. |
+| 4. Implement the initial auth slice | IN PROGRESS — password primitive | `PasswordService` and meaningful tests exist; resolve its formatting check to close this increment. Registration, persistence, sessions, caller read and logout remain unimplemented. Introduce boundary validation, safe responses, CSRF and abuse controls with those flows. |
 | 5. Verify browser behavior and failure cases | NOT STARTED | Verify cookie issuance/sending/clearing, origin/CSRF denial, expiry/revocation, concurrent registration/logout, hash secrecy and rollback. Add meaningful CI coverage. |
 | 6. Close this tracker | NOT STARTED | Preserve accepted decisions in requirements and evidence/follow-ups in the validation register; repair incoming links and remove this temporary file after the slice is complete. |
 

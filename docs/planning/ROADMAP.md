@@ -2,7 +2,7 @@
 
 This roadmap tracks the implementation of TenantFlow from architecture decisions to public deployment. The file is meant to stay current and should be updated whenever a milestone changes status.
 
-The developer implements NestJS in `backend/`, beside the independent `frontend/`. The [backend README](../../backend/README.md) owns commands and current runtime behavior; the [validation register](VALIDATION.md) owns recorded results and outstanding checks. Database wiring exists, while domain persistence, authentication and real local PostgreSQL verification remain unfinished.
+The developer implements NestJS in `backend/`, beside the independent `frontend/`. The [backend README](../../backend/README.md) owns commands and current runtime behavior; the [validation register](VALIDATION.md) owns recorded results and outstanding checks. Database wiring and a tested password service exist; domain persistence, auth workflows and agent-run real PostgreSQL verification remain unfinished.
 
 The [canonical SRS release boundaries](../requirements/TenantFlow-SRS.md#24-canonical-release-boundaries) govern MVP versus future scope. The [version plan](releases/1.0.0/VERSION-PLANNING.md) groups release work; its archived original schedule is retained for history only.
 
@@ -25,17 +25,17 @@ The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial
 
 | Order | Task and state | Concrete scope / next checkpoint |
 | --- | --- | --- |
-| 1 | Session-auth contract — baseline accepted; Step 1 close-out pending | Settle the worksheet's remaining identity/Unicode, blocklist/input, CSRF, persistence, renewal/retention and response/abuse-control defaults. Auth implementation has not started. |
+| 1 | Session-auth contract — baseline accepted; Step 1 close-out pending | Settle the worksheet's remaining identity/Unicode, blocklist/input, CSRF, persistence, renewal/retention and response/abuse-control defaults before auth mappings/handlers. Password hashing is independently implemented. |
 | 2 | TypeORM foundation — in progress | Runtime configuration/module and standalone migration DataSource are wired; local static, unit, HTTP smoke and compiled CLI-loading checks passed. Real PostgreSQL startup, initial entities and a reviewed migration remain the next checkpoint. Verify constraints, rollback and shutdown on isolated PostgreSQL. Hosting remains separate. |
 | 3 | API foundation and backend CI — queued; can proceed independently where contracts allow | Existing env validation, integer port checks and configuration tests are in place. Add health HTTP coverage, explicit listener/CORS policy, request validation, response/error conventions, OpenAPI and redacted logging. Add backend-triggered locked install/type/lint/format/unit/e2e/hook/build CI checks and standardize runtime versions. Observe hosted results after publication. |
-| 4 | Persistence and first local-auth slice — queued after 1-2 | Implement the initial entities and reviewed migration, isolated-database checks and readiness, then registration/login, session verification, `GET /auth/me` and logout. Test rollback, concurrent duplicate registration, expiry/revocation and cleanup. Add verification/reset/change/logout-all flows to complete SRS account lifecycle. |
+| 4 | First local-auth slice — password primitive implemented; workflows pending | Password hashing/verification and tests are present, with service formatting still open. Initial entities/migration, isolated-database checks and readiness precede registration/login, session verification, `GET /auth/me` and logout. Test rollback, concurrent registration, expiry/revocation and cleanup. Verification/reset/change/logout-all complete the broader SRS lifecycle later. |
 | 5 | Organization management and tenant isolation — queued after authenticated persistence | Create organization plus initial owner membership/permissions atomically; list/read/rename authorized organizations; integrate frontend switching after template-auth replacement. Test two tenants, different memberships, forged tenant IDs, permission denial and baseline audit evidence. |
 | 6 | Invitations and full membership/RBAC management — queued after 5 | Invitation delivery/expiry/revocation/single-use acceptance; member removal/role assignment; prevent cross-tenant assignments and loss of the last owner. Verify permission and session/membership-revocation policy. |
 | Later | Remaining MVP sequence — retained | Plans/subscriptions and test-mode billing; customers/contacts; projects/tasks; attachments; in-app notifications; audit viewer and reporting. Add required audit, validation and authorization safeguards with each earlier feature; later milestones expand their coverage. |
 
 Do not introduce queues, distributed cache, live push, multiple API instances or a managed load balancer merely to use available products. Evaluate them when a feature or operational exercise needs them. R2 is a later file-storage candidate. Hosted API compute, frontend auth replacement/deployment and transactional email delivery remain explicit follow-ups, not verified free-tier capabilities.
 
-**Next review checkpoint:** Verify PostgreSQL container health, SQL execution and a Windows client connection using the [PostgreSQL guide](../setup/POSTGRESQL_SETUP.md). Docker/Compose/WSL readiness is user-reported; PostgreSQL checks remain pending. The next increment is the Nest/compiled DataSource connection. Later, settle remaining Step 1 details and review entities/migration before auth handlers. Record actual results in [Validation and Follow-ups](VALIDATION.md); the developer implements and runs generators/migrations.
+**Next review checkpoint:** Resolve `password.service.ts` formatting to close the password-service increment; its behavior tests and compiled execution pass. Then review minimal auth entity mappings after the remaining Step 1 choices are settled, retaining real PostgreSQL/Nest connection and migration checks as required evidence. Record actual results in [Validation and Follow-ups](VALIDATION.md); the developer implements and runs generators/migrations.
 
 ---
 
@@ -100,7 +100,7 @@ The Nest backend includes environment validation, configuration tests, `/health-
 
 ## Milestone 2 — Identity and Authentication
 
-**Status:** NOT STARTED
+**Status:** IN PROGRESS — password primitive implemented; account/session workflows pending
 
 ### Goal
 Implement secure account and session management.
