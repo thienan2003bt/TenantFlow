@@ -2,9 +2,7 @@
 
 This roadmap tracks the implementation of TenantFlow from architecture decisions to public deployment. The file is meant to stay current and should be updated whenever a milestone changes status.
 
-**Authoring and location (2026-10-18):** The developer implements NestJS inside `backend/`, beside `frontend/`; the assistant provides researched guidance/reviews and explicitly requested tooling changes. The minimal application has passed compiled/watch startup and HTTP health smoke. The [backend README](../../backend/README.md) owns current commands, configuration and test coverage. This does not complete Milestone 1's broader database, API documentation or frontend-integration criteria.
-
-**Restart baseline (2026-10-17):** The backend has requirements and design references only; NestJS implementation has not started. A Next.js/Stack Auth frontend scaffold, PostgreSQL Compose configuration, and CI definitions exist. Their presence does not satisfy the API, migration, isolation, or end-to-end exit criteria below. Use [backend requirements](../requirements/BACKEND_REQUIREMENTS.md) for open decisions and [validation evidence and follow-ups](VALIDATION.md#recorded-foundation-checks) for retained verification evidence. Release dates in version planning are original estimates awaiting review.
+The developer implements NestJS in `backend/`, beside the independent `frontend/`. The [backend README](../../backend/README.md) owns commands and current runtime behavior; the [validation register](VALIDATION.md) owns recorded results and outstanding checks. Database wiring and a tested password service exist; domain persistence, auth workflows and agent-run real PostgreSQL verification remain unfinished.
 
 The [canonical SRS release boundaries](../requirements/TenantFlow-SRS.md#24-canonical-release-boundaries) govern MVP versus future scope. The [version plan](releases/1.0.0/VERSION-PLANNING.md) groups release work; its archived original schedule is retained for history only.
 
@@ -16,6 +14,28 @@ Status legend:
 - `BLOCKED` — waiting on a decision or dependency
 - `DONE` — completed and verified
 - `DEFERRED` — intentionally postponed
+
+---
+
+## Current priorities and learning preferences
+
+This portfolio project prioritizes comprehensive backend learning through application-owned auth and ORM experience. [ADR 0001](../architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) selects TypeORM repositories/Data Mapper, reviewed migrations, PostgreSQL-backed opaque sessions, Argon2id and the supporting Nest stack. Hosting remains open; compare suitable providers by cost, capability and maintenance. Preserve the frontend/license and PostgreSQL volume.
+
+The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns the account/password/session/browser/API policies, including password length 6-128. The [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md#remaining-step-1-close-out-decisions) owns remaining Step 1 proposals. The developer has moved to Step 2's independent connection checks; settle schema/security-affecting Step 1 choices before auth mappings and handlers. Build confidence through small checkpoints rather than requiring every milestone criterion at once. Stack Auth replacement remains later frontend work.
+
+| Order | Task and state | Concrete scope / next checkpoint |
+| --- | --- | --- |
+| 1 | Session-auth contract — baseline accepted; Step 1 close-out pending | Settle the worksheet's remaining identity/Unicode, blocklist/input, CSRF, persistence, renewal/retention and response/abuse-control defaults before auth mappings/handlers. Password hashing is independently implemented. |
+| 2 | TypeORM foundation — in progress | Runtime configuration/module and standalone migration DataSource are wired; local static, unit, HTTP smoke and compiled CLI-loading checks passed. Real PostgreSQL startup, initial entities and a reviewed migration remain the next checkpoint. Verify constraints, rollback and shutdown on isolated PostgreSQL. Hosting remains separate. |
+| 3 | API foundation and backend CI — queued; can proceed independently where contracts allow | Existing env validation, integer port checks and configuration tests are in place. Add health HTTP coverage, explicit listener/CORS policy, request validation, response/error conventions, OpenAPI and redacted logging. Add backend-triggered locked install/type/lint/format/unit/e2e/hook/build CI checks and standardize runtime versions. Observe hosted results after publication. |
+| 4 | First local-auth slice — password primitive implemented; workflows pending | Password hashing/verification and tests are present, with service formatting still open. Initial entities/migration, isolated-database checks and readiness precede registration/login, session verification, `GET /auth/me` and logout. Test rollback, concurrent registration, expiry/revocation and cleanup. Verification/reset/change/logout-all complete the broader SRS lifecycle later. |
+| 5 | Organization management and tenant isolation — queued after authenticated persistence | Create organization plus initial owner membership/permissions atomically; list/read/rename authorized organizations; integrate frontend switching after template-auth replacement. Test two tenants, different memberships, forged tenant IDs, permission denial and baseline audit evidence. |
+| 6 | Invitations and full membership/RBAC management — queued after 5 | Invitation delivery/expiry/revocation/single-use acceptance; member removal/role assignment; prevent cross-tenant assignments and loss of the last owner. Verify permission and session/membership-revocation policy. |
+| Later | Remaining MVP sequence — retained | Plans/subscriptions and test-mode billing; customers/contacts; projects/tasks; attachments; in-app notifications; audit viewer and reporting. Add required audit, validation and authorization safeguards with each earlier feature; later milestones expand their coverage. |
+
+Do not introduce queues, distributed cache, live push, multiple API instances or a managed load balancer merely to use available products. Evaluate them when a feature or operational exercise needs them. R2 is a later file-storage candidate. Hosted API compute, frontend auth replacement/deployment and transactional email delivery remain explicit follow-ups, not verified free-tier capabilities.
+
+**Next review checkpoint:** Resolve `password.service.ts` formatting to close the password-service increment; its behavior tests and compiled execution pass. Then review minimal auth entity mappings after the remaining Step 1 choices are settled, retaining real PostgreSQL/Nest connection and migration checks as required evidence. Record actual results in [Validation and Follow-ups](VALIDATION.md); the developer implements and runs generators/migrations.
 
 ---
 
@@ -46,7 +66,7 @@ Define the product boundaries before writing the first table or endpoint.
 - free-tier-conscious deployment strategy
 - Stripe test-mode billing strategy
 
-NestJS is the selected backend direction. Identity provider ownership, user/team-to-domain mapping, persistence, and runtime/dependency choices still need decisions; Stack Auth is already used by the frontend.
+The backend stack, application-owned opaque sessions and PostgreSQL/TypeORM migration approach are selected. Remaining auth details, real database behavior and hosting are tracked in the current priorities above. Stack Auth remains in the frontend pending replacement.
 
 ---
 
@@ -67,7 +87,7 @@ Create the basic runnable application structure.
 - OpenAPI enabled
 - health check endpoints
 
-The frontend and CI definitions remain partial foundation work. The developer has added the Nest backend, environment validation and `/health-check`; startup and HTTP smoke passed, with open review findings. Migrations, API documentation, backend CI/container wiring and verified frontend-to-API access remain unfinished.
+The Nest backend includes environment validation, configuration tests, `/health-check` and TypeORM runtime/CLI wiring. Startup and HTTP smoke have recorded evidence, with the database stubbed in the HTTP suite. Real PostgreSQL verification, migrations, API documentation, backend CI/container wiring and verified frontend-to-API access remain unfinished.
 
 ### Exit criteria
 
@@ -80,7 +100,7 @@ The frontend and CI definitions remain partial foundation work. The developer ha
 
 ## Milestone 2 — Identity and Authentication
 
-**Status:** NOT STARTED
+**Status:** IN PROGRESS — password primitive implemented; account/session workflows pending
 
 ### Goal
 Implement secure account and session management.
@@ -91,7 +111,7 @@ Implement secure account and session management.
 - email verification
 - login
 - logout
-- refresh token flow
+- opaque-session renewal within the absolute expiry limit
 - password reset flow
 - password change flow
 - session revocation
@@ -99,15 +119,15 @@ Implement secure account and session management.
 
 ### Notes
 
-- define identity ownership and backend credential verification using the existing frontend Stack Auth integration as context; do not assume a second identity store is required
-- decide the API credential/token contract with the identity provider before implementation; do not introduce a parallel token issuer by default
-- rotate refresh tokens rather than reusing them
+- implement application-owned identity under the accepted contract; template Stack Auth replacement is separate frontend work
+- settle the remaining Step 1 details before implementing the first slice
+- preserve SRS verification, recovery/password change, renewal and revocation outcomes beyond the initial slice
 
 ### Exit criteria
 
 - user can register and sign in
 - protected endpoints reject unauthenticated callers
-- token refresh works safely
+- session renewal works safely within the selected opaque-session contract
 
 ---
 

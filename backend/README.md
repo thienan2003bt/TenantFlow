@@ -4,20 +4,35 @@ The developer implements this NestJS application. The assistant provides researc
 
 This application currently exposes `GET /` (Hello World) and `GET /health-check` (HTTP 200 with the text `Service is healthy!`). The current health endpoint is HTTP liveness only.
 
+`AuthModule` provides `PasswordService` for asynchronous Argon2id hashing and verification. Its current hashing profile uses 64 MiB, two iterations and parallelism one; verification reads the persisted hash's encoded parameters. Its public verification signature is `verify(rawPassword, hashedPassword)`. Registration/login routes, credential persistence, cookies and sessions are not implemented yet.
+
 ## Local configuration and commands
 
 Use Node.js compatible with the installed Nest/CLI and ESLint versions; recent checks used Node.js 24.21.0. Run commands from **`TenantFlow/backend/`**. For a clean dependency installation, use `npm.cmd ci`.
 
-The application loads `.env` from this working directory. Current validation requires `NODE_ENV` and `PORT`; process variables override env-file values. The environment enum allows `development`, `production`, `test` and `provisioning`. The documented local port is `14400`.
+The application loads `.env` from this working directory. Validation requires `NODE_ENV`, `PORT`, `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` and `DB_NAME`; process variables override env-file values. The environment enum allows `development`, `production`, `test` and `provisioning`. Both ports must be integers from 1 to 65535. The documented local HTTP port is `14400`.
 
 Create your local `.env` with safe development values:
 
 ```dotenv
 NODE_ENV=development
 PORT=14400
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=tenantflow
+DB_PASSWORD=tenantflow_password
+DB_NAME=tenantflow_dev
 ```
 
-The tracked `.env.example` is currently empty; use the values above for local startup. Real `.env` values remain ignored by Git. Root `.env` is for Compose, and `frontend/.env.local` is for Next.js.
+The tracked `.env.example` contains these development values, matching the retained Compose PostgreSQL service. Use it to create a local `.env` if one does not exist; preserve existing local settings. Real `.env` values remain ignored by Git. Root `.env` is for Compose, and `frontend/.env.local` is for Next.js.
+
+Start PostgreSQL from the **repository root** before starting Nest:
+
+```powershell
+docker compose up -d --wait --wait-timeout 90 postgres
+```
+
+`AppModule` validates configuration once, then imports `DatabaseModule`. That module injects `ConfigService` and uses `database.options.ts` to configure TypeORM. Nest manages the connection lifecycle. Synchronization and startup migrations are disabled; no feature entities or migrations are registered yet.
 
 Start development mode:
 
@@ -37,6 +52,14 @@ Build and start compiled output:
 npm.cmd run build
 npm.cmd run start:prod
 ```
+
+The standalone migration DataSource reuses the database validator and options builder without starting Nest. After building, run this from `backend/` to check migration status against the configured PostgreSQL database:
+
+```powershell
+node --env-file=.env ./node_modules/typeorm/cli.js migration:show -d ./dist/database/data-source.js
+```
+
+With no migrations registered, no migration entries are expected. This command may create TypeORM's migration-history table; it does not apply feature migrations. Loading the DataSource without opening a connection is not proof that PostgreSQL is reachable.
 
 The current bootstrap omits an explicit listening host and enables unrestricted CORS. The printed localhost URL does not restrict exposure.
 
@@ -62,7 +85,9 @@ npm.cmd test
 npm.cmd run test:e2e
 ```
 
-ESLint uses its flat configuration and the TypeScript recommended rules, with type-aware floating-promise checks. The existing Nest tests cover Hello World, not health/configuration behavior. Their green results do not establish coverage of those cases. Both Vitest configurations supply synthetic `NODE_ENV=test` and `PORT=14400`, so test startup does not require a developer's local env file.
+ESLint uses its flat configuration and the TypeScript recommended rules, with type-aware floating-promise checks. Unit tests cover Hello World, configuration validation and the password primitive. Password tests use real Argon2 for encoded algorithm/work factors, match/mismatch, independent salts, spaces, Unicode, persisted work factors and malformed hashes. A separate error suite injects library failures to verify preserved causes. Configuration tests cover numeric conversion, inherited database rules, missing/invalid settings and password redaction.
+
+The HTTP smoke suite supplies synthetic configuration and overrides the TypeORM DataSource; it checks HTTP assembly without connecting to a developer's database. Its success does not verify PostgreSQL connectivity, migrations, health readiness or authentication routes. Real database integration must use an isolated PostgreSQL database when added. Actual results and any failed checks belong in the [validation register](../docs/planning/VALIDATION.md).
 
 ## Pre-commit checks
 

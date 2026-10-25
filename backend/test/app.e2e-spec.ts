@@ -2,15 +2,20 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { App } from "supertest/types.js";
+import { getDataSourceToken } from "@nestjs/typeorm";
 import { AppModule } from "./../src/app.module.js";
 
-describe("AppController (e2e)", () => {
+describe("AppController (HTTP smoke, database stubbed)", () => {
   let app: INestApplication<App>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      // This suite checks HTTP assembly only. Real PostgreSQL integration is a separate check.
+      .overrideProvider(getDataSourceToken())
+      .useValue({ manager: {}, isInitialized: false })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
@@ -21,6 +26,6 @@ describe("AppController (e2e)", () => {
   });
 
   afterEach(async () => {
-    await app.close();
+    await app?.close();
   });
 });
