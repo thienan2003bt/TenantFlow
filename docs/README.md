@@ -1,6 +1,6 @@
 # TenantFlow documentation
 
-Reviewed 18 October 2026. The developer's NestJS application in `backend/` has passed startup and HTTP health smoke checks. Successful smoke checks do not complete the broader backend requirements.
+The NestJS backend has a minimal HTTP/configuration foundation and TypeORM runtime/CLI wiring. Auth and domain persistence remain unfinished. Use the validation register for evidence and the roadmap for the next checkpoint.
 
 ## Where to start
 
@@ -15,8 +15,8 @@ Reviewed 18 October 2026. The developer's NestJS application in `backend/` has p
 | Location | Document | Owns |
 | --- | --- | --- |
 | `requirements/` | [SRS](requirements/TenantFlow-SRS.md) | Product rules, tenant boundaries, required behavior, MVP versus future scope |
-| `requirements/` | [Backend Requirements](requirements/BACKEND_REQUIREMENTS.md) | Backend constraints, provisional model findings, unresolved design choices |
-| `docs/` (temporary) | [Session Auth Development Plan](SESSION_AUTH_DEVELOPMENT_PLAN.md) | Active slice checklist and Step 1 contract worksheet; retire after preserving decisions/evidence |
+| `requirements/` | [Backend Requirements](requirements/BACKEND_REQUIREMENTS.md) | Backend constraints, accepted auth contract, model candidates and unresolved design choices |
+| `docs/` (temporary) | [Session Auth Development Plan](SESSION_AUTH_DEVELOPMENT_PLAN.md) | Active slice checklist and remaining Step 1 proposals; retire after preserving decisions/evidence |
 | `architecture/` | [Backend Conventions](architecture/BACKEND_CONVENTIONS.md) | Responsibilities, Nest request lifecycle diagram, security/data conventions, review agreement |
 | `architecture/decisions/` | [ADR 0001: Backend Stack and Session Auth](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) | Accepted TypeORM/session/supporting-stack decision, alternatives, consequences and unverified implementation details |
 | `setup/` | [Start Here](setup/START_HERE.md) | Commands for the existing checkout and onboarding order |
@@ -33,16 +33,10 @@ The root [README](../README.md) owns the project overview. Root [schemas](../sch
 ## Keeping documents manageable
 
 1. Update the owning document, then link to it from related guides. Avoid another setup-complete summary or duplicate source of milestone status.
-2. Follow SRS product rules when documents conflict. Keep technical recommendations, accepted decisions, existing files, and verified behavior distinct. A tutorial or unchecked item is not implementation evidence.
+2. Follow SRS product rules when documents conflict. Keep proposals, accepted decisions, existing files and verified behavior distinct. Remove superseded instructions and duplicate drafts as decisions change; retain useful evidence in the validation register and rationale in decision records.
 3. Use descriptive filenames matching the existing uppercase guide names. Keep `README.md` as the index and link new documents here. Use relative links and repair incoming links whenever a file moves.
-4. Record a significant accepted technical decision under `architecture/decisions/` when needed: date, status, context, choice, alternatives, consequences, and affected requirements. Create that directory with the first real decision; a setup recommendation alone is not an accepted decision.
+4. Record significant accepted technical decisions under `architecture/decisions/`: date, status, context, choice, alternatives, consequences and affected requirements. Keep current implementation state in the owning runtime/planning documents.
 5. Keep completion evidence short: command/check, commit or environment, observed result, and remaining limitation. Keep secrets and account details out of documentation.
 6. Remove completed temporary plans after preserving useful decisions and unfinished follow-ups in their owning documents. Git history retains the detailed change narrative.
 
-## Reorganization notes
-
-The former `docs/init/` content now lives in `requirements/` and `planning/`. The supplied `docs/tenantflow_backend_conventions.md` is now `architecture/BACKEND_CONVENTIONS.md`, with its diagram linked from the shared image directory. The former root `versions/1.0.0/` documents now live in `planning/releases/1.0.0/`; their scope and historical dates are retained.
-
-The completed backend cleanup plan has been removed. Its final verification summary and F-01 through F-04 follow-ups are retained in [Validation and Follow-ups](planning/VALIDATION.md). This reorganization changes documentation, not application implementation or delivery status.
-
-The completed NestJS setup walkthrough has also been removed. The backend README owns current commands and configuration. Review feedback belongs in the conversation rather than separate review documents. Future backend guidance follows [backend agent instructions](../backend/AGENTS.md).
+Backend guidance follows [backend agent instructions](../backend/AGENTS.md). Keep review feedback in the conversation; use the backend README for runtime instructions.

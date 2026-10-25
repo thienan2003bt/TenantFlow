@@ -2,11 +2,24 @@
 
 [Documentation index](../README.md) · [Implementation roadmap](ROADMAP.md)
 
-This file retains the useful final evidence and open follow-ups from the completed backend retirement. It replaces references to the removed temporary cleanup plan. Results below are historical reports from 17 October 2026, not checks rerun during the documentation reorganization on 18 October 2026.
+This register owns observed verification results, their limits and open checks. Dated results are historical evidence, not checks rerun against the current working tree. Use the [backend README](../../backend/README.md) for commands and the roadmap for sequencing.
 
 ## Recorded foundation checks
 
-Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`. The retirement was prepared through [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8). This document does not assert its current merge state.
+### Backend foundation — 23 October 2026
+
+| Check | Recorded result | Boundary |
+| --- | --- | --- |
+| Static/build checks | Typecheck, ESLint, formatting and Nest build passed. | Does not establish real database or auth behavior. |
+| Unit and HTTP tests | 14 unit tests and one HTTP smoke test passed. Current source includes configuration/database validation and Hello World tests. | The HTTP suite stubs the DataSource and checks GET /; it does not cover health HTTP behavior, PostgreSQL or auth. |
+| Compiled CLI loading | The installed TypeORM loader loaded the compiled DataSource with synthetic database-only settings; it remained uninitialized. | No database connection or feature migration was executed. |
+| Application startup | Compiled/watch startup and HTTP health smoke have earlier recorded evidence. | Real application/CLI PostgreSQL startup and connection cleanup remain unverified. Docker was unavailable and no local listener was reachable on port 5432 during the database review. |
+
+Next database check, after Step 1 closes: prepare Docker Desktop/PostgreSQL, confirm backend environment settings, and verify compiled startup, migration status and shutdown using the backend README. Configuration tests do not substitute for that check.
+
+### Frontend and Compose — 17 October 2026
+
+Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared through [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8). These results concern the frontend/Compose foundation and do not establish the current PR's merge state or backend auth behavior.
 
 | Check | Recorded result | Boundary |
 | --- | --- | --- |
@@ -17,35 +30,30 @@ Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`. The retiremen
 | Hosted frontend image | Image build, container start, bounded-retry HTTP smoke and cleanup passed in that run. | A previous probe failed during startup; the corrected run is the successful evidence. |
 | Secret boundary | A fake private-key marker was absent from 32 generated browser assets during the local review. | This is a targeted artifact check, not a security certification. |
 
-The frontend source/license, provisional root models, and PostgreSQL data configuration were preserved. At that historical retirement checkpoint the backend remained unimplemented. The original tracker and detailed investigation are available in Git history; they are no longer active setup instructions.
-
-## Documentation review on 18 October 2026
-
-The documentation reorganization checked 15 Markdown documents: 119 local document/image links and 17 heading anchors resolved. Tracked-reference and placeholder audits passed. Whitespace checks passed for tracked edits and new documents. The SRS and future-backlog content were preserved apart from relative links; the historical release schedule was preserved verbatim. A preservation check covered 62 tracked application/model/configuration paths.
-
-The supplied request-lifecycle image was inspected and linked into the revised conventions guide. No backend scaffold, source, tests, dependency manifests or environment files were created. No application runtime checks were rerun for this documentation-only change; the historical results above retain their original limits.
-
 ## Open follow-ups
 
-The backend passed type/lint/format/build checks, the existing one-test unit/e2e suites, compiled/watch startup and HTTP health smoke during the implementation review. The current suites still only cover Hello World; their success does not certify health/configuration coverage. The completed setup walkthrough has been removed, and review feedback is kept in the conversation.
-
-These are local tracking IDs, not GitHub issues. Completing backend retirement does not complete any of these items.
-
-On 22 October 2026 the user confirmed application-owned session auth, PostgreSQL with an ORM, flexible hosting comparison and the initial auth slice. F-01/F-02 below replace the earlier target of integrating backend identity with template Stack Auth. Historical frontend evidence remains valid only for its original limited checks. The [temporary development tracker](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns the active Step 1 checklist; broader sequencing is owned by the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences), and durable choices/research by [backend requirements](../requirements/BACKEND_REQUIREMENTS.md#current-identity-and-database-options).
+These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns auth policies, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns the active slice and remaining proposals, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. Step 1 remains current; the developer requested Step 2 later.
 
 | ID | Work still needed | Completion evidence / owning document |
 | --- | --- | --- |
-| F-01 | Replace inherited frontend Stack Auth with the future TenantFlow account/session and organization flows. | Original provider-flow verification target superseded by user direction; replacement is not implemented. After backend contracts exist, verify registration/login/logout, recovery/account settings and authorized organization switching, preserving template assets/license. Status: queued frontend transition. |
-| F-02 | Design application-owned credentials, sessions and account lifecycle. | Record hashing, normalized identity uniqueness, session/token storage, expiry/renewal/rotation/revocation, cookie/CSRF or bearer behavior, recovery/verification tokens, abuse controls and deletion policy. Verify chosen-runtime hashing feasibility. See [backend requirements](../requirements/BACKEND_REQUIREMENTS.md). Status: selected next, open design. |
+| F-01 | Replace inherited frontend Stack Auth with TenantFlow account/session and organization flows. | After backend contracts exist, verify registration/login/logout, recovery/account settings and authorized organization switching while preserving template assets/license. Status: queued frontend transition. |
+| F-02 | Complete application-owned auth design and account lifecycle. | Settle the [remaining Step 1 proposals](../SESSION_AUTH_DEVELOPMENT_PLAN.md#remaining-step-1-close-out-decisions); preserve the [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract). Hashing feasibility, auth/browser tests and the broader verification/recovery lifecycle remain unfinished. Status: baseline accepted, Step 1 close-out pending. |
 | F-03 | Review provisional model names, constraints, joins, deletion/timestamp policy and ERD/migration design. | Resolve the candidates in [backend requirements section 2](../requirements/BACKEND_REQUIREMENTS.md#2-data-integrity-and-lifecycle), including tenant safety and history retention. Status: open design. |
-| F-04 | Complete the NestJS foundation inside `backend/`. | Minimal startup and HTTP health smoke passed. Add configuration/health coverage and continue database/migrations, identity/tenant contracts, CI/container wiring and meaningful auth/isolation tests under the [roadmap](ROADMAP.md). Status: in progress. |
-| F-05 | Validate selected TypeORM/PostgreSQL integration and evaluate feasible hosting. | ADR 0001 accepts TypeORM repositories/Data Mapper and reviewed migrations with synchronization disabled. Released versions, ESM runtime/CLI, transactions, constraints, session concurrency, migrations and cleanup remain unverified. Compare effective provider costs/capabilities without a Cloudflare-only restriction and preserve local PostgreSQL data. Status: architecture accepted, implementation pending. |
-| F-06 | Verify backend CI, replacement frontend hosting and transactional email delivery. | Source inspection is not hosted execution. A backend CI job must actually run; framework hosting needs a compatibility test; verification/reset/invitation delivery needs a suitable provider and recipient support. Cloudflare Free email to verified destinations does not establish arbitrary-recipient delivery. Status: queued validation/design. |
+| F-04 | Complete the NestJS foundation inside `backend/`. | Configuration validation/tests and TypeORM wiring exist. Add health HTTP coverage, database readiness, backend CI/container wiring and meaningful auth/isolation tests under the [roadmap](ROADMAP.md). Status: in progress. |
+| F-05 | Verify TypeORM/PostgreSQL behavior and select feasible hosting. | Prove real startup/shutdown, migrations, transactions, constraints, session concurrency and cleanup. Compare provider cost/capability and verify deployment compatibility while preserving local PostgreSQL data. Status: configuration implemented, runtime integration pending. |
+| F-06 | Verify backend CI, replacement frontend hosting and transactional email delivery. | Observe actual backend CI runs and hosted runtime checks. Verify verification/reset/invitation delivery to intended recipients; provider accounts and delivery infrastructure are not configured. Status: queued validation/design. |
 
-The 22 October 2026 planning update checked 117 local links and 19 heading anchors across 16 tracked Markdown documents; all resolved, and `git diff --check` passed. Official product/security documentation and relevant driver-maintainer discussion were reviewed. No application tests, dependency installs, authentication flows, database migrations, Cloudflare deployments or billing/account checks were run.
+## Documentation checks
 
-The subsequent session-auth tracker update checked 132 local links and 24 heading anchors across 17 Markdown documents, including the new untracked plan; all resolved. Tracked whitespace checks and a direct whitespace/final-newline check on the new plan passed. Changes were documentation only; branch creation, ORM installation, generators, migrations and runtime tests were not performed.
+Historical documentation-only checks are retained below. Their counts describe the documents examined at the time; they do not establish application or database behavior.
 
-The 23 October 2026 accepted-stack update added ADR 0001 and reconciled its architecture/planning references. All 147 local links and 30 heading anchors across 18 Markdown documents resolved. Tracked whitespace checks and a direct whitespace/final-newline check of the new ADR passed; changed paths were documentation only. No dependencies, generators, migrations, runtime tests, Git mutations or publication were performed. TypeORM/package compatibility and the auth slice remain unverified implementation work.
+| Review | Recorded evidence |
+| --- | --- |
+| 18 October 2026 reorganization | 15 Markdown documents, 119 local links and 17 anchors passed; whitespace/reference checks passed. A preservation check covered 62 application/model/configuration paths, SRS/backlog content and the historical release schedule. |
+| 22 October 2026 planning | 16 tracked Markdown documents, 117 local links and 19 anchors passed; whitespace checks passed. |
+| Session-auth tracker introduction | 17 Markdown documents, 132 local links and 24 anchors passed; whitespace/final-newline checks passed. |
+| 23 October 2026 stack decision | 18 Markdown documents, 147 local links and 30 anchors passed; whitespace/final-newline checks passed. |
+| 25 October 2026 contract acceptance | Four changed documents, 48 local links and 21 anchors passed; whitespace/final-newline checks passed. Accepted policies and remaining proposals were recorded separately. |
+| 25 October 2026 documentation cleanup | All 150 local links and 33 anchors across 18 tracked Markdown documents resolved, including tracked paths hidden by ignore rules. Whitespace/final-newline checks passed for five changed documents, and `git diff --check` passed. Stale instructions and duplicate draft wording were removed; accepted policies, pending proposals and useful dated evidence were preserved. |
 
-Keep milestone status in the roadmap and product/release scope in the SRS. Update this register when evidence changes; do not treat an intended command or placeholder smoke check as a completed product flow.
+No application tests, Docker runtime, database migrations, auth flows or browser checks were run for these documentation updates. Keep future runtime evidence attached to its actual command/environment and observed outcome.

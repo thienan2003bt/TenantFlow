@@ -1,136 +1,71 @@
 # Session authentication development plan
 
-Created 22 October 2026. Temporary working tracker for the first application-owned authentication slice. **Current step: 1 — define the contract.** No authentication, ORM integration or migrations have been implemented by this plan.
+**Current step: 1 — accepted baseline; remaining decisions pending.** Finish Step 1 before starting Step 2, as requested by the developer. Working branch: `feat/session-auth`.
 
-**Stack accepted 23 October 2026:** [ADR 0001](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) selects TypeORM repositories/Data Mapper with PostgreSQL, reviewed migrations, application-owned database sessions, Argon2id and the supporting Nest tooling. The earlier Prisma command outline is superseded. Detailed contract values and package/runtime compatibility still need review; implementation has not started.
+[Documentation index](README.md) · [Roadmap](planning/ROADMAP.md#current-priorities-and-learning-preferences) · [Accepted contract](requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) · [Validation register](planning/VALIDATION.md#open-follow-ups)
 
-[Documentation index](README.md) · [Roadmap](planning/ROADMAP.md#current-priorities-and-learning-preferences) · [Backend requirements](requirements/BACKEND_REQUIREMENTS.md#current-identity-and-database-options) · [Validation register](planning/VALIDATION.md#open-follow-ups)
+## Scope and current state
 
-## Confirmed direction and remaining choices
+The first slice covers registration, login, authenticated caller read and current-session logout. The developer accepted its baseline on 25 October 2026, including passwords of 6-128 Unicode code points. The [backend requirements](requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) own the accepted account, password, session, browser and HTTP policies; the table below owns the remaining proposals.
 
-| Topic | Confirmed direction | Still to decide |
-| --- | --- | --- |
-| Ownership | TenantFlow owns credentials, authentication and sessions. Stack Auth is inherited template code intended for later removal. | Replacement frontend integration and account migration, if actual accounts/data need preserving. |
-| Authentication | Session-based authentication. | Opaque credential format/storage, browser transport, expiry, renewal, revocation and CSRF details below. JWT access/refresh tokens are not the selected starting design. |
-| Persistence | PostgreSQL with TypeORM repositories/Data Mapper and reviewed TypeORM migrations. | Compatible released versions, ESM CLI wiring, schema mappings and execution checks; no ORM is installed. |
-| Hosting | Compare effective cost, capability and maintenance across suitable providers. Cloudflare is a candidate, not a restriction. | API/frontend/database/email hosting. Compare the relevant services from providers such as Cloudflare, Vercel and Supabase; do not assume each offers equivalent runtime/database products. |
-| First feature | Registration, login, authenticated caller read and current-session logout. | Exact contract must pass Step 1 review. Full SRS account lifecycle follows this initial slice. |
+[ADR 0001](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) selects Nest/Express, TypeORM repositories with PostgreSQL, reviewed migrations, opaque database sessions and Argon2id. Runtime database configuration and a compiled CLI DataSource exist. Auth entities, feature migrations and auth handlers do not exist; real PostgreSQL and browser behavior remain unverified.
 
-The backend stays in `backend/` with its current Nest 12/Express, npm, ESM/NodeNext and Vitest/Vite setup. Preserve the frontend, assets/license, root model references and PostgreSQL volume while designing this feature. Implementation belongs to the developer.
-
-## Suggested branch
-
-`feat/session-auth`
-
-This uses `feat/` for a feature and a short kebab-case name. No additional repository-specific branch naming rule was found. The branch covers the first session-auth slice, its ORM persistence and meaningful tests, not the complete account/tenant platform.
-
-The agent has not created or switched branches. From the repository root, the developer can run:
-
-```powershell
-git switch -c feat/session-auth
-```
-
-The checkout was on `dev` when this tracker was prepared, with earlier documentation edits still uncommitted. Review those edits and carry the intended documentation onto the feature branch; branch creation is not a commit or synchronization step.
+Keep implementation in `backend/`, preserve the frontend/assets/license and PostgreSQL volume, and use the [backend README](../backend/README.md) for commands. The developer writes backend behavior and runs generators/migrations.
 
 ## Development checkpoints
 
-| Step | Status | Deliverable / completion evidence |
+| Step | State | Completion evidence |
 | --- | --- | --- |
-| 1. Define the auth contract | CURRENT — awaiting developer decisions | Complete the worksheet below. Required outcomes, proposed API, state transitions, data invariants and security/failure checks agree. No unresolved choice changes the initial schema or browser trust boundary. |
-| 2. Validate TypeORM integration and migration workflow | ARCHITECTURE ACCEPTED — implementation not started | Select compatible released TypeORM/adapter/driver versions for Node/ESM/Nest/testing; wire runtime and standalone CLI configuration and prove migration/transaction behavior on isolated PostgreSQL. Use the accepted repository/Data Mapper style. |
-| 3. Establish persistence | NOT STARTED | Implement the agreed minimal schema, migration apply/status workflow, connection/shutdown handling and database readiness. Prove constraints and rollback without resetting the existing development volume. |
-| 4. Implement the initial auth slice | NOT STARTED | Add registration, password verification, session creation/resolution and current-session logout. Verify the real Nest request pipeline and PostgreSQL behavior. Include boundary validation, safe responses, CSRF and abuse controls with their consumers. |
-| 5. Verify browser behavior and failure cases | NOT STARTED | Confirm cookie issuance/sending/clearing, origin/CSRF rejection, expired/revoked sessions, concurrent registration, hash secrecy and transaction rollback. Reuse relevant backend checks and add meaningful CI coverage. A test client alone does not prove browser cookie policy. |
-| 6. Review and close this tracker | NOT STARTED | Move accepted decisions and actual evidence to their owning documents; retain unfinished lifecycle/frontend work in the roadmap/register, repair incoming links and remove this temporary file when the slice is complete. |
+| 1. Define the auth contract | CURRENT — baseline accepted; remaining decisions pending | Resolve the table below, then confirm the state flow, minimal entity sketch and acceptance matrix agree. No unresolved choice may change the initial schema or browser trust boundary. |
+| 2. Validate TypeORM integration and migration workflow | Configuration implemented; runtime verification pending | Runtime/CLI wiring and static/loading checks are recorded in the validation register. Later, prove connection, shutdown and migration/transaction behavior against isolated PostgreSQL. |
+| 3. Establish persistence | NOT STARTED | Implement the agreed entities and reviewed migration; prove uniqueness, foreign keys, rollback and database readiness without resetting the development volume. |
+| 4. Implement the initial auth slice | NOT STARTED | Implement registration, password verification, sessions, caller read and logout with boundary validation, safe responses, CSRF and abuse controls. Verify the Nest request pipeline and real PostgreSQL. |
+| 5. Verify browser behavior and failure cases | NOT STARTED | Verify cookie issuance/sending/clearing, origin/CSRF denial, expiry/revocation, concurrent registration/logout, hash secrecy and rollback. Add meaningful CI coverage. |
+| 6. Close this tracker | NOT STARTED | Preserve accepted decisions in requirements and evidence/follow-ups in the validation register; repair incoming links and remove this temporary file after the slice is complete. |
 
 ## Step 1 — Define the session-auth contract
 
-### Objective and output
+Work in this document from the repository root. This step requires no installation, generator, migration, environment change or application-code edit. Use the [SRS](requirements/TenantFlow-SRS.md#51-authentication) and [engineering conventions](architecture/BACKEND_CONVENTIONS.md) when settling the remaining choices. Root model files are vocabulary references, not approved tables.
 
-Agree on observable behavior before choosing ORM models or generating feature files. Work in this document from the repository root. This step needs no package installation, Nest generator, migration, environment change or application-code edit.
+### 1A. Account rules
 
-Prerequisites: read [SRS authentication requirements](requirements/TenantFlow-SRS.md#51-authentication), [backend identity boundaries](requirements/BACKEND_REQUIREMENTS.md#1-boundaries-and-identity-ownership), and [engineering conventions](architecture/BACKEND_CONVENTIONS.md). Root `schemas.ts` and `enum.ts` are vocabulary references, not approved tables.
+The accepted contract covers global email identity, pending/active/ineligible account states, current account checks and generic duplicate registration. Settle the exact email case policy below.
 
-**Deliverable:** mark each item below reviewed, replace proposed values where needed, and explicitly record acceptance. Recommendations are not silently accepted decisions.
+### 1B. Password rules
 
-### 1A. Fix the slice boundary and account rules
+The accepted policy is 6-128 Unicode code points, spaces/passphrases allowed, no composition rules, trimming or truncation, bounded input and common/compromised-password rejection. Settle Unicode treatment, the blocklist and the body limit below. The accepted contract records the difference from NIST's password-only length guidance.
 
-- [ ] Confirm the first slice covers register -> login -> caller read -> logout. Email verification, recovery/password change, logout-all, session-management UI and renewal remain required follow-up work; they are not completed by this slice.
-- [ ] Define email identity scope and canonicalization. Proposed: one global account per normalized email; trim surrounding email whitespace and apply one documented case policy consistently at registration/login and in database uniqueness. Do not strip plus tags or dots based on provider-specific assumptions.
-- [ ] Define password input rules before selecting a hashing package. Proposed: accept long passphrases/spaces without composition rules, never silently trim or truncate, and bound input size. Select exact length/Unicode handling and common/compromised-password rejection policy. For password-only auth, use NIST's 15-character minimum as the starting recommendation; the exact project policy needs acceptance.
-- [ ] Define account-state rules. Proposed: registration creates `pending_verification`; valid credentials may establish a restricted session that can read `/auth/me` and log out. Only `active` users receive normal business access. Inactive/frozen/deleted accounts cannot authenticate. Specify behavior when status changes during an existing session.
-- [ ] Decide registration duplicate behavior. Proposed: the same generic HTTP 202 response for a valid new registration and an existing email, with no user ID, session or existence detail returned. A duplicate must not replace credentials or change the existing account. Database faults must still produce a real failure response. This does not promise that email delivery exists yet.
+### 1C. Session lifecycle
 
-**Check:** walk through new email, case/whitespace variants, concurrent duplicates, incorrect password and each account state. A new user must not become fully activated by bypassing email verification. Pending verification support is a restricted intermediate state, not a verified account lifecycle.
+The accepted policy uses fresh random credentials with only digests persisted, multiple device sessions, 30-minute idle expiry, 24-hour absolute expiry and current-session revocation. Renewal must not exceed absolute expiry or restore revoked/expired sessions. Settle persistence frequency and retention below; expiry denial must work independently of cleanup.
 
-### 1B. Specify session lifecycle
+### 1D. Browser transport and CSRF
 
-| Detail to review | Proposed baseline, not yet accepted |
+The accepted topology uses credentialed local origins and a future single HTTPS production origin. Production and local cookie attributes are recorded in the accepted contract. Settle the exact CSRF strategy, development cookie name and proxy/prefix mapping below. Browser tests must cover trusted calls, untrusted origins, the chosen missing-header behavior and cookie clearing.
+
+### 1E. Persistence and HTTP acceptance
+
+The accepted contract defines the user/credential/session concepts and register/login/me/logout routes. Settle exact persistence ownership, response fields/errors and abuse limits below. Keep global identity separate from tenant memberships and permission checks; defer verification/reset-token tables until their consuming flows are designed.
+
+**Step 1 exit check:** walk through canonical/concurrent duplicate registration, invalid input/password, every account state and state change, transaction rollback, independent sessions, idle/absolute expiry, renewal overlapping logout, replay, persistence failure, CSRF/origin denial, throttling and secret-free responses/logs. This is a future test matrix, not executed validation. Record settled policies in the owning requirements document before moving to Step 2.
+
+### Remaining Step 1 close-out decisions
+
+These defaults remain proposals awaiting a decision. Accepted policies do not need reconfirmation.
+
+| Remaining detail | Proposed close-out default |
 | --- | --- |
-| Credential | Generate 32 cryptographically random bytes and use an agreed transport-safe encoding. Do not use the user ID or a predictable database ID as the session secret. |
-| Persistence | Store only a SHA-256 digest of the high-entropy session secret, plus metadata. Passwords use Argon2id through a maintained implementation instead; a fast session-secret digest is not password hashing. |
-| Issuance | Successful login issues a new session; do not promote a caller-supplied anonymous/session ID into an authenticated session. Permit multiple device sessions initially. |
-| Lifetime | Proposed starting values: 30-minute idle expiry and 24-hour absolute expiry, enforced by the server. These are project proposals, not values mandated by the cited standards. |
-| Renewal | Define exactly which successful authenticated activity updates idle expiry and when it is persisted. Idle renewal cannot extend absolute expiry. Define stale/concurrent request behavior so renewal cannot undo revocation. Remember-me behavior is outside the first slice. |
-| Verification | Resolve the secret digest, check expiry/revocation and current user eligibility on every authenticated request. Tenant membership/permissions remain separate checks. |
-| Logout | Revoke the current persisted session, then clear the cookie with the same name/path/domain attributes. A repeated logout with a missing/already invalid session may return 204 and clear the cookie. Persistence failure must not be reported as successful revocation. |
-| Failure | Missing/invalid/expired/revoked credentials produce 401 on a protected caller read; unavailable persistence produces a controlled server/service error, not a misleading 401. Secrets must never appear in logs or response bodies. |
+| Email case and password Unicode | Lowercase the entire trimmed email for canonical uniqueness; retain the original trimmed email for display. Count password length in Unicode code points, preserve exact input without Unicode normalization, and reject malformed Unicode rather than modifying it. |
+| Blocklist and body limit | Start with a pinned, locally bundled snapshot of [SecLists' 10,000 common passwords](https://github.com/danielmiessler/SecLists/blob/master/Passwords/Common-Credentials/10k-most-common.txt), check exact whole-password matches on registration/change, review updates monthly, and add known-compromised values deliberately. This is a common-password baseline, not comprehensive breach screening. Limit auth JSON bodies to 16 KiB. Do not send raw passwords to third parties. |
+| CSRF policy | Use [Nest 12.1 built-in Fetch Metadata/Origin protection](https://docs.nestjs.com/security/csrf), with only `http://localhost:3000` trusted for development and same-origin requests in production. Unsafe browser requests with untrusted origins are rejected; requests lacking both Sec-Fetch-Site and Origin are allowed per the framework policy. GET/HEAD/OPTIONS are allowed and must not perform user-requested state-changing operations; successful caller reads may renew idle expiry as explicitly agreed housekeeping. No separate CSRF token/bootstrap route. |
+| Persistence ownership | Three separate records: user, one-to-one password credential and many sessions per user. Use application-generated UUIDs, PostgreSQL timezone-aware timestamps, database defaults for creation, and explicit service-owned update/activity timestamps. Canonical email and session digest are unique; credential user reference is unique. References and expiry fields are non-null; verification/revocation and password-change timestamps may be null until their event occurs. First-slice deletion is soft deletion through account state; foreign keys restrict physical user deletion. No cascading removal of retained history. |
+| Renewal, cookie scope and retention | Persist idle renewal for each successful guarded request using a conditional update and cap it at absolute expiry. Use `tenantflow_session_dev` locally and the accepted production cookie name; cap cookie lifetime to the remaining server-valid window. Local Nest routes have no global prefix; the future production proxy maps external `/api/auth/...` to Nest `/auth/...`. Collect no IP/user-agent/device session metadata initially. Retain invalid session rows for 7 days after the earliest expiry/revocation, then make them eligible for cleanup; cleanup scheduling remains implementation work. |
+| Responses and abuse limits | Use a safe error envelope with `statusCode`, stable `code` and `message`; classify input/authentication/CSRF/throttling/unavailable-persistence as 400/401/403/429/503, with 500 for unexpected faults. Caller responses expose only id, display email, status and a verification boolean. Start with 10 login requests per client IP per minute and 5 registration requests per client IP per hour, counting all attempts. Use direct socket IP locally with proxy trust disabled; select exact trusted proxies before deployment. Single-process rate-limit storage is sufficient for the local slice; revisit before scaling/public exposure. |
 
-- [ ] Accept or revise every baseline above, including renewal, concurrent logout and account-state change behavior.
-- [ ] Define the session cleanup/retention policy. Expiry must deny access even before expired rows are cleaned up. Retention and physical cleanup scheduling can be implemented separately from request-time validity.
-
-**Check:** draw login -> valid session -> idle renewal -> absolute expiry and login -> logout -> replay. Include two concurrent sessions and a request overlapping logout. No request may resurrect a revoked session or renew past its absolute deadline.
-
-### 1C. Define browser transport and CSRF
-
-- [ ] Choose topology. Proposed production target: one browser origin, with `/api` routed to Nest by the eventual hosting/proxy setup. Development may use frontend `localhost:3000` and API `localhost:14400`; these ports are different origins, so specify exact allowed origins and credentialed request behavior. Production routing is planned, not configured.
-- [ ] Define production cookie attributes. Proposed: `__Host-tenantflow_session`, `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, no `Domain`; browser lifetime must not exceed server policy. The cookie is scoped to its host/path, not to a TCP port. Confirm this against the chosen deployment topology.
-- [ ] Define an explicit local HTTP exception. Proposed: a separate unprefixed development cookie name, `HttpOnly`, `SameSite=Lax`, `Path=/`, host-only, with Secure disabled only for loopback HTTP development. Do not reuse that exception in deployment.
-- [ ] Select a reviewed CSRF strategy for unsafe methods, including login/register/logout. Specify token/header delivery and any anonymous bootstrap when needed, allowed Origin behavior and rejection of missing/mismatched protection. SameSite and CORS alone do not establish a complete CSRF policy. Do not invent a custom cryptographic token scheme.
-- [ ] Record browser request credentials, CORS/preflight behavior and safe cookie clearing. CORS must not reflect arbitrary origins or combine wildcard origins with credentials.
-
-**Check:** the future browser test matrix covers successful credentialed calls, untrusted origins, missing/invalid CSRF protection and logout clearing. Add a browser check rather than relying solely on Supertest cookie behavior.
-
-### 1D. Sketch the minimal persisted model
-
-| Concept | Proposed fields / invariant to review |
-| --- | --- |
-| User | UUID, original/canonical email, status, verification timestamp, created/updated timestamps. Database uniqueness enforces the canonical identity policy under concurrent requests. |
-| Password credential | User reference, encoded password hash including algorithm parameters, password-change timestamp. Decide separate one-to-one credentials versus fields on the user; one password credential per user. |
-| Session | UUID, user reference, unique secret digest, created timestamp, last activity/idle deadline, absolute expiry and revocation timestamp. Match indexes to lookup and cleanup paths. Browser secret is never stored. |
-
-- [ ] Sketch cardinalities, nullability, uniqueness, timestamp ownership and foreign-key deletion behavior. Registration writes must be atomic if credentials are separate records. Audit/history retention rules still apply.
-- [ ] Keep global identity/session records distinct from future tenant memberships. An authentication session must not embed a permanent membership/role grant that stays valid after removal.
-- [ ] Specify which session metadata is actually necessary. IP/user-agent/device values are optional candidates; do not collect or retain them indefinitely just because the reference model has fields.
-- [ ] Defer verification/reset-token schema until its consuming lifecycle flow is designed. Record the future single-use/expiry/hash requirements without generating unused tables now.
-
-**Check:** explain how uniqueness, rollback, session lookup/revocation and account deletion work using this sketch. Do not paste the entire root model into an ORM schema. Exact SQL/ORM mappings belong to Steps 2-3.
-
-### 1E. Agree on HTTP contracts and the future test matrix
-
-All routes/statuses below are proposals, not existing endpoints. Select an API prefix once; `/api` in the topology proposal is outside the route paths shown here.
-
-| Method / route | Proposed contract |
-| --- | --- |
-| `POST /auth/register` | Valid email/password -> generic 202 with no auto-login; invalid DTO -> 400; duplicate valid email -> same generic 202. New-account writes are atomic. |
-| `POST /auth/login` | Valid eligible credentials -> 200 with safe user DTO and session cookie; invalid credentials/ineligible account -> generic 401. A pending user receives only the explicitly restricted session capabilities. |
-| `GET /auth/me` | Valid session -> 200 with only `id`, allowed email field, `status` and verification state; missing/invalid/expired/revoked -> 401. No password hash, session digest or provider metadata. |
-| `POST /auth/logout` | Revoke current session and clear cookie -> 204; missing/already invalid session -> idempotent 204; valid-session persistence failure -> controlled server/service error. CSRF rules still apply. |
-
-- [ ] Choose one error schema and classify validation, authentication, CSRF, throttling and database failure without leaking internal diagnostics. Specify credential failures without account-enumeration details; generic responses alone do not guarantee equivalent timing.
-- [ ] Define registration/login abuse limits and how the API determines client IP behind a future trusted proxy. Exact thresholds/store/package are a follow-up implementation choice before exposing the routes publicly, not an implicit Redis requirement.
-- [ ] List acceptance cases: duplicate/concurrent registration; invalid password; account states; safe response fields; cookie settings; session expiry/renewal/revocation; repeated logout; failed persistence; CSRF rejection; missing/invalid input; log redaction. Add later browser and real-PostgreSQL checks to the relevant step rather than treating this list as tests already run.
-
-**Step 1 exit:** a reviewed contract, state-flow sketch, minimal entity sketch and acceptance matrix with every schema/security-affecting choice resolved. Record chosen values here and preserve durable decisions in backend requirements. Then validate the selected TypeORM integration in Step 2. Generators and installation commands are deliberately not part of Step 1.
+If built-in CSRF protection is selected, test its documented origin/header behavior rather than asserting token-based rejection. Real PostgreSQL and browser checks belong to subsequent checkpoints.
 
 ## Follow-up boundaries and handoff
 
-The first slice is not the full authentication milestone. Email delivery/verification, recovery/password change, logout-all, session management, renewal hardening and frontend Stack Auth replacement remain visible in the [roadmap](planning/ROADMAP.md) and [validation register](planning/VALIDATION.md). Do not publish a pending-verification prototype as full SRS authentication. Organization isolation/RBAC, billing and other business features retain their existing sequence.
+The initial slice does not complete SRS authentication. Verification/email delivery, recovery/password change, logout-all, session management, renewal hardening and frontend Stack Auth replacement remain in the [roadmap](planning/ROADMAP.md) and [validation register](planning/VALIDATION.md). A pending-verification prototype does not establish full account activation. Organization isolation/RBAC and other business features retain their roadmap sequence.
 
-Keep current runtime commands/configuration in the [backend README](../backend/README.md). Keep review findings in the conversation; this file tracks development work rather than duplicating review reports. On completion, preserve accepted decisions/evidence in their owning documents and retire this file with its incoming links.
-
-## Research and verification limits
-
-Step 1 security guidance was checked on 22 October 2026 against [OWASP session management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html), [CSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html), [password storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html), and [NIST SP 800-63B password guidance](https://pages.nist.gov/800-63-4/sp800-63b.html). These support the design considerations; proposed endpoint names and timeout values are project choices. This is not a claim of standards compliance or a verified implementation.
-
-The existing backend has no ORM dependency or auth/session integration. Only documentation was edited for this tracker; no application code/configuration, dependencies, migrations or frontend integration changed, and no branch/index/history mutations were performed. Documentation checks do not establish application behavior. ORM/version-specific framework research and reproducible compatibility checks belong to Step 2 before recommending its installation/API usage.
+Security references: [OWASP session management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html), [CSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html), [password storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) and [NIST password guidance](https://pages.nist.gov/800-63-4/sp800-63b.html). Implementation and verification evidence belong in the validation register.
