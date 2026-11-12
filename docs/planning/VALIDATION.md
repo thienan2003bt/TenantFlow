@@ -42,6 +42,20 @@ The current local hashing profile is Argon2id, 64 MiB, two iterations and parall
 - Local `dev` at `565b2d5` contains the foundation merge from PR #10. At the developer's explicit request, the agent created and checked out `feat/auth-persistence` from that clean local base. No fetch, commit, push or publication was performed.
 - The developer delegated first-slice contract decisions. Backend requirements now own finalized policies and the exact three-entity mapping; the temporary plan owns implementation checkpoints. Design completion does not establish runtime correctness. Entity files, feature migrations and auth routes were not added in this documentation batch.
 
+### User entity example — 12 November 2026
+
+At the developer's explicit request, the agent implemented User as the first TypeORM mapping, added the backend-local UserStatus enum and registered User in the shared runtime/CLI database options. PasswordCredential/Session, migrations and repository consumers were not added.
+
+| Check | Observed result | Boundary |
+| --- | --- | --- |
+| Typecheck, ESLint, formatting and Nest build | Passed. | The compiled enum alias resolves to a relative JavaScript import. No dependency/configuration/module-system change was required. |
+| Existing unit/HTTP suites | 23 unit tests and one database-stubbed HTTP test passed. | These existing suites do not exercise User persistence or PostgreSQL constraints. |
+| Compiled Node ESM and offline ORM smoke | Passed after accounting for TypeORM's timestamp-default normalization in the diagnostic assertion. The compiled shared options build valid metadata for eight columns, six CHECKs and canonical-email uniqueness, and render PostgreSQL CREATE TABLE SQL with the C collation. The initial assertion expected literal CURRENT_TIMESTAMP(3), whereas the driver renders its equivalent normalized expression. | Uses synthetic configuration and no database connection. No CREATE TABLE SQL was executed; this is not migration or constraint-enforcement evidence. |
+
+Next evidence: review the two remaining entity mappings, then apply/revert/reapply a reviewed migration and exercise constraints/rollback against isolated real PostgreSQL. User alone is a mapping checkpoint, not working account persistence.
+
+Documentation checks for this batch resolved 154 local links and 35 anchors across 18 tracked Markdown files. Whitespace/final-newline checks passed, including the two new source files. No migration or database command was executed for this entity example.
+
 ### Frontend and Compose — 17 October 2026
 
 Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared through [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8). These results concern the frontend/Compose foundation and do not establish the current PR's merge state or backend auth behavior.
@@ -57,13 +71,13 @@ Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared thro
 
 ## Open follow-ups
 
-These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns finalized first-slice policies/mappings, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns implementation checkpoints, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. The next checkpoint is the developer's three entity files; design and password-service formatting are no longer open blockers. Real persistence and browser behavior still require implementation and evidence.
+These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns finalized first-slice policies/mappings, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns implementation checkpoints, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. The next checkpoint is PasswordCredential/Session implementation and review of all three mappings; User exists as the requested example. Real persistence and browser behavior still require implementation and evidence.
 
 | ID | Work still needed | Completion evidence / owning document |
 | --- | --- | --- |
 | F-01 | Replace inherited frontend Stack Auth with TenantFlow account/session and organization flows. | After backend contracts exist, verify registration/login/logout, recovery/account settings and authorized organization switching while preserving template assets/license. Status: queued frontend transition. |
 | F-02 | Implement first-slice auth and design the later account lifecycle. | Follow the finalized [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract). Password hashing/tests/formatting pass; blocklist asset pinning, deployment hashing benchmarks, auth/browser workflows, verification/recovery and internationalized-email input remain later work. Status: first-slice design finalized, workflows pending. |
-| F-03 | Implement minimal auth mappings; review later domain design. | Review the [three-entity contract](../requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping), then prove its constraints/migration/rollback on isolated PostgreSQL. Broader model candidates in section 2 still need tenant/history-safe design. Status: auth mapping design finalized; entity implementation next. |
+| F-03 | Finish minimal auth mappings; review later domain design. | User is mapped/registered with passing offline checks. Implement PasswordCredential/Session under the [three-entity contract](../requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping), then prove constraints/migration/rollback on isolated PostgreSQL. Broader model candidates in section 2 still need tenant/history-safe design. Status: one mapping implemented; remaining entities and persistence verification pending. |
 | F-04 | Complete the NestJS foundation inside `backend/`. | Configuration validation/tests and TypeORM wiring exist. Add health HTTP coverage, database readiness, backend CI/container wiring and meaningful auth/isolation tests under the [roadmap](ROADMAP.md). Status: in progress. |
 | F-05 | Verify TypeORM/PostgreSQL behavior and select feasible hosting. | CLI migration-status execution is user-reported successful. Still prove Nest startup/shutdown, feature migrations, transactions, constraints, session concurrency and cleanup. Compare provider cost/capability, settle exact trusted proxies/Host forwarding and verify deployment compatibility while preserving local PostgreSQL data. Status: configuration implemented, CLI connectivity reported, integration pending. |
 | F-06 | Verify backend CI, replacement frontend hosting and transactional email delivery. | Observe actual backend CI runs and hosted runtime checks. Verify verification/reset/invitation delivery to intended recipients; provider accounts and delivery infrastructure are not configured. Status: queued validation/design. |
