@@ -49,7 +49,7 @@ The selected stack adds entity metadata, relation-loading and transaction-contex
 ## Open details and acceptance checks
 
 - Select released TypeORM/adapter/driver versions compatible with Nest 12, TypeScript 6 and ESM; validate type-check, Nest build/watch, compiled startup and Vitest before extending the schema. Repository manifests are supporting compatibility evidence, not a verified installed combination.
-- Settle exact email/password input rules, pending-verification behavior, endpoint/status/error contracts, session duration/renewal/retention, cookie topology and CSRF strategy in the temporary tracker. Accepting this stack does not silently accept every previously proposed value.
+- First-slice email/password, account, HTTP/error, session/retention and browser policies were finalized on 12 November 2026 under delegated developer authority in the [accepted contract](../../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract). The temporary tracker now owns execution checkpoints only. This closes the policy follow-up, not implementation or runtime verification.
 - Finalize migration scripts/source-versus-compiled CLI invocation, isolated test database targeting and readiness behavior alongside actual integration. A migration directory or schema comment is not proof of execution.
 - Verify atomic user/credential writes, concurrent normalized-email uniqueness, session lookup/expiry/revocation/renewal, connection cleanup and safe response/log fields against real PostgreSQL.
 - Hosting providers, frontend Stack Auth replacement, delivery infrastructure, RLS, shared rate-limit storage and future queues remain explicit later choices. No provider accounts or runtime quotas were validated by this decision.

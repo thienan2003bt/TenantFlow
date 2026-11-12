@@ -16,7 +16,7 @@ The NestJS backend has a minimal HTTP/configuration foundation and TypeORM runti
 | --- | --- | --- |
 | `requirements/` | [SRS](requirements/TenantFlow-SRS.md) | Product rules, tenant boundaries, required behavior, MVP versus future scope |
 | `requirements/` | [Backend Requirements](requirements/BACKEND_REQUIREMENTS.md) | Backend constraints, accepted auth contract, model candidates and unresolved design choices |
-| `docs/` (temporary) | [Session Auth Development Plan](SESSION_AUTH_DEVELOPMENT_PLAN.md) | Active slice checklist and remaining Step 1 proposals; retire after preserving decisions/evidence |
+| `docs/` (temporary) | [Session Auth Development Plan](SESSION_AUTH_DEVELOPMENT_PLAN.md) | Active slice checkpoints and entity/migration handoff; finalized policies live in backend requirements; retire after preserving decisions/evidence |
 | `architecture/` | [Backend Conventions](architecture/BACKEND_CONVENTIONS.md) | Responsibilities, Nest request lifecycle diagram, security/data conventions, review agreement |
 | `architecture/decisions/` | [ADR 0001: Backend Stack and Session Auth](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) | Accepted TypeORM/session/supporting-stack decision, alternatives, consequences and unverified implementation details |
 | `setup/` | [Start Here](setup/START_HERE.md) | Commands for the existing checkout and onboarding order |

@@ -473,8 +473,7 @@ The database should be able to model at least the following entity groups:
 #### Identity
 
 - users
-- sessions
-- refresh_tokens
+- sessions, including renewal, expiry and revocation state; separate refresh-token storage only if a future authentication flow actually issues refresh tokens
 - email_verification_tokens
 - password_reset_tokens
 
