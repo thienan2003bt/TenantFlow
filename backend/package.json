@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "build": "nest build",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run test:e2e && npm run test:hook && npm run build",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"vitest.config*.ts\" \"eslint.config.mjs\" \"scripts/**/*.mjs\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"vitest.config*.ts\" \"eslint.config.mjs\" \"scripts/**/*.mjs\"",

@@ -1,6 +1,6 @@
 # Backend Requirements and Design Notes
 
-The NestJS application in `backend/` has configuration validation, HTTP liveness, TypeORM runtime wiring, a standalone migration DataSource, a tested Argon2id password service and a registered User entity example. PasswordCredential/Session entities, feature migrations and auth workflows are not implemented; agent-run real PostgreSQL checks remain unverified. The frontend still uses the inherited Stack Auth integration pending replacement.
+The NestJS application in `backend/` has configuration validation, HTTP liveness, TypeORM runtime wiring, a standalone migration DataSource, a tested Argon2id password service and registered User/PasswordCredential/Session mappings. Feature migrations and auth workflows are not implemented; agent-run real PostgreSQL checks remain unverified. The frontend still uses the inherited Stack Auth integration pending replacement.
 
 The developer implements the backend inside `backend/`, alongside `frontend/`. The [backend README](../../backend/README.md) documents current startup, configuration, health behavior and test coverage. Broader requirements below follow in later milestones. Use [engineering conventions](../architecture/BACKEND_CONVENTIONS.md) for responsibility and review rules; explicit tooling requests do not authorize automatically implementing review findings.
 
@@ -71,7 +71,7 @@ The root model files remain design references, not migrations or runtime validat
 
 ### Accepted initial session-auth contract
 
-Baseline accepted on 25 October 2026; remaining policies finalized on 12 November 2026 under the developer's delegated decision authority. This is the implementation contract, not evidence that database constraints or auth routes work. The password primitive and first User mapping are implemented; remaining mappings/migrations and HTTP workflows are pending. The temporary plan tracks execution, not competing policy proposals.
+Baseline accepted on 25 October 2026; remaining policies finalized on 12 November 2026 under the developer's delegated decision authority. This is the implementation contract, not evidence that database constraints or auth routes work. The password primitive and all three mappings are implemented; migrations and HTTP workflows are pending. The temporary plan tracks execution, not competing policy proposals.
 
 | Concern | Accepted behavior |
 | --- | --- |
@@ -100,7 +100,7 @@ Login must perform a real verification against either the stored hash or a maint
 
 #### Minimal auth persistence mapping
 
-Keep these mappings directly in `backend/src/auth/user.entity.ts`, `password-credential.entity.ts` and `session.entity.ts`. The User example is implemented at the developer's explicit request; the developer writes the remaining two entities. Explicit table/column names use snake_case. All columns are NOT NULL unless marked nullable. This table is an accepted design, not an executable migration.
+Keep these mappings directly in `backend/src/auth/user.entity.ts`, `password-credential.entity.ts` and `session.entity.ts`. The agent supplied User as the explicitly requested example; the developer implemented PasswordCredential and Session. All three are registered and pass offline ORM review, with line-ending formatting still open for the two new files. Explicit table/column names use snake_case. All columns are NOT NULL unless marked nullable. This table is an accepted design, not an executable migration.
 
 | Entity / table | Columns and ownership |
 | --- | --- |

@@ -36,7 +36,7 @@ Start PostgreSQL from the **repository root** before starting Nest:
 docker compose up -d --wait --wait-timeout 90 postgres
 ```
 
-`AppModule` validates configuration once, then imports `DatabaseModule`. That module injects `ConfigService` and uses `database.options.ts` to configure TypeORM. Nest manages the connection lifecycle. `User` is registered in those shared runtime/CLI options; synchronization and startup migrations remain disabled, and no feature migration exists. Registering the mapping does not create its table. Add `TypeOrmModule.forFeature([User])` in the consuming feature module when introducing an injected `Repository<User>`; no repository consumer is implemented yet. See [Nest's TypeORM integration](https://docs.nestjs.com/data/typeorm) and [TypeORM entities](https://typeorm.io/docs/entity/entities/).
+`AppModule` validates configuration once, then imports `DatabaseModule`. That module injects `ConfigService` and uses `database.options.ts` to configure TypeORM. Nest manages the connection lifecycle. `User`, `PasswordCredential` and `Session` are registered in those shared runtime/CLI options; synchronization and startup migrations remain disabled, and no feature migration exists. Registering the mappings does not create their tables. Add `TypeOrmModule.forFeature([User])` in the consuming feature module when introducing an injected `Repository<User>`; no repository consumer is implemented yet. See [Nest's TypeORM integration](https://docs.nestjs.com/data/typeorm) and [TypeORM entities](https://typeorm.io/docs/entity/entities/).
 
 Start development mode:
 
@@ -79,7 +79,15 @@ When using the Nest CLI, append `--format`, for example `npx.cmd --no-install ne
 
 The existing `backend/.vscode/settings.json` selects double quotes for auto-imports and Prettier on save **when `backend/` is opened as the VS Code workspace** and the Prettier extension is installed. Nested VS Code settings do not apply automatically when opening only the repository root; the formatter and scripts still read the backend Prettier configuration. Prettier may choose another delimiter for ordinary strings to reduce escaping; import specifiers here use double quotes.
 
-Run these checks from `backend/`:
+Run the complete existing verification sequence from `backend/`:
+
+```powershell
+npm.cmd run check
+```
+
+This runs typecheck, lint, formatting verification, unit tests, HTTP smoke tests, hook-runner tests and Nest build, in that order. It stops at the first failure and does not apply fixes. The build writes compiled output under `dist/`. No PostgreSQL connection, migration, auth flow or browser behavior is verified by this command. The script uses npm's standard [run-script behavior](https://docs.npmjs.com/cli/v11/commands/npm-run/).
+
+Individual checks remain available:
 
 ```powershell
 npm.cmd run typecheck
