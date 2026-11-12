@@ -1,6 +1,6 @@
 # Session authentication development plan
 
-**Current checkpoint: close entity formatting, then migration review.** The first-slice contract is finalized and all three entities are registered on `feat/auth-persistence`. Their offline ORM review passed; the developer still needs to normalize line endings in PasswordCredential/Session. Password hashing/verification and their tests exist. Feature migrations and auth handlers remain unimplemented.
+**Current checkpoint: first migration review and isolated PostgreSQL verification.** The first-slice contract is finalized and all three entities are registered on `feat/auth-persistence`. Offline ORM review and the complete local check command pass after line-ending normalization. Password hashing/verification and their tests exist. Feature migrations and auth handlers remain unimplemented.
 
 [Documentation index](README.md) · [Roadmap](planning/ROADMAP.md#current-priorities-and-learning-preferences) · [Accepted contract](requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) · [Validation register](planning/VALIDATION.md#open-follow-ups)
 
@@ -18,7 +18,7 @@ Keep implementation in `backend/`, preserve the frontend/assets/license and Post
 | --- | --- | --- |
 | 1. Define the auth contract | DONE — design finalized, not runtime-verified | Remaining decisions were resolved on 12 November 2026 in backend requirements. Preserve the explicitly accepted 6-128-code-point password policy and its security distinction. |
 | 2. Validate TypeORM integration and migration workflow | Basic CLI connectivity user-reported; remaining runtime checks open | Runtime/CLI wiring exists and migration-status execution succeeded per the developer. Nest compiled startup, health/shutdown and isolated migration/transaction checks need their own recorded evidence. |
-| 3. Establish persistence | IN PROGRESS — mappings reviewed; formatting and migration pending | All three entities and shared runtime/CLI registrations pass offline metadata/DDL review. Run format and check to close the remaining line-ending failure, then review the migration and real PostgreSQL tests for constraints, concurrent uniqueness, apply/revert/reapply and rollback. Preserve the development volume. |
+| 3. Establish persistence | IN PROGRESS — mapping increment complete; migration pending | All three entities and shared runtime/CLI registrations pass offline metadata/DDL review and the full local check command. Review the migration and real PostgreSQL tests for constraints, concurrent uniqueness, apply/revert/reapply and rollback. Preserve the development volume. |
 | 4. Implement the initial auth slice | IN PROGRESS — password primitive only | Password hashing/verification and tests pass, including formatting in the branch review. Registration, sessions, caller read and logout remain unimplemented. Introduce boundary validation, safe responses, CSRF and abuse controls with those flows. |
 | 5. Verify browser behavior and failure cases | NOT STARTED | Verify cookie issuance/renewal/sending/clearing, origin/CSRF denial, expiry/revocation, concurrent registration/logout, account status changes, hash secrecy and rollback. Add meaningful CI coverage with each consuming checkpoint. |
 | 6. Close this tracker | NOT STARTED | Preserve decisions/evidence and unfinished follow-ups in their owning documents; repair incoming links and remove this temporary file after the slice is complete. |
@@ -27,11 +27,11 @@ Keep implementation in `backend/`, preserve the frontend/assets/license and Post
 
 Use backend requirements as the single policy source. The design now fixes email case/length, password Unicode/blocklist/input bounds, browser trust, exact entity fields, timestamps/deletion, renewal/retention, safe responses and local abuse limits. Later verification/recovery, frontend replacement and production proxy configuration retain explicit follow-ups.
 
-### Next checkpoint — three entity files
+### Completed checkpoint — three entity files
 
 - **Objective:** represent the accepted global identity state without adding HTTP behavior yet.
-- **Action:** all three mappings and shared runtime/CLI registrations are now implemented. Normalize the two new files with `npm.cmd run format`, then rerun the combined check. Entity behavior was reviewed without changing the developer's entity files.
-- **Working directory:** `backend/`. Run `npm.cmd run check` for typecheck, lint, formatting, unit/HTTP/hook tests and Nest build. The initial combined run correctly stopped at formatting; other checks were subsequently exercised separately, as recorded in the validation register. The script does not run migrations or real database integration.
+- **Action:** all three mappings and shared runtime/CLI registrations are implemented. The two new files were normalized to LF, and the formatter's LF policy is explicit. No entity behavior changed during this formatting fix.
+- **Working directory:** `backend/`. `npm.cmd run check` passed typecheck, lint, formatting, unit/HTTP/hook tests and Nest build in one run. Continue using it after changes. The script does not run migrations or real database integration; provenance and limits are recorded in the validation register.
 - **Check:** review names/types/nullability, primary/unique/foreign keys, CHECK constraints, timestamp ownership, restrictive deletion and secret-selection behavior. Runtime and CLI must use the same registrations, with synchronization and startup migrations disabled. A successful build is not proof that PostgreSQL constraints work.
 
 ### Subsequent checkpoint — migration and real PostgreSQL

@@ -69,7 +69,7 @@ The current bootstrap omits an explicit listening host and enables unrestricted 
 
 ## Formatting and checks
 
-Backend Prettier configuration uses double quotes for imports, `printWidth: 120` and two spaces per indentation level (`tabWidth: 2`, `useTabs: false`). `printWidth` is Prettier's wrapping preference, not a hard limit on every line. Run formatting after editing or generation:
+Backend Prettier configuration uses double quotes for imports, `printWidth: 120`, two spaces per indentation level (`tabWidth: 2`, `useTabs: false`) and explicit LF line endings (`endOfLine: "lf"`), matching `backend/.gitattributes`. Existing CRLF working files still need formatting even when Git stores LF in the index; see [Prettier's line-ending option](https://prettier.io/docs/options#end-of-line). `printWidth` is Prettier's wrapping preference, not a hard limit on every line. Run formatting after editing or generation:
 
 ```powershell
 npm.cmd run format

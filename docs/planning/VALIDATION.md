@@ -68,6 +68,14 @@ The developer corrected PasswordCredential and Session and registered both along
 
 Next checkpoint: format the two new files and rerun the combined command, then review and exercise the first migration on isolated PostgreSQL. The check script deliberately excludes migration/database/browser operations.
 
+### Entity line-ending normalization — 12 November 2026
+
+The developer requested a direct fix after committing the mappings. Both entity files had CRLF in the working copy even though their index versions and existing backend Git attributes specified LF. Prettier comparison confirmed line-ending differences only. The files were formatted to LF and `endOfLine: "lf"` was made explicit in backend Prettier configuration; no entity behavior changed. The earlier formatting failure above is historical and resolved.
+
+`npm.cmd run check` then passed in one run: typecheck, ESLint, format verification, 23 unit tests, one database-stubbed HTTP test, seven hook-runner tests and Nest build. This run used unsandboxed execution so the HTTP smoke test could access its local loopback server; no runtime/test workaround was committed. Git inspection confirmed both working files now use LF. No PostgreSQL connection, migration, constraint/concurrency test or browser-auth check was executed.
+
+The local mapping increment is complete. The next evidence remains a reviewed migration and isolated PostgreSQL apply/revert/reapply, constraint and rollback checks.
+
 ### Frontend and Compose — 17 October 2026
 
 Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared through [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8). These results concern the frontend/Compose foundation and do not establish the current PR's merge state or backend auth behavior.
@@ -83,13 +91,13 @@ Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared thro
 
 ## Open follow-ups
 
-These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns finalized first-slice policies/mappings, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns implementation checkpoints, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. All three mappings have passed offline review; close their formatting check before the migration checkpoint. Real persistence and browser behavior still require implementation and evidence.
+These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns finalized first-slice policies/mappings, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns implementation checkpoints, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. All three mappings have passed offline review and the full local check command. Real persistence and browser behavior still require implementation and evidence.
 
 | ID | Work still needed | Completion evidence / owning document |
 | --- | --- | --- |
 | F-01 | Replace inherited frontend Stack Auth with TenantFlow account/session and organization flows. | After backend contracts exist, verify registration/login/logout, recovery/account settings and authorized organization switching while preserving template assets/license. Status: queued frontend transition. |
 | F-02 | Implement first-slice auth and design the later account lifecycle. | Follow the finalized [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract). Password hashing/tests/formatting pass; blocklist asset pinning, deployment hashing benchmarks, auth/browser workflows, verification/recovery and internationalized-email input remain later work. Status: first-slice design finalized, workflows pending. |
-| F-03 | Close mapping formatting; verify persistence and later domain design. | All three mappings are implemented/registered and pass offline review under the [three-entity contract](../requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping). Normalize new-file line endings, rerun npm check, then prove constraints/migration/rollback on isolated PostgreSQL. Broader model candidates in section 2 still need tenant/history-safe design. Status: mappings reviewed; formatting and database verification pending. |
+| F-03 | Verify persistence and later domain design. | All three mappings are implemented/registered and pass offline review and the local check command under the [three-entity contract](../requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping). Prove constraints/migration/rollback on isolated PostgreSQL. Broader model candidates in section 2 still need tenant/history-safe design. Status: local mapping increment complete; database verification pending. |
 | F-04 | Complete the NestJS foundation inside `backend/`. | Configuration validation/tests and TypeORM wiring exist. Add health HTTP coverage, database readiness, backend CI/container wiring and meaningful auth/isolation tests under the [roadmap](ROADMAP.md). Status: in progress. |
 | F-05 | Verify TypeORM/PostgreSQL behavior and select feasible hosting. | CLI migration-status execution is user-reported successful. Still prove Nest startup/shutdown, feature migrations, transactions, constraints, session concurrency and cleanup. Compare provider cost/capability, settle exact trusted proxies/Host forwarding and verify deployment compatibility while preserving local PostgreSQL data. Status: configuration implemented, CLI connectivity reported, integration pending. |
 | F-06 | Verify backend CI, replacement frontend hosting and transactional email delivery. | Observe actual backend CI runs and hosted runtime checks. Verify verification/reset/invitation delivery to intended recipients; provider accounts and delivery infrastructure are not configured. Status: queued validation/design. |

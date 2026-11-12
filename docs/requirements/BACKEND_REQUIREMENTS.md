@@ -100,7 +100,7 @@ Login must perform a real verification against either the stored hash or a maint
 
 #### Minimal auth persistence mapping
 
-Keep these mappings directly in `backend/src/auth/user.entity.ts`, `password-credential.entity.ts` and `session.entity.ts`. The agent supplied User as the explicitly requested example; the developer implemented PasswordCredential and Session. All three are registered and pass offline ORM review, with line-ending formatting still open for the two new files. Explicit table/column names use snake_case. All columns are NOT NULL unless marked nullable. This table is an accepted design, not an executable migration.
+Keep these mappings directly in `backend/src/auth/user.entity.ts`, `password-credential.entity.ts` and `session.entity.ts`. The agent supplied User as the explicitly requested example; the developer implemented PasswordCredential and Session. All three are registered, pass offline ORM review and have passed the complete local check command after line-ending normalization. Explicit table/column names use snake_case. All columns are NOT NULL unless marked nullable. This table is an accepted design, not an executable migration.
 
 | Entity / table | Columns and ownership |
 | --- | --- |
