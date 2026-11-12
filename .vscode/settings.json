@@ -9,5 +9,6 @@
     "vercel",
     "webapi",
     "Yubi"
-  ]
+  ],
+  "editor.formatOnSave": true
 }
