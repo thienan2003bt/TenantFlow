@@ -51,7 +51,10 @@ async function run(action) {
     ensureContext();
     await action();
   } catch (error) {
-    output.textContent += String(error) + "\nCheck the page address, selected console context, and API terminal.";
+    output.textContent += String(error);
+    if (error instanceof TypeError) {
+      output.textContent += "\nCheck that the API is running, then inspect the browser console for a network or CORS error.";
+    }
   } finally {
     buttons.forEach((button) => { button.disabled = false; });
   }
@@ -75,7 +78,13 @@ document.querySelector("#register").onclick = () => run(async () => {
     output.textContent += name + ": expected " + expected + ", received " + result.status + "\n";
     output.textContent += JSON.stringify(result, null, 2) + "\n\n";
     if (result.status !== expected) {
-      throw new Error("Unexpected response. Restart the API to reset its limit before a fresh sequence.");
+      if (result.status === 429) {
+        throw new Error("Rate limit reached early. Wait for Retry-After or restart the local API before a fresh sequence.");
+      }
+      if (result.status >= 500) {
+        throw new Error("Server failure. Inspect the API and PostgreSQL terminals; verify InitialAuth is applied to the API's database. A health-check 200 does not verify the schema. Restarting the API does not apply migrations.");
+      }
+      throw new Error("Unexpected response. Inspect the response above and the failed request in the browser Network panel.");
     }
   }
 });

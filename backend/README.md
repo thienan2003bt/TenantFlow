@@ -34,6 +34,15 @@ Start PostgreSQL from the repository root if needed:
 docker compose up -d --wait --wait-timeout 90 postgres
 ~~~
 
+Before starting the API, apply InitialAuth to the database selected by backend/.env and any shell overrides.
+Verify the host, port, database and user using the [migration guide](src/database/migrations/README.md).
+A migration applied to a scratch/test database does not initialize tenantflow_dev.
+From backend/, apply pending registered migrations:
+
+~~~powershell
+npm.cmd run db:migration:run
+~~~
+
 Start the API from backend/:
 
 ~~~powershell
@@ -42,8 +51,7 @@ npm.cmd run start:dev
 
 The API binds 127.0.0.1 and the configured PORT, normally 14400.
 Use http://localhost:14400 from a browser.
-InitialAuth must already be applied to the selected database; startup does not apply migrations.
-Use the [migration guide](src/database/migrations/README.md) before schema operations.
+Startup does not apply migrations. A running API can still lack the auth tables.
 
 ## Registration
 
@@ -91,7 +99,7 @@ node scripts/auth-browser-check.mjs
 
 5. Confirm Origin: http://localhost:3000 and Secure context: true on the page.
 
-6. Click Check API connection. Expect 200 and Service is healthy!.
+6. Click Check API connection. Expect 200 and Service is healthy!. This checks liveness, not schema readiness.
 
 7. Click Run six registration checks once. Expect 202, 202, 400, 400, 400, 429.
 
