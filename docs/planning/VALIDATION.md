@@ -170,6 +170,14 @@ Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared thro
 | Hosted frontend image | Image build, container start, bounded-retry HTTP smoke and cleanup passed in that run. | A previous probe failed during startup; the corrected run is the successful evidence. |
 | Secret boundary | A fake private-key marker was absent from 32 generated browser assets during the local review. | This is a targeted artifact check, not a security certification. |
 
+### Registration controller review — 24 November 2026
+
+The basic POST /auth/register handler now awaits RegistrationService and returns the fixed generic 202 body. AuthInputError becomes a fixed 400 INVALID_INPUT; other rejections, including non-Error values, become a fixed 500 INTERNAL_ERROR without raw error logging. The handler sets Cache-Control: no-store before service work so successful and handled-error responses retain it. No cookie, account identifier or credential details are returned.
+
+Six focused tests in auth.controller.spec.ts exercise actual Nest HTTP routing with RegistrationService stubbed: successful response and no cookie, awaited completion, input rejection, database-error sanitization, and string/object rejections. They run under the ordinary test command. The full npm.cmd run check passed: typecheck, lint, format, 143 tests (including these six controller HTTP cases), one application HTTP smoke, seven hook checks, Nest build and compiled blocklist smoke. No database command was run for this controller-only change.
+
+This does not verify a protected end-to-end registration flow or real persistence over HTTP. The next checkpoint is request DTO/custom-pipe separation using the existing parser as the single source of input rules, with direct service callers updated to the validated-input contract. Dedicated verified persistence-unavailability mapping to 503, middleware/parser error responses, body/media/encoding limits, exact listener/CORS/CSRF policy, registration throttling and real-PostgreSQL HTTP coverage remain pending. Existing service validation remains in place until that coordinated refactor.
+
 ## Open follow-ups
 
 These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns finalized first-slice policies/mappings, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns implementation checkpoints, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. All three mappings have passed offline review and earlier full local checks. Manual isolated-schema verification is now developer-reported above; automated migration/registration persistence checks now pass. Remaining schema automation and actual account/session HTTP/browser behavior remain unfinished.
