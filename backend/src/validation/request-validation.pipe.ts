@@ -1,5 +1,7 @@
 import { BadRequestException, HttpStatus, Injectable, ValidationPipe, type ArgumentMetadata } from "@nestjs/common";
 
+const reservedBodyKeys: ReadonlySet<string> = new Set(["prototype", ...Object.getOwnPropertyNames(Object.prototype)]);
+
 @Injectable()
 export class RequestValidationPipe extends ValidationPipe {
   constructor() {
@@ -24,9 +26,8 @@ export class RequestValidationPipe extends ValidationPipe {
       if (value === null || typeof value !== "object" || Array.isArray(value)) {
         throw this.exceptionFactory([]);
       }
-      // Nest strips these keys before validation; our body contract rejects them instead.
-      const reservedKeys: readonly string[] = ["__proto__", "prototype", "constructor"];
-      if (Reflect.ownKeys(value).some((key) => typeof key === "symbol" || reservedKeys.includes(key))) {
+      // Nest/class-transformer strip reserved keys and skip inherited methods; reject them before transformation.
+      if (Reflect.ownKeys(value).some((key) => typeof key === "symbol" || reservedBodyKeys.has(key))) {
         throw this.exceptionFactory([]);
       }
     }

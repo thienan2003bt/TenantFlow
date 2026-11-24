@@ -20,6 +20,7 @@ export function configureHttpApplication(app: NestExpressApplication): void {
       callback(null, origin === FRONTEND_ORIGIN);
     },
     credentials: true,
+    exposedHeaders: ["Retry-After"],
     methods: ["GET", "HEAD", "POST", "OPTIONS"],
   });
   app.enableCsrfProtection({ trustedOrigins: [FRONTEND_ORIGIN] });

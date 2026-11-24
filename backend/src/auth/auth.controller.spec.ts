@@ -103,7 +103,7 @@ describe("AuthController (HTTP, registration service stubbed)", () => {
     { label: "an invalid password", body: { ...input, password: "weak" } },
     { label: "a client-supplied canonical email", body: { ...input, emailCanonical: "forged@example.com" } },
     { label: "an array", body: [input] },
-    ...["__proto__", "constructor", "prototype"].map((key) => ({
+    ...["__proto__", "constructor", "prototype", "toString", "hasOwnProperty"].map((key) => ({
       label: `a reserved ${key} field`,
       body: { ...input, [key]: "untrusted" },
     })),

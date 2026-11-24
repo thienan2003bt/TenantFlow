@@ -229,6 +229,7 @@ describe("Registration request protections (AppModule, persistence/service stubb
       .post("/auth/register")
       .set("X-Forwarded-For", "198.51.100.1")
       .set("X-Real-IP", "198.51.100.2")
+      .set("Origin", FRONTEND_ORIGIN)
       .send(input)
       .expect(429)
       .expect("Cache-Control", "no-store");
@@ -237,6 +238,8 @@ describe("Registration request protections (AppModule, persistence/service stubb
       code: "RATE_LIMITED",
       message: "Too many registration attempts.",
     });
+    expect(response.headers["access-control-allow-origin"]).toBe(FRONTEND_ORIGIN);
+    expect(response.headers["access-control-expose-headers"].toLowerCase()).toContain("retry-after");
     expect(Number(response.headers["retry-after"])).toBeGreaterThan(0);
     expect(Number(response.headers["retry-after"])).toBeLessThanOrEqual(3600);
     expect(register).not.toHaveBeenCalled();

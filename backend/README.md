@@ -22,7 +22,7 @@ AuthController returns the same fixed 202 body for successful new/duplicate regi
 
 The HTTP input flow is unknown body -> global RequestValidationPipe -> decorated RegisterDto -> controller -> RegistrationService. AppModule imports ValidationModule once; its APP_PIPE provider makes validation global, including applications assembled through Nest testing modules. Controllers use plain @Body() with a concrete DTO class imported as a value. The per-route RegisterInputPipe has been removed. Future DTOs declare their own class-validator rules and use the same global pipe without adding endpoint-specific pipes. Untyped/interface parameters do not provide runtime validation metadata.
 
-RequestValidationPipe extends Nest's built-in ValidationPipe with transform, whitelist, forbidNonWhitelisted and forbidUnknownValues enabled, implicit body-field conversion disabled, and fixed safe validation errors. Its small pre-check rejects non-object DTO bodies and reserved/symbol keys before Nest can silently strip them; remaining validation and transformation use Nest's implementation. RegisterDto declares only email and password. Its shared AuthEmailConstraint/AuthPasswordConstraint delegate to parseAuthEmail/parseAuthPassword, also used by parseAuthInput, so email/password rules have one implementation. Email transformation trims only strings; passwords are never transformed. Canonical email is derived by the service from the validated trimmed email and is not a request/DTO field. Unknown fields, including supplied canonical email and reserved keys, are rejected.
+RequestValidationPipe extends Nest's built-in ValidationPipe with transform, whitelist, forbidNonWhitelisted and forbidUnknownValues enabled, implicit body-field conversion disabled, and fixed safe validation errors. Its small pre-check rejects non-object DTO bodies and reserved/symbol keys and inherited Object method names before Nest/class-transformer can silently strip or skip them; remaining validation and transformation use Nest's implementation. RegisterDto declares only email and password. Its shared AuthEmailConstraint/AuthPasswordConstraint delegate to parseAuthEmail/parseAuthPassword, also used by parseAuthInput, so email/password rules have one implementation. Email transformation trims only strings; passwords are never transformed. Canonical email is derived by the service from the validated trimmed email and is not a request/DTO field. Unknown fields, including supplied canonical email and reserved keys, are rejected.
 
 The service does not repeat request validation; its blocklist check remains registration policy. Non-HTTP callers must use RegisterDto.fromUnknown({ email, password }) before calling register. That factory uses parseAuthInput with the same shared field rules. DTO annotations and readonly properties do not validate arbitrary direct calls. Route-scoped RegistrationExceptionFilter handles both AuthInputError and BadRequestException as fixed registration-input errors, while unexpected failures stay sanitized. See [Nest global validation](https://docs.nestjs.com/application/validation) and [exception filters](https://docs.nestjs.com/exception-filters).
 
@@ -35,7 +35,7 @@ main.ts and assembled auth HTTP tests use the same httpApplicationOptions (defau
 The shared setup applies these controls in order:
 
 - Auth responses receive Cache-Control: no-store, including early errors and preflight.
-- CORS grants credentials only to the exact http://localhost:3000 origin. Allowed preflight is answered before the later checks; foreign origins receive no CORS grant headers.
+- CORS grants credentials only to the exact http://localhost:3000 origin. Allowed preflight is answered before the later checks; foreign origins receive no CORS grant headers. Retry-After is explicitly exposed so credentialed browser fetch can read the throttle delay.
 - Nest 12.1+ built-in CSRF runs before body parsing, without auth exclusions. Its Fetch Metadata/Origin semantics are preserved: same-origin/none, matching authority fallback and requests with neither browser header are allowed; cross-origin requests need the trusted frontend Origin. GET/HEAD/OPTIONS remain safe methods. No CSRF-token endpoint is introduced.
 - Auth writes require application/json and identity content encoding. The only installed parser is strict JSON with inflation disabled and a 16,384-byte limit. Unsupported formats/encodings/charsets return fixed 415, oversized bodies 413 and malformed JSON 400. RequestExceptionFilter safely handles bootstrap/parser failures without echoing/logging password-bearing bodies or library details.
 - RegistrationRateLimitGuard permits five admitted requests per direct socket IP per 3,600,000 ms window, before global DTO validation, hashing and persistence. DTO-invalid attempts count. Earlier CSRF/parser/media rejections do not. Forwarded IP headers cannot create buckets, route case/trailing-slash aliases share the guard, and 429 includes Retry-After rounded up in seconds. Expired entries are removed on subsequent attempts. State is per application process and resets on restart; shared limits/proxy policy remain a prerequisite for public or multi-instance exposure.
@@ -56,7 +56,7 @@ Nest copies `src/auth/data/password-blocklist/` into `dist/auth/data/password-bl
 npm.cmd run test:blocklist:build
 ```
 
-The combined check includes this smoke after its existing build. The required registration sequence remains parse input -> blocklist check -> hash -> atomic user/credential inserts. Registration and later password replacement must invoke the blocklist, while login must not apply it to existing credentials. RegistrationService now invokes it before hashing; HTTP registration and password-replacement consumers remain later work. See [Nest assets](https://docs.nestjs.com/cli/monorepo#assets) for the build mechanism.
+The combined check includes this smoke after its existing build. The required registration sequence remains parse input -> blocklist check -> hash -> atomic user/credential inserts. Registration and later password replacement must invoke the blocklist, while login must not apply it to existing credentials. RegistrationService now invokes it before hashing; HTTP registration invokes this service; password-replacement consumers remain later work. See [Nest assets](https://docs.nestjs.com/cli/monorepo#assets) for the build mechanism.
 
 ## Local configuration and commands
 
@@ -146,6 +146,88 @@ npm.cmd run test:e2e
 ESLint uses its flat configuration and the TypeScript recommended rules, with type-aware floating-promise checks. Unit tests cover Hello World, configuration validation, the password primitive, shared auth inputs, blocklist behavior/operational failures and registration orchestration/duplicate handling. Password tests use real Argon2 for encoded algorithm/work factors, match/mismatch, independent salts, spaces, Unicode, persisted work factors and malformed hashes. A separate error suite injects library failures to verify preserved causes. Configuration tests cover numeric conversion, inherited database rules, missing/invalid settings and password redaction.
 
 The HTTP smoke suite supplies synthetic configuration and overrides the TypeORM DataSource; it checks HTTP assembly without connecting to a developer's database. Focused AuthController tests in auth.controller.spec.ts additionally exercise real Nest HTTP routing with RegistrationService stubbed: fixed accepted responses, awaited completion, DTO transformation, invalid-body rejection before service work, safe pipe/service rejection mapping, no session cookie and no-store headers. The application HTTP suites use the shared bootstrap and verify AppModule global DTO validation, loopback binding, credentialed CORS, native CSRF behavior, strict body/media/encoding limits, safe early failures and socket-IP throttle order/reset. A separate ValidationModule HTTP suite proves the same global pipe works with another decorated DTO. Neither suite verifies PostgreSQL connectivity, migrations, health readiness or the complete protected registration flow. The separate real PostgreSQL suite now covers registration persistence and migrations. Remaining schema, HTTP and CI work is tracked under [F-07](../docs/planning/VALIDATION.md#automated-postgresql-integration-testing--todo). Actual results and any failed checks belong in the [validation register](../docs/planning/VALIDATION.md).
+
+## Browser registration acceptance
+
+These are manual checks, not recorded browser evidence. Use the local development database with InitialAuth already applied; inspect the target/migration status using the migration guide if necessary. This PR adds no migration. The test creates one pending test account and never logs it in. The inherited frontend registration form still calls Stack Auth, so use browser fetch rather than that form.
+
+1. Start or restart the backend with PORT=14400 in backend/.env. Restarting clears its process-local attempt window, so do this immediately before the sequence. From a PowerShell terminal:
+
+~~~powershell
+Set-Location C:\Workspace\AnTrieu\TenantFlow\backend
+npm.cmd run start:dev
+~~~
+
+2. Use the existing frontend if it already serves http://localhost:3000. Otherwise, in a separate terminal, serve a temporary blank page on that origin without editing the frontend:
+
+~~~powershell
+node --input-type=module -e "import { createServer } from 'node:http'; createServer((_req,res)=>{res.writeHead(200, {'Content-Type':'text/html; charset=utf-8'});res.end('<!doctype html><title>TenantFlow auth check</title><p>Open DevTools Console.</p>');}).listen(3000,'127.0.0.1')"
+~~~
+
+3. Open http://localhost:3000, then DevTools Console and Network. Confirm the address stays on that exact origin. Paste this helper once:
+
+~~~javascript
+globalThis.browserCredentials = {
+  email: "browser-pr-" + Date.now() + "@example.com",
+  password: "Allowed-Reg-7391!",
+};
+globalThis.registerAuth = async (payload, options = {}) => {
+  const response = await fetch("http://localhost:14400/auth/register", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(options.headers ?? {}) },
+    body: options.rawBody ?? JSON.stringify(payload),
+  });
+  return {
+    status: response.status,
+    body: await response.json(),
+    cacheControl: response.headers.get("Cache-Control"),
+    retryAfter: response.headers.get("Retry-After"),
+  };
+};
+~~~
+
+4. Run these calls in order from the same browser, without other registration requests between them:
+
+| Attempt | Console command | Expected result |
+| --- | --- | --- |
+| 1 | await registerAuth(browserCredentials) | 202 with exactly the generic accepted message. |
+| 2 | await registerAuth({ ...browserCredentials, email: " " + browserCredentials.email.toUpperCase() + " ", password: "Different-Allowed-8329!" }) | The same 202 body; existing credentials are preserved. |
+| 3 | await registerAuth({ ...browserCredentials, password: "weak" }) | 400 INVALID_INPUT. |
+| 4 | await registerAuth({ ...browserCredentials, password: "Password1!" }) | 400 INVALID_INPUT from the blocklist. |
+| 5 | await registerAuth({ ...browserCredentials, toString: "unexpected" }) | 400 INVALID_INPUT for an unknown field, including a name transformation would otherwise skip. |
+| 6 | await registerAuth(browserCredentials) | 429 RATE_LIMITED, with readable positive retryAfter seconds. |
+
+Each response must report cacheControl as no-store. Inspect Network for the initial JSON OPTIONS preflight (it may be cached), exact Access-Control-Allow-Origin http://localhost:3000, Access-Control-Allow-Credentials true, and Access-Control-Expose-Headers containing Retry-After. Registration POST responses must not set a TenantFlow session cookie. Existing Stack Auth cookies, if present, are unrelated; Set-Cookie cannot be inspected through browser fetch headers.
+
+5. Early media/parser checks run before the throttle, so these calls still return their own errors even after attempt six:
+
+~~~javascript
+await registerAuth(browserCredentials, {
+  headers: { "Content-Type": "text/plain" },
+}); // 415 UNSUPPORTED_MEDIA_TYPE
+await registerAuth(browserCredentials, {
+  rawBody: JSON.stringify({ ...browserCredentials, password: "A".repeat(17000) }),
+}); // 413 PAYLOAD_TOO_LARGE
+await registerAuth(browserCredentials, {
+  rawBody: '{"email":"unterminated',
+}); // 400 INVALID_INPUT
+~~~
+
+6. To test a rejected browser origin, open the same test page at http://127.0.0.1:3000 in another tab. Run this simple POST, which avoids a JSON preflight:
+
+~~~javascript
+await fetch("http://localhost:14400/auth/register", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "text/plain" },
+  body: "{}",
+});
+~~~
+
+Expect a CORS rejection in JavaScript and a POST 403 in Network: native CSRF runs before media parsing. Browser scripts cannot forge Origin or Sec-Fetch-Site; changing the page origin supplies genuine browser headers. Keep persistence-fault/rollback/concurrency checks in the disposable test:db suite. The browser sequence verifies transport behavior, not credential preservation inside PostgreSQL; the automated suite proves that invariant.
+
+Stop only the development/test-page servers you started with Ctrl+C when finished; preserve PostgreSQL data/volumes. Report the observed browser results separately before marking browser acceptance complete. See [Fetch credentials](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch) and [exposed response headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Expose-Headers).
 
 ## PostgreSQL integration tests
 

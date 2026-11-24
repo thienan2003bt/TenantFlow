@@ -65,7 +65,7 @@ describe("RegisterDto with global ValidationPipe", () => {
     }
   });
 
-  it.each(["__proto__", "constructor", "prototype"])(
+  it.each(["__proto__", "constructor", "prototype", "toString", "hasOwnProperty", "valueOf", "isPrototypeOf"])(
     "rejects reserved field %s before Nest can strip it",
     async (key) => {
       const body: Record<string, unknown> = { email, password, [key]: "untrusted" };
