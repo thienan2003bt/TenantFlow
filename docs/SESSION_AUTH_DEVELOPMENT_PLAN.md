@@ -7,7 +7,7 @@ This page explains the current structure; implementation plans belong in the cha
 
 Registration is implemented and covered by automated HTTP and PostgreSQL tests.
 It creates a pending account, preserves credentials on duplicate input and creates no session.
-Actual browser acceptance is separate from those automated results.
+The developer has reported passing the six-request browser registration sequence.
 
 Login, caller read, session renewal and logout are not implemented.
 Their accepted behavior is defined in the
@@ -30,4 +30,5 @@ Use the [coverage summary](planning/VALIDATION.md) to understand what has been c
 The [persistence mapping](requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping)
 defines stored fields and invariants.
 
-Swagger/OpenAPI is a possible next PR, separate from registration.
+Development-only Swagger UI describes the implemented routes and supports requests through the same protections.
+See the [backend guide](../backend/README.md#swagger-ui) for usage.

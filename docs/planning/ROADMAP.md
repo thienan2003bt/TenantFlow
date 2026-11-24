@@ -45,7 +45,7 @@ Deliver a small usable feature with the validation, integrity and tests it needs
 A schema, template screen or SDK does not establish a completed product feature.
 Detailed PR plans and proposed cases belong in the chat and tests.
 
-Swagger/OpenAPI is a candidate next PR after registration.
+Development-only Swagger/OpenAPI supports testing the implemented API; see the backend guide for usage.
 Hosting remains undecided; the local topology is not a production deployment design.
 
 See the [backend guide](../../backend/README.md) for commands and the

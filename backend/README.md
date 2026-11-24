@@ -79,6 +79,24 @@ Earlier CSRF/parser/media failures do not count. Forwarded IP headers are ignore
 A 429 includes a browser-readable Retry-After. Counter state resets when the API process restarts.
 Auth responses use no-store and fixed safe error bodies; passwords, hashes and SQL are not returned or logged.
 
+## Swagger UI
+
+With NODE_ENV=development, start the API and open http://localhost:14400/docs.
+The OpenAPI document is available at http://localhost:14400/docs-json.
+These routes are not registered in other environments.
+
+Expand Authentication → POST /auth/register, click Try it out, edit the example email/password and click Execute.
+Use a distinct test email when checking a new account. Expect 202 for new and duplicate canonical emails.
+The UI also documents input rules, safe error bodies, no-store and Retry-After headers.
+
+Swagger uses the API's origin, so it needs no separate frontend server or CORS exception.
+It sends real requests: successful registration creates a pending account, and invalid DTOs count toward
+five attempts per IP per hour. A 429 includes Retry-After; restart the local API for a fresh test window.
+
+Swagger metadata describes the API; the existing global pipe, guards and services enforce the rules.
+UI assets are served locally and the external Swagger validator is disabled.
+See the [Nest Swagger guide](https://docs.nestjs.com/openapi/introduction).
+
 ## Browser check
 
 The requesting page must be http://localhost:3000 in a normal top-level browser tab.

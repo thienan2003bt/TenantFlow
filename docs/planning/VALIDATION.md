@@ -6,8 +6,9 @@ Commands and browser instructions live in the [backend guide](../../backend/READ
 ## Current evidence
 
 The full review on 25 November 2026 passed typecheck, lint, formatting, 231 tests,
-39 application HTTP checks, seven hook checks, Nest build and compiled blocklist smoke.
-All 13 isolated PostgreSQL cases passed and their disposable container/storage were removed.
+45 application HTTP checks, seven hook checks, Nest build and compiled blocklist smoke.
+All 13 isolated PostgreSQL cases passed before the Swagger addition; their disposable container/storage were removed.
+The Swagger change has no schema or persistence changes; that database suite was not rerun for it.
 These results describe the reviewed code, not every environment where it may be run.
 
 The developer separately reported passing earlier manual isolated-schema checks.
@@ -19,6 +20,8 @@ npm.cmd run check covers input/email/password rules, Unicode safeguards, blockli
 registration orchestration, duplicates, safe errors and the HTTP request pipeline.
 It verifies CORS, native CSRF, body limits, parser errors and socket-IP throttling.
 It also verifies copied blocklist assets and compiled loading outside the source working directory.
+Swagger checks cover generated input/response schemas, development-only routes/assets and same-origin requests
+through the existing validation, CSRF and rate limit.
 
 Regression coverage includes unknown inherited-method fields and browser-readable Retry-After.
 Compiled-runtime checks passed, and pinned password-list/additions/license hashes matched their metadata.
@@ -37,8 +40,9 @@ That synthetic failure is not a physical network-outage simulation.
 
 The localhost check page was opened in a real browser: origin http://localhost:3000, secure context true.
 Its credentialed health request returned 200 and Service is healthy!.
-The six-request browser registration sequence has not been executed by the agent.
-Node HTTP tests do not replace that registration acceptance check.
+The developer reported passing all six browser registration checks.
+The agent verified Swagger Try it out returning 202 and no-store in a browser against a compiled instance
+with persistence/service stubbed. This verifies the UI/request pipeline, not database writes through Swagger.
 
 Hosted backend CI, production operation and the unimplemented login/session lifecycle are not covered here.
 Some standalone schema constraints have manual evidence rather than dedicated automated cases.
