@@ -1,4 +1,4 @@
-import { Catch, HttpStatus, type ArgumentsHost, type ExceptionFilter } from "@nestjs/common";
+import { BadRequestException, Catch, HttpStatus, type ArgumentsHost, type ExceptionFilter } from "@nestjs/common";
 import type { Response } from "express";
 import { AuthInputError } from "../errors/auth-input.error.js";
 
@@ -6,7 +6,7 @@ import { AuthInputError } from "../errors/auth-input.error.js";
 export class RegistrationExceptionFilter implements ExceptionFilter {
   catch(error: unknown, host: ArgumentsHost): void {
     const response: Response = host.switchToHttp().getResponse<Response>();
-    const invalidInput: boolean = error instanceof AuthInputError;
+    const invalidInput: boolean = error instanceof AuthInputError || error instanceof BadRequestException;
     const statusCode: HttpStatus = invalidInput ? HttpStatus.BAD_REQUEST : HttpStatus.INTERNAL_SERVER_ERROR;
 
     // Never serialize or log raw dependency errors: they may contain credentials or query parameters.

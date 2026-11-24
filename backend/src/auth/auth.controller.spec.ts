@@ -8,7 +8,8 @@ import { AuthInputError } from "../errors/auth-input.error.js";
 import { AuthController } from "./auth.controller.js";
 import { RegistrationService } from "./registration.service.js";
 import { RegisterDto } from "./register.dto.js";
-import { RegisterInputPipe } from "./register-input.pipe.js";
+import { ValidationModule } from "../validation/validation.module.js";
+import { AuthEmailConstraint } from "./auth-input.constraints.js";
 import { RegistrationExceptionFilter } from "./registration-exception.filter.js";
 
 const input: { email: string; password: string } = {
@@ -23,12 +24,9 @@ describe("AuthController (HTTP, registration service stubbed)", () => {
   beforeEach(async () => {
     register = vi.fn<RegistrationService["register"]>().mockResolvedValue(undefined);
     const module: TestingModule = await Test.createTestingModule({
+      imports: [ValidationModule],
       controllers: [AuthController],
-      providers: [
-        RegisterInputPipe,
-        RegistrationExceptionFilter,
-        { provide: RegistrationService, useValue: { register } },
-      ],
+      providers: [RegistrationExceptionFilter, { provide: RegistrationService, useValue: { register } }],
     }).compile();
     app = module.createNestApplication();
     await app.init();
@@ -99,6 +97,10 @@ describe("AuthController (HTTP, registration service stubbed)", () => {
     { label: "an invalid password", body: { ...input, password: "weak" } },
     { label: "a client-supplied canonical email", body: { ...input, emailCanonical: "forged@example.com" } },
     { label: "an array", body: [input] },
+    ...["__proto__", "constructor", "prototype"].map((key) => ({
+      label: `a reserved ${key} field`,
+      body: { ...input, [key]: "untrusted" },
+    })),
   ])("rejects $label in the pipe before invoking registration", async ({ body }) => {
     const response: request.Response = await request(app.getHttpServer())
       .post("/auth/register")
@@ -111,7 +113,7 @@ describe("AuthController (HTTP, registration service stubbed)", () => {
 
   it("sanitizes an unexpected pipe failure before the controller method executes", async () => {
     const logError: ReturnType<typeof vi.spyOn> = vi.spyOn(Logger.prototype, "error").mockImplementation(() => {});
-    vi.spyOn(RegisterDto, "fromUnknown").mockImplementationOnce(() => {
+    vi.spyOn(AuthEmailConstraint.prototype, "validate").mockImplementationOnce(() => {
       throw new Error("sensitive-pipe-details");
     });
     const response: request.Response = await request(app.getHttpServer())

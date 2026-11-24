@@ -21,10 +21,11 @@ export class RegistrationService {
 
   /**
    * Creates a pending local account atomically; existing canonical emails resolve normally.
-   * Accepts a DTO from RegisterDto.fromUnknown; checks the blocklist and hashes before the transaction. Other failures propagate.
+   * Accepts validated input; checks the blocklist and hashes before the transaction. Other failures propagate.
    */
   async register(input: RegisterDto): Promise<void> {
-    const { email, emailCanonical, password }: RegisterDto = input;
+    const { email, password }: RegisterDto = input;
+    const emailCanonical: string = email.toLowerCase();
     this.passwordBlocklistService.assertAllowed(password);
     const passwordHash: string = await this.passwordService.hash(password);
     const userId: UUID = randomUUID();

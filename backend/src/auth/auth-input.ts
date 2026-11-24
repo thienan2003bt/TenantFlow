@@ -22,16 +22,23 @@ export function parseAuthInput(input: unknown): ParsedAuthInput {
     throw new AuthInputError("Input must contain only 'email' and 'password' properties.");
   }
 
-  const { email: rawEmail, password } = input as Record<string, unknown>;
-  if (typeof rawEmail !== "string") {
+  const { email: rawEmail, password: rawPassword }: Record<string, unknown> = input as Record<string, unknown>;
+  const { email, emailCanonical }: ParsedAuthEmail = parseAuthEmail(rawEmail);
+  const password: string = parseAuthPassword(rawPassword);
+  return { email, emailCanonical, password };
+}
+
+export interface ParsedAuthEmail {
+  email: string;
+  emailCanonical: string;
+}
+
+export function parseAuthEmail(input: unknown): ParsedAuthEmail {
+  if (typeof input !== "string") {
     throw new AuthInputError("Email is required and must be a valid email address.");
   }
-  if (typeof password !== "string") {
-    throw new AuthInputError("Password is required and must be a valid password.");
-  }
-
-  const email = rawEmail.trim();
-  const localPartLength = email.indexOf("@");
+  const email: string = input.trim();
+  const localPartLength: number = email.indexOf("@");
   if (
     email.length > 254 ||
     localPartLength < 1 ||
@@ -49,10 +56,17 @@ export function parseAuthInput(input: unknown): ParsedAuthInput {
     throw new AuthInputError("Email is required and must be a valid email address.");
   }
 
+  return { email, emailCanonical: email.toLowerCase() };
+}
+
+export function parseAuthPassword(input: unknown): string {
+  if (typeof input !== "string") {
+    throw new AuthInputError("Password is required and must be a valid password.");
+  }
   // String iteration counts code points; an unpaired surrogate remains a single code unit.
-  let passwordLength = 0;
-  for (const character of password) {
-    const codeUnit = character.charCodeAt(0);
+  let passwordLength: number = 0;
+  for (const character of input) {
+    const codeUnit: number = character.charCodeAt(0);
     if (character.length === 1 && codeUnit >= 0xd800 && codeUnit <= 0xdfff) {
       throw new AuthInputError("Password is required and must be a valid password.");
     }
@@ -64,7 +78,7 @@ export function parseAuthInput(input: unknown): ParsedAuthInput {
 
   if (
     passwordLength < 8 ||
-    !isStrongPassword(password, {
+    !isStrongPassword(input, {
       minLength: 8,
       minLowercase: 1,
       minUppercase: 1,
@@ -75,9 +89,5 @@ export function parseAuthInput(input: unknown): ParsedAuthInput {
     throw new AuthInputError("Password is required and must be a valid password.");
   }
 
-  return {
-    email,
-    emailCanonical: email.toLowerCase(),
-    password,
-  };
+  return input;
 }
