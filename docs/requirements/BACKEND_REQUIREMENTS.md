@@ -1,142 +1,204 @@
-# Backend Requirements and Design Notes
+# Backend requirements
 
-The NestJS application in `backend/` has configuration validation, HTTP liveness, TypeORM runtime wiring, a standalone migration DataSource, a tested Argon2id password service, registered User/PasswordCredential/Session mappings and a generated/registered initial auth migration. The shared auth input parser and pinned password-blocklist provider are implemented and pass their unit/compiled-asset checks. The developer reports passing isolated schema checks, and agent-run automated PostgreSQL tests now verify migrations and RegistrationService persistence/rollback/concurrent duplicates. Protected registration HTTP is implemented and covered by automated checks; browser acceptance, login/session workflows and remaining database automation are unfinished. The frontend still uses the inherited Stack Auth integration pending replacement.
+This document defines the accepted backend contract, not a list of completed features.
+Registration is implemented; login/session routes remain design requirements.
+The [backend guide](../../backend/README.md) owns commands and the
+[coverage summary](../planning/VALIDATION.md) owns verification evidence.
 
-The developer implements the backend inside `backend/`, alongside `frontend/`. The [backend README](../../backend/README.md) documents current startup, configuration, health behavior and test coverage. Broader requirements below follow in later milestones. Use [engineering conventions](../architecture/BACKEND_CONVENTIONS.md) for responsibility and review rules; follow the agent instructions for task authority, including the developer's authorization to apply identified fixes directly.
+## System boundaries
 
-Use the [SRS](TenantFlow-SRS.md) for product rules, [schema references](../../schemas.ts) and [enums](../../enum.ts) for provisional model vocabulary, and the [roadmap](../planning/ROADMAP.md) for implementation sequencing. This document owns backend constraints, accepted auth policies and unresolved design choices.
+Use application-owned identity, Nest/Express, TypeORM repositories/Data Mapper and PostgreSQL.
+[ADR 0001](../architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) owns the stack decision.
+The frontend still uses Stack Auth; its replacement is a separate integration.
 
-## 1. Boundaries and identity ownership
+The [SRS](TenantFlow-SRS.md#24-canonical-release-boundaries) owns product scope and tenant rules.
+Global identity does not grant tenant access. Every tenant-owned read/write must check membership and permission,
+including child resources, joins, assignments and file access.
 
-- TenantFlow is a portfolio and backend-learning project with application-owned session authentication, PostgreSQL and TypeORM/Data Mapper. Use maintained cryptographic libraries. [ADR 0001](../architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) owns the stack decision; the accepted contract below owns auth policies. Hosting remains open, with provider choice based on cost, capability and maintenance.
-- Keep business rules independent of HTTP handlers, persistence details, storage providers, and payment/email SDKs. Separate request/response contracts from stored entities; introduce abstractions where they make an integration replaceable or a boundary testable.
-- The frontend currently uses Stack Auth for sign-in, account management, and teams. The target backend owns local users, credentials, sessions, organizations, memberships and permissions. Design the transition separately; do not make provider-team synchronization a prerequisite for new domain behavior. Never trust a client-supplied tenant ID without checking membership and permissions.
-- Global user identities and platform roles differ from tenant-owned memberships and tenant/project roles. A global identity must not grant access to every tenant.
-- Root model references use UUIDs. Define local identity uniqueness, credential/session ownership and account-deletion behavior before implementation. If external identities are added later, do not assume provider IDs match domain UUIDs; define mapping and synchronization at that time.
-- User identity, profile, session, authentication-factor, and verification/reset-token concepts are represented by `User`, `UserIdentity`, `UserProfile`, `UserSession`, `AuthFactor`, and `UserToken`. Implement the required outcomes with a minimal local model; reference classes are not a requirement to create every table now. Do not carry template-provider credentials into the new local store.
-- The five `UserStatus` values remain `active`, `inactive`, `pending_verification`, `frozen`, and `deleted` in the root enum reference. Authentication factors and verification/reset/MFA token types are also preserved there. MFA is a later enhancement under the [canonical SRS release boundaries](TenantFlow-SRS.md#24-canonical-release-boundaries); model support is not an MVP implementation commitment.
+Root schemas.ts and enum.ts are design references, not a requirement to create every modeled table.
+Provisional field lengths and provider models do not become constraints without a consuming requirement.
+Use explicit UUIDs, foreign keys, tenant-aware uniqueness, soft deletion and retained history.
 
-## 2. Data integrity and lifecycle
+## API and integration boundaries
 
-The SRS sections 7-8 remain authoritative for tenant boundaries, UUIDs, foreign keys, explicit join tables, soft deletion, and retained history. Validate a tenant-owned child through its parent as well as its own identifiers. System-level records may have no tenant; this must be explicit rather than an unscoped query exception.
+Validate input at the boundary and enforce durable invariants in services and the database.
+Return explicit response objects; never serialize secrets, hashes, unrestricted entities or internal relationships.
+Use HTTPS in production and keep credentials out of logs and browser-public configuration.
 
-The following model candidates require review against the accepted contract and SRS before becoming schema constraints:
+Lists require bounded pagination and tenant-aware queries.
+Audit records retain actor, tenant, target, action and time without credential contents.
+External clients require timeouts; state-changing retries require idempotency.
 
-| Topic | Candidate retained for review | Decision required |
-| --- | --- | --- |
-| User identifiers | The first-slice contract below fixes canonical email handling and 254-character storage. No slug is required initially. | Review additional identifiers only with their consuming feature. |
-| Role/permission vocabulary | Required scope and name; candidate scope length 50, name length 255, description required. | Enforce system/tenant/project scope consistency with nullable tenant/project references and assignment boundaries. |
-| Role joins | Unique `(role_id, permission_id)` and `(user_id, role_id)` pairs. | Add appropriate uniqueness for tenant/member/project assignment joins and prevent cross-scope assignments. |
-| External identities | Candidate unique `(provider, provider_user_id)`; provider length 50, provider user ID length 255. Local credentials were modeled with a nullable provider. | Define local/provider identity uniqueness and null behavior explicitly; do not rely on a nullable unique index alone. |
-| Sessions | The first-slice contract below fixes digest storage, expiry/renewal/retention and timestamps. IP/user-agent/device metadata is omitted initially. | Any later metadata needs a purpose and retention decision. Enforce expiry independently of cleanup. |
-| Authentication factors | Type, display name (candidate length 255), enabled/primary flags, verification/last-used timestamps, and provider-specific metadata modeled as JSONB. | Future factor design must protect secret metadata and identify application/provider ownership. MFA is outside the initial slice. |
-| User profiles | Optional first/last name (100 each), phone (20), location (255), bio (500), avatar URL (500); one profile per user. | Recheck lengths and one-to-one uniqueness against product/provider needs; these were example limits. |
-| Verification/reset tokens | Hash, purpose, expiry and used/revoked timestamps; optionally one unused/unrevoked token per user and purpose. | Design issuance, single use, expiry and reissue with the consuming flow. Review PostgreSQL constraints explicitly before migrating. |
-| UUIDs and enum storage | First-slice UUIDs and checked lifecycle strings are fixed below. | Apply equivalent deliberate rules to later domain mappings; never rely on retired language enum ordinals. |
-| Timestamps | First-slice timestamp types/defaults and update ownership are fixed below. | Define the same ownership explicitly for later tables. |
-| Deletion | First-slice account soft deletion and restrictive foreign keys are fixed below. | Reconcile later domain foreign keys with historical-data rules; retained audit/billing history must survive account deletion. |
+Provider webhooks require signature verification and delivery deduplication.
+Payments use the SRS test-mode provider design; never handle raw card data.
+File ownership/metadata belongs in PostgreSQL and binaries behind an authorized storage boundary.
+Queues, cache and live delivery are implementation choices, not prerequisites for basic domain behavior.
+Hosting is not selected. Preserve the development PostgreSQL volume.
 
-The root model files remain design references, not migrations or runtime validators. Known naming issues include comments referring to `Project.id` and `UserMembership.id` where types are named `TenantProject` and `TenantMembership`. Reconcile `User.role_id`, system-role assignments and membership/project-role assignments into one authorization model before implementing those relationships.
+## Accepted initial session-auth contract
 
-## 3. API and security requirements
+The first slice is registration, login, caller read and current-session logout.
+Verification delivery, recovery, password change, logout-all and frontend replacement have separate designs.
+The password policy below reflects the developer's accepted 24 November 2026 revision.
+These project rules are not a standards-compliance claim.
 
-- Account lifecycle outcomes include registration, verification, sign-in/out, session renewal/revocation, password reset/change and future MFA. Implement the finalized first-slice contract below; design verification/recovery and other later lifecycles with their consumers. MFA remains future scope.
-- Validate incoming data at the API boundary and enforce domain invariants in services and database constraints where practical. Keep validation, authentication, authorization, missing-record, and unexpected-failure outcomes distinguishable without disclosing sensitive internals.
-- Return explicit response contracts. Never serialize password hashes, session digests, verification/reset-token hashes, authentication secrets or internal entity relationships directly to clients. Email/profile exposure must respect the caller's permissions.
-- Use maintained Argon2id and cryptographic randomness/digest implementations for the accepted password/session design; do not implement cryptographic primitives.
-- Use HTTPS for production traffic and avoid sensitive-data logging; local debugging instructions must not expose credentials or token contents.
-- Enforce tenant isolation and permission checks for reads and writes, including nested resources, list/filter endpoints, assignment joins, and file access. UI visibility and frontend team selection do not enforce API authorization.
-- Common lists need pagination/filtering and tenant-aware indexes. Preserve append-only audit records with actor, tenant, target, action and time; consider safe old/new-value metadata without logging credentials.
-- Keep API contracts documented with OpenAPI and a discoverable exploration interface when implemented. The existing `/health-check` is liveness only; readiness and database connectivity checks remain future implementation work.
-- Plan structured, redacted logs, correlation, diagnosable errors, optional tracing/metrics, rate limiting and tests for tenant isolation, permissions, session lifecycle and integration boundaries. Supporting tools are selected in ADR 0001; the first-slice error and abuse-control policies are fixed below.
+### Email
 
-## 4. Integrations and operations
+Use one global account per canonical email, including soft-deleted accounts.
+Trim outer whitespace, preserve the trimmed spelling for display and lowercase the whole address for identity.
+Preserve dots and plus tags. Lowercasing the local part is a deliberate product policy.
 
-- PostgreSQL with TypeORM repositories/Data Mapper is selected; the existing PostgreSQL service remains the development baseline. Host processes use PostgreSQL's published local port; containers on the Compose network use the service hostname. Schema changes need reviewed TypeORM migrations and an explicit verification procedure. Preserve the current Compose data/volume configuration.
-- Keep outbound integration clients bounded by timeouts and appropriate retry/circuit-breaking policies. Retry state-changing calls only with an idempotency strategy.
-- Retain billing plans/limits, provider webhook verification and idempotency, append-only billing history and test-mode payment integration. Stripe is the planned provider in the SRS; no payment SDK is installed. Never handle raw card data.
-- Keep email verification/reset/invitation delivery requirements and optional later notification delivery. Notification preferences, read state, and tenant-aware records must work independently of any optional live-push transport.
-- Store file metadata and ownership in the selected relational database; keep binaries behind a storage boundary, with local storage possible for development and object storage later. Cloudflare R2 is a later candidate, not configured storage. Preserve size/type validation and authorized download requirements.
-- Plan lightweight background processing before durable scheduling. Notification delivery, retry behavior and webhook work must remain traceable and recoverable. Choose scheduling/queue tools only when needed.
-- Keep caching optional: tenant-aware keys, appropriate invalidation, local in-memory lookups where useful, and a distributed cache only when justified. Redis, mail-testing services, durable workers, live-push transports and tracing infrastructure are not configured in this checkout.
-- Extend the existing startup-validated environment configuration as consumers are added; use managed secrets when deploying. Identity, email, storage and billing settings need actual consumers before becoming required variables. Separate environment credentials and never expose server secrets through browser-public variables or logs.
+Accept ASCII mailbox addresses up to 254 characters, with a local part up to 64 and a dotted DNS domain.
+Reject display names, quoted local parts, IP literals and Unicode mailbox input.
+ASCII punycode domains are allowed. Registration and login use the same identity rule.
 
-## 5. Decisions before implementation
+### Password and blocklist
 
-1. Use the [canonical SRS release boundaries](TenantFlow-SRS.md#24-canonical-release-boundaries) and reconciled version plan as the scope baseline. Record any requested scope change explicitly; old dates, checkboxes and future model fields do not establish completed delivery or new commitments.
-2. Retain Nest/Express, npm, ESM/NodeNext, Vitest/Vite and the selected TypeORM migration workflow. Verify real PostgreSQL behavior and standardize supported runtime versions before extending persistence.
-3. Implement the finalized first-slice auth contract, then design the later account lifecycle, organizations/memberships and permission ownership. Stack Auth replacement is a later frontend transition.
-4. Review the data-integrity candidates above and produce a consistent schema/ERD with tenant-aware constraints and retention rules.
-5. Define the first API contracts, environment contract, startup commands, health checks, container/CI wiring and meaningful tests alongside the actual backend source.
+Require 8-128 Unicode code points, at least one lowercase ASCII letter, uppercase ASCII letter,
+ASCII digit and a symbol recognized by the installed isStrongPassword validator; ASCII space counts as a symbol.
+Preserve the exact string without trimming, normalization or truncation.
+Reject unpaired UTF-16 surrogates and enforce code-point bounds before hashing.
 
-### Accepted initial session-auth contract
+The validator's UTF-16 length check does not replace the explicit maximum and Unicode safeguards.
+Use maintained Argon2id; the current implementation uses 64 MiB, two iterations and parallelism one.
+Deployment parameters require measurement on the actual runtime.
 
-Baseline accepted on 25 October 2026; remaining policies finalized on 12 November 2026 under the developer's delegated decision authority. This is the implementation contract, not evidence that database constraints or auth routes work. The password primitive, three mappings and initial migration are implemented; manual isolated migration verification is developer-reported, while automated migration/registration persistence and protected HTTP checks now pass; browser acceptance and later login/session workflows remain pending. On 24 November 2026 the developer replaced the former password policy with the composition rules below and explicitly retained the 128-code-point maximum and Unicode safeguards. The temporary plan tracks execution, not competing policy proposals.
+Registration and password replacement compare the complete password against a checksum-pinned local blocklist.
+Keep source commit, SHA-256, license and maintained additions with the assets; review the snapshot monthly.
+Missing or corrupt data is an operational failure, not an empty list.
+Do not apply this blocklist to login or send raw passwords to third parties.
+The common-password snapshot is not comprehensive breach screening.
 
-| Concern | Accepted behavior |
-| --- | --- |
-| Initial scope | Register -> login -> authenticated caller read -> current-session logout. Verification delivery, recovery/password change, logout-all, session-management UI and frontend replacement remain follow-ups. |
-| Email identity | One global account per canonical email, including soft-deleted accounts. Trim surrounding whitespace, retain the trimmed spelling for display, and lowercase the entire address for canonical lookup/uniqueness. Preserve plus tags and dots. Accept ASCII mailbox addresses up to 254 characters with a local part up to 64 characters and a dotted DNS domain; exclude display names, quoted local parts, IP literals and Unicode mailbox input in this slice. ASCII punycode domains are allowed. Use the same validation/canonicalization for registration and login. Lowercasing the local part is a deliberate product policy that folds case-distinct mailboxes; do not describe it as universal email equivalence. |
-| Password inputs | Minimum 8, maximum 128 Unicode code points, with at least one lowercase ASCII letter, one uppercase ASCII letter, one ASCII digit and one symbol recognized by class-validator's isStrongPassword (including an ASCII space). Permit spaces/passphrases that satisfy these rules. Preserve the exact string: no trimming, truncation or Unicode normalization. Reject ill-formed Unicode (unpaired UTF-16 surrogates) before hashing; count supplementary characters as one code point. Apply explicit code-point bounds before the composition check and expensive hashing: the installed validator's minLength uses UTF-16 code units and does not implement the maximum or well-formedness checks. The shared parser enforces these retained safeguards before the composition check. |
-| Blocklist and HTTP input | Bundle a pinned snapshot of SecLists' 10k common-password list plus explicitly maintained known-compromised entries. Compare the whole password exactly on registration and later password changes, not login. Record upstream commit, SHA-256 and license with the asset when introduced; review updates monthly. Missing/unreadable required data is an operational failure, not an empty blocklist. This is a common-password baseline, not comprehensive breach screening. Never send raw passwords to third parties. Register/login accept application/json objects with only email/password string fields; reject unknown fields. Limit auth request bodies to 16 KiB; accept identity content encoding only. Logout accepts an empty body or an empty JSON object. |
-| Password security distinction | Argon2id remains selected. The eight-character minimum and composition rules are the developer's explicit project policy. Eight is below NIST SP 800-63B's 15-character minimum for password-only authentication; the composition policy must not be described as NIST guidance or standards compliance. |
-| Account states | Registration creates `pending_verification` with no automatic login. Correct credentials may establish a restricted session for caller read and logout. Only `active` users are eligible for normal business access, subject to authorization. Inactive/frozen/deleted accounts cannot authenticate; subsequent requests must reflect current eligibility. |
-| Registration duplicates | Valid new and duplicate requests receive the same generic 202 without user IDs, session credentials or a claim that email was sent. Duplicates cannot replace credentials. Concurrent uniqueness is a database invariant; unrelated persistence faults remain failures. |
-| Session credentials | Generate 32 cryptographically random bytes with Node crypto and encode as unpadded base64url (43 characters). Hash the ASCII cookie value with SHA-256 and persist only its lowercase 64-character hexadecimal digest. Reject malformed cookie credentials before lookup. Each successful login creates a new session; permit multiple device sessions. Never store or log raw session credentials. |
-| Session lifetime and renewal | Server-enforced 30-minute idle and 24-hour absolute expiry, measured from creation. A session is invalid at equality with either deadline. Each successful guarded session resolution conditionally persists activity and idle expiry as min(database time + 30 minutes, absolute expiry), then refreshes the same cookie to the remaining server-valid lifetime. Use database time for validity and renewal, preserve monotonic activity/idle timestamps, and check current account eligibility. Expired/revoked rows must never be renewed or recreated by this operation. Keep the absolute deadline fixed. |
-| Resolution and logout | Check digest, expiry, revocation and current account eligibility. Revoke the current session before clearing its cookie. Missing/already invalid logout is idempotent 204; persistence failure is a controlled server/service error. Authentication does not grant tenant membership or permissions. |
-| Browser topology | Local frontend `http://localhost:3000` and API `http://localhost:14400`; exact credentialed CORS origin and credentialed browser requests. Production target is one HTTPS browser origin with `/api` proxy routing, not configured routing. |
-| Cookies | Production: `__Host-tenantflow_session`, HttpOnly, Secure, SameSite=Lax, Path=/, no Domain. Local loopback HTTP: `tenantflow_session_dev`, HttpOnly, SameSite=Lax, Path=/, host-only, Secure disabled. Issue/refresh HTTP Max-Age in whole seconds rounded down to remaining min(idle, absolute) validity; clearing uses the same name/path/domain scope. Auth responses use Cache-Control: no-store. |
-| CORS, CSRF and listener | Local Nest listens explicitly on 127.0.0.1:14400 and allows credentialed CORS only for http://localhost:3000; browsers use the documented localhost API URL. Enable Nest 12.1+ built-in CSRF protection with that exact trusted origin and no auth exclusions. Preserve its documented Fetch Metadata/Origin behavior, including allowing requests with neither header and allowing GET/HEAD/OPTIONS. No separate CSRF-token route. Production uses one HTTPS browser origin; exact proxy address trust and Host forwarding must be verified before deployment. Keep local proxy trust disabled. CORS and SameSite do not replace CSRF checks. |
-| Routing and safe methods | Nest routes remain /auth/... with no global prefix. A future production proxy maps external /api/auth/... to those routes. GET/HEAD/OPTIONS do not perform user-requested state changes; authenticated reads may renew idle expiry as explicit session housekeeping. Apply the same bootstrap protections in assembled HTTP tests. |
-| Minimal persistence | Three global identity records: User, PasswordCredential and Session, with the exact mapping contract below. No tenant/membership grants are persisted in sessions. Registration atomically creates user and credential; hash before opening the transaction. The credential's unique user reference enforces at most one row, while the registration transaction establishes one credential for each newly registered local account. |
-| Retention and account changes | Keep invalid sessions for seven days after the earliest idle-expiry, absolute-expiry or revocation timestamp, then permit bounded cleanup. Cleanup never determines session validity and must recheck eligibility at deletion time. Account soft deletion preserves email uniqueness and history; physical user deletion is not an initial operation. Inactivation/freezing/deletion must revoke existing sessions in the same transaction, so reactivation cannot revive them. Login must lock/recheck the user row in its session-creation transaction; eligibility-changing workflows use the same lock order before revoking sessions. Resolution also checks current status. Verification/activation, recovery and administrative state-change entry points remain later work. |
-| HTTP contract | POST `/auth/register`: generic 202, invalid input 400. POST `/auth/login`: 200 with safe user fields and cookie, generic credential/eligibility failure 401. GET `/auth/me`: 200 with approved caller fields, invalid/missing/expired/revoked session 401. POST `/auth/logout`: 204 with revocation/clearing, subject to CSRF and persistence-error rules. These are planned routes. |
-| Response and error shape | Register returns { message: "Registration request accepted." } for valid new/duplicate requests. Login and me return { user: { id, email, status, emailVerified } }, using display email and emailVerified derived from email_verified_at. Logout returns no body. Errors return { statusCode, code, message }: 400 INVALID_INPUT, 401 INVALID_CREDENTIALS (login) or AUTH_REQUIRED (session), 403 CSRF_REJECTED, 413 PAYLOAD_TOO_LARGE, 415 UNSUPPORTED_MEDIA_TYPE, 429 RATE_LIMITED, 503 SERVICE_UNAVAILABLE for unavailable persistence and 500 INTERNAL_ERROR for unexpected faults. Use generic fixed messages; no database/library details or account-existence distinction. Validate/blocklist-check duplicates too; the generic registration response is not a claim of delivery or activation. |
-| Abuse controls | After bootstrap security/body-parser checks and before DTO validation or hashing/database work, count admitted login attempts toward 10 requests per client IP per 60 seconds and registration attempts toward 5 per client IP per 3,600 seconds, including DTO-invalid and failed credential attempts. Key by route and direct socket IP with proxy trust disabled locally; return 429 and Retry-After when exceeded. Use single-process in-memory storage for the local slice. Shared limits, trusted proxies, account-targeted defenses and hashing resource benchmarks are required review points before public exposure or multiple instances. |
-| Acceptance matrix | Cover canonical/concurrent duplicates, invalid input/password, all account states and status changes, rollback, secret-free responses/logs, cookie issuance/sending/clearing, expiry/renewal, independent sessions, replay/concurrent logout, CSRF/origin denial, throttling and database failure. Future tests must use real PostgreSQL and a browser where their behavior is the subject. |
+### Registration and account states
 
-Login must perform a real verification against either the stored hash or a maintained dummy hash for a nonexistent account before returning generic credential denial; do not promise identical request timing. Invalid input, throttling and unavailable persistence remain distinct failures. Logout with missing/malformed/already invalid credentials clears the matching cookie and returns 204 after CSRF checks; if revocation cannot be persisted, return a controlled failure rather than reporting successful logout. A response already in flight may arrive after logout, but it cannot make the revoked database session valid again.
+Create the user and credential atomically, with pending_verification status and no automatic session.
+Validate and blocklist-check duplicate requests too, and hash before opening the transaction.
+Valid new/duplicate input receives the same generic 202 without IDs, credentials or email-delivery claims.
+Duplicates must not change existing credentials. Database uniqueness resolves concurrent identity conflicts.
 
-#### Minimal auth persistence mapping
+Statuses are active, inactive, pending_verification, frozen and deleted.
+Correct credentials may establish a restricted pending-verification session for caller read/logout.
+Only active accounts are eligible for normal business access, subject to authorization.
+Inactive, frozen and deleted accounts cannot authenticate; subsequent requests reflect current eligibility.
+Deletion is terminal in this slice.
 
-Keep these mappings directly in `backend/src/auth/user.entity.ts`, `password-credential.entity.ts` and `session.entity.ts`. The agent supplied User as the explicitly requested example; the developer implemented PasswordCredential and Session. All three are registered, pass offline ORM review and have passed the complete local check command after line-ending normalization. Explicit table/column names use snake_case. All columns are NOT NULL unless marked nullable. This table is an accepted design, not an executable migration.
+### Session credentials and lifetime
 
-| Entity / table | Columns and ownership |
-| --- | --- |
-| User / users | id uuid primary key; email varchar(254); email_canonical varchar(254) COLLATE "C" unique; status varchar(32) default pending_verification; email_verified_at timestamptz(3) nullable; created_at and updated_at timestamptz(3) default CURRENT_TIMESTAMP(3); deleted_at timestamptz(3) nullable. |
-| PasswordCredential / password_credentials | user_id uuid primary key and foreign key to users.id; password_hash text containing the full encoded Argon2 hash; created_at timestamptz(3) default CURRENT_TIMESTAMP(3); password_changed_at timestamptz(3) nullable until the first replacement. No separate credential id is needed: the shared user UUID is its primary key. |
-| Session / sessions | id uuid primary key; user_id uuid foreign key to users.id; credential_digest varchar(64) unique; created_at timestamptz(3) default CURRENT_TIMESTAMP(3); last_seen_at, idle_expires_at and absolute_expires_at timestamptz(3); revoked_at timestamptz(3) nullable. Activity starts at creation; initial deadlines are creation + 30 minutes and + 24 hours. No generic updated_at or device metadata is required initially. |
+Generate 32 cryptographically random bytes and encode unpadded base64url: 43 characters.
+Persist only the SHA-256 digest of that ASCII credential as 64 lowercase hexadecimal characters.
+Reject malformed credentials before lookup. Each successful login creates a new session; multiple devices are allowed.
 
-- Generate User/Session UUID v4 values in the application with Node crypto; the credential uses its user's UUID. No database UUID extension is needed. Keep identity tables global without tenant_id, slug, role or profile fields.
-- Use varchar plus a CHECK for the five exact status strings: active, inactive, pending_verification, frozen, deleted. CHECK that active has email_verified_at, pending_verification does not, and status = deleted is equivalent to deleted_at IS NOT NULL. Deletion is terminal in this slice; email_verified_at may remain populated on frozen/inactive/deleted accounts.
-- Store trimmed printable ASCII email and CHECK that email_canonical equals lower(email COLLATE "C"). Both email columns must be nonempty. PostgreSQL uniqueness is unconditional across account states; no partial unique index for undeleted users and no citext extension. The API owns full mailbox syntax validation; the database owns stored bounds, canonical consistency and uniqueness.
-- All user foreign keys use ON DELETE RESTRICT and ON UPDATE RESTRICT. Disable ORM relation cascades, eager/lazy relation loading and automatic orphan deletion. User/credential inserts share one transaction manager. A unique constraint is not proof that every user has a credential; integration tests must prove atomic local registration writes.
-- CHECK password_hash is nonempty and credential_digest matches exactly 64 lowercase hexadecimal characters. Keep hash/digest excluded from default ORM selections; credential checks explicitly request the hash, and HTTP responses always use explicit mapping.
-- CHECK created_at <= last_seen_at < idle_expires_at <= absolute_expires_at and revoked_at IS NULL OR revoked_at >= created_at for sessions. Check finite stored timestamps for session lifecycle values so PostgreSQL infinity cannot bypass expiry. Services enforce the 30-minute/24-hour durations and conditional renewal/revocation; do not use a time-dependent CHECK involving now() for validity.
-- Add an index on sessions.user_id for account-wide revocation. The primary/unique constraints supply their own indexes. Cleanup indexing follows a measured cleanup query, not an unused speculative index.
-- Store instants as timestamptz(3), serialize API timestamps as UTC ISO 8601 when exposed, and use a consistent database timestamp for each lifecycle operation. Creation/default updated_at values are database defaults; application services explicitly set updated_at on user changes and activity/revocation/password-change timestamps on their events. A creation default does not maintain updates. Never extend an existing session's absolute deadline.
-- Register the same explicit entity/migration classes in shared runtime/CLI options. Keep synchronize and migrationsRun false. Review generated SQL and verify apply/revert/reapply only against an isolated test database before applying a reviewed migration to development data.
+Use a 30-minute idle limit and 24-hour absolute limit, measured from creation with database time.
+A session is invalid at equality with either deadline.
+A successful guarded resolution conditionally advances activity and idle expiry to
+min(database time + 30 minutes, absolute expiry), preserving monotonic timestamps and the same credential.
+Refresh the cookie only for the remaining valid lifetime; never extend the absolute deadline.
 
-**Mapping review exit:** inspect all three entities and shared registrations before migration generation. The migration/integration checkpoint must then prove normalized-email concurrency, credential cardinality, missing-parent denial, duplicate/malformed digests, status/timestamp checks, restrictive deletion and transaction rollback. HTTP/browser lifecycle tests follow with the routes; they are not prerequisites for reviewing these entity files.
+Resolution checks digest, expiry, revocation and account eligibility.
+Expired/revoked rows must not be renewed or recreated.
+Login locks/rechecks the user row; eligibility changes use a consistent lock order and revoke sessions atomically.
+Reactivation must not revive revoked sessions. Authentication alone grants no tenant permissions.
 
-Decision rationale: lowercase canonical email provides a predictable global identity key; an ASCII-only first slice makes its length/case behavior explicit while preserving future internationalized-email work. Shared credential keys and text status checks minimize schema machinery; explicit session timestamps and conditional writes keep expiry/revocation reviewable. SRS session renewal is implemented through the session record; a separate refresh-token table belongs only to a future flow that actually issues refresh tokens.
+Revoke before clearing the current cookie. Missing/already invalid logout is idempotent 204.
+Persistence failure must not be reported as successful logout.
+Clear malformed/missing/invalid cookie credentials using the same cookie scope.
+A response already in flight cannot make a revoked database session valid again.
 
-References checked for this contract: [Nest CSRF](https://docs.nestjs.com/security/csrf), [Nest rate limiting](https://docs.nestjs.com/security/rate-limiting), [PostgreSQL constraints](https://www.postgresql.org/docs/17/ddl-constraints.html), [timestamp types](https://www.postgresql.org/docs/17/datatype-datetime.html), [database time functions](https://www.postgresql.org/docs/17/functions-datetime.html), [OWASP email validation](https://cheatsheetseries.owasp.org/cheatsheets/Email_Validation_and_Verification_Cheat_Sheet.html), [session management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html), [SecLists blocklist source](https://github.com/danielmiessler/SecLists/blob/master/Passwords/Common-Credentials/10k-most-common.txt) and [NIST password guidance](https://pages.nist.gov/800-63-4/sp800-63b.html). Project values and choices are not standards mandates. The lockfile selects Nest 12.1.3, which provides the chosen built-in CSRF API; enforce Nest >=12.1 when integrating it. The snapshot, mappings and blocklist provider are now implemented; RegistrationService integration is implemented and database-tested; account/session HTTP behavior remains implementation/verification work. The [bundled data provenance](../../backend/src/auth/data/password-blocklist/README.md) owns the exact snapshot pin, license and review procedure.
+Retain invalid sessions for seven days after the earliest idle expiry, absolute expiry or revocation.
+Cleanup is bounded and rechecks eligibility; deletion of old rows does not enforce live session validity.
 
-### Current identity and database decisions
+### Browser and HTTP behavior
 
-[ADR 0001](../architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) owns the selected architecture and evaluated alternatives. Current implementation evidence belongs in the [validation register](../planning/VALIDATION.md); the [roadmap](../planning/ROADMAP.md#current-priorities-and-learning-preferences) owns sequencing.
+Local frontend origin is http://localhost:3000; browser API URL is http://localhost:14400.
+Listen explicitly on 127.0.0.1 with local PORT=14400 and proxy trust disabled.
+Grant credentialed CORS only to that exact frontend origin.
 
-| Concern | Selected direction | Remaining work |
-| --- | --- | --- |
-| Identity ownership | Application-owned credentials and account lifecycle. | Implement and verify the accepted first slice, then the remaining SRS lifecycle. Replace template Stack Auth separately. |
-| Sessions | Opaque cookie credentials, PostgreSQL digest storage, a session service and a Nest guard under the finalized contract. | Implement expiry, renewal, revocation, browser protection and meaningful concurrency tests. |
-| Persistence | PostgreSQL, TypeORM repositories/Data Mapper, reviewed migrations, synchronization disabled. | Runtime/CLI configuration is wired and dependencies are installed. Verify real connections/shutdown, entity mappings, migration execution and transaction behavior. |
-| Password hashing | Argon2id through `argon2`, behind `PasswordService`. | The current 64 MiB/two-iteration/parallelism-one implementation passed real hashing/verification tests and compiled Node execution locally; formatting passed in the branch review. Benchmark parameters on the deployment runtime before exposure. |
-| Supporting tools | Existing DTO validation/configuration/Vitest plus the ADR-selected Swagger, Helmet, throttling and built-in JSON logging. | Introduce missing integrations with their consumers; verify error contracts, redaction and abuse controls. |
-| Hosting | Compare suitable API/frontend/PostgreSQL/email providers by effective cost, capability and maintenance. | Verify runtime/hashing compatibility, deployment topology, delivery support, current prices and quotas before selection. No provider is selected. |
+Use Nest 12.1+ native CSRF protection with that trusted origin and no auth exclusions.
+Preserve its Fetch Metadata/Origin algorithm, including same-origin/none, matching authority fallback,
+requests with neither browser header and safe GET/HEAD/OPTIONS methods. No CSRF-token route is needed.
+CORS and SameSite do not replace CSRF checks.
 
-The first-slice schema and browser policies are finalized above. Later verification/reset-token tables, internationalized-email support and public deployment topology require their own consuming designs. Retain the Nest application in `backend/` and preserve the existing PostgreSQL volume.
+Production uses one HTTPS browser origin with external /api proxy routing.
+Nest routes remain /auth/... with no global prefix. Verify trusted proxy/Host forwarding before deployment.
+Safe methods do not perform user-requested state changes; authenticated reads may perform explicit idle renewal.
+Assembled HTTP tests use the same bootstrap protections as the application.
 
-The backend currently supports its minimal HTTP/configuration foundation and database wiring. Domain persistence, authentication and tenant integration remain unfinished. Use [Start Here](../setup/START_HERE.md) and the [backend README](../../backend/README.md) for current local operation.
+Register/login require application/json objects with only email/password strings.
+Reject unknown fields, bodies over 16 KiB and non-identity content encoding.
+Logout accepts an empty body or empty JSON object when implemented.
+Auth responses use Cache-Control: no-store.
+
+Count admitted attempts after security/body parsing and before DTO validation, hashing or database work.
+Registration allows five per direct socket IP per 3,600 seconds; login allows ten per 60 seconds.
+DTO-invalid/failed-credential attempts count. Key by route and socket IP; return 429 with Retry-After.
+Use single-process memory locally. Shared limits and trusted proxies need a deployment-specific design.
+
+### Cookies and response contracts
+
+Production cookie: __Host-tenantflow_session, HttpOnly, Secure, SameSite=Lax, Path=/, no Domain.
+Local cookie: tenantflow_session_dev, HttpOnly, SameSite=Lax, Path=/, host-only, Secure disabled.
+Max-Age is whole seconds rounded down from remaining min(idle, absolute) validity.
+Clearing uses the same name/path/domain scope.
+
+POST /auth/register returns 202 with { message: "Registration request accepted." }.
+POST /auth/login returns 200 and a cookie; GET /auth/me returns 200 for a valid session.
+Login/me expose only { user: { id, email, status, emailVerified } }, using display email and stored verification state.
+POST /auth/logout returns 204 without a body.
+
+Errors use { statusCode, code, message } with fixed safe messages:
+
+- 400 INVALID_INPUT.
+- 401 INVALID_CREDENTIALS for login, AUTH_REQUIRED for session resolution.
+- 403 CSRF_REJECTED.
+- 413 PAYLOAD_TOO_LARGE; 415 UNSUPPORTED_MEDIA_TYPE.
+- 429 RATE_LIMITED; expose Retry-After to the allowed browser origin.
+- 503 SERVICE_UNAVAILABLE for recognized persistence unavailability.
+- 500 INTERNAL_ERROR for unexpected faults.
+
+Login verifies either the stored hash or a maintained dummy hash for an unknown account.
+Return generic credential/eligibility denial without promising identical timing.
+Input, throttling and persistence failures remain distinguishable.
+
+### Minimal auth persistence mapping
+
+Use explicit snake_case names and timestamptz(3) instants. Columns are NOT NULL unless stated otherwise.
+The three identity tables are global and contain no tenant IDs, roles, profile data or provider credentials.
+Generate User/Session UUID v4 values in the application; no database UUID extension is needed.
+
+User / users:
+
+- id uuid primary key; email varchar(254); email_canonical varchar(254), COLLATE C, unconditionally unique.
+- status varchar(32), default pending_verification, checked against the five exact status strings.
+- email_verified_at and deleted_at nullable; created_at/updated_at default CURRENT_TIMESTAMP(3).
+- Active requires verification; pending_verification requires no verification timestamp.
+- Deleted status is equivalent to a non-null deleted_at; other ineligible states may retain verification.
+- Stored email is trimmed printable ASCII and nonempty; canonical email equals lower(email COLLATE C).
+
+PasswordCredential / password_credentials:
+
+- user_id uuid is both primary key and foreign key to users.id.
+- password_hash is nonempty text containing the full encoded Argon2 hash, excluded from default ORM selection.
+- created_at defaults to CURRENT_TIMESTAMP(3); password_changed_at is nullable until first replacement.
+
+Session / sessions:
+
+- id uuid primary key; user_id uuid foreign key; credential_digest varchar(64) unconditionally unique.
+- credential_digest is exactly 64 lowercase hexadecimal characters and excluded from default ORM selection.
+- created_at defaults to CURRENT_TIMESTAMP(3); last_seen_at, idle_expires_at and absolute_expires_at are explicit.
+- revoked_at is nullable. Initial activity equals creation; initial deadlines are creation + 30 minutes/+24 hours.
+- Check created_at <= last_seen_at < idle_expires_at <= absolute_expires_at.
+- Check revoked_at is null or >= created_at, and all stored session lifecycle instants are finite.
+- Index user_id for account-wide revocation. Do not add speculative cleanup indexes.
+
+All user foreign keys use ON DELETE RESTRICT and ON UPDATE RESTRICT.
+Disable relation cascades, eager/lazy relation loading and automatic orphan deletion.
+Credential uniqueness establishes at most one row; the registration transaction establishes both local records.
+
+Services maintain update/activity/revocation/password-change timestamps explicitly.
+Serialize exposed instants as UTC ISO 8601 and use one consistent database time per lifecycle operation.
+Database creation defaults do not maintain later updates. Never use now()-dependent CHECK constraints for validity.
+
+Runtime and CLI register the same explicit entities and migrations.
+Keep synchronize and migrationsRun false; review SQL and verify migrations in isolation before applying to retained data.
+See the [migration guide](../../backend/src/database/migrations/README.md) and
+[PostgreSQL constraints](https://www.postgresql.org/docs/17/ddl-constraints.html).

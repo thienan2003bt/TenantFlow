@@ -21,7 +21,7 @@ Project bootstrap and technical foundation.
 - [x] PostgreSQL Compose configuration, readiness/SQL and cleanup verified in hosted CI
 - [x] React/Next.js frontend scaffold present
 - [x] Frontend/PostgreSQL container configuration verified by image/start/HTTP and database smoke checks
-- [x] Corrected CI passed frontend lint/build/image smoke and Compose/PostgreSQL checks (implementation commit 979d4bd; see the [validation evidence and follow-ups](../../VALIDATION.md#recorded-foundation-checks))
+- [x] Corrected CI passed frontend lint/build/image smoke and Compose/PostgreSQL checks (implementation commit 979d4bd; see the [validation evidence and follow-ups](../../VALIDATION.md#current-evidence))
 - [ ] Deployment automation
 - [x] Initial TypeScript domain model references drafted
 - [ ] Domain constraints and model consistency reviewed
@@ -201,7 +201,7 @@ Monetization system.
 - [ ] Required billing alert delivery
 - [ ] Tenant subscription/usage summaries
 
-Operational task/member/project/activity summaries remain MVP reporting work in the [implementation roadmap](../../ROADMAP.md#milestone-11--reporting-and-dashboarding). Revenue, retention and advanced productivity analytics remain later enhancements; the placeholder frontend dashboard is not their implementation.
+Operational task/member/project/activity summaries remain MVP reporting work in the [implementation roadmap](../../ROADMAP.md#delivery-sequence). Revenue, retention and advanced productivity analytics remain later enhancements; the placeholder frontend dashboard is not their implementation.
 
 ## Exit Criteria
 

@@ -7,7 +7,7 @@ The backend now loads and validates startup configuration through Nest's ConfigM
 | File | Consumer | Purpose |
 | --- | --- | --- |
 | `frontend/.env.local` | Next.js in `frontend/` | Local frontend development/build configuration; copy the adjacent `.env.local.example`. |
-| `backend/.env` | Nest ConfigModule when run from `backend/` | Required `NODE_ENV` and integer-port intent; documented local `PORT=14400`. The current example is empty and integer validation remains an open review finding. |
+| `backend/.env` | Nest ConfigModule when run from `backend/` | Startup-validated settings with local `PORT=14400`. Both application and database ports must be integers from 1 to 65535. |
 | Root `.env` | Docker Compose interpolation and build-secret source | Frontend public build arguments, private build secret and runtime values; copy root `.env.example`. Compose does not automatically make this a Next.js local env file. |
 | Root `docker-compose.yml` | Docker Compose | PostgreSQL development settings and frontend container configuration. PostgreSQL values are currently set directly in this file. |
 | CI secrets | Frontend workflow | Project-specific Stack Auth settings used by the existing build steps. No values are committed in examples. |
@@ -51,6 +51,6 @@ The second command should print nothing and return exit code 1. An ignore rule d
 
 Define settings alongside actual NestJS consumers, document their loading source and precedence, and validate required values at startup. Keep database host/container distinctions explicit. Separate credentials between environments and use deployment secret management when needed. Provider-owned credentials and sessions must not be duplicated by default.
 
-The [backend README](../../backend/README.md) documents the existing loader, required `NODE_ENV` and local `PORT=14400` settings. `backend/.env.example` exists but is empty, so use the documented safe development values for local startup. Vitest supplies synthetic test settings independently. The root `.env.example` remains the separate Compose contract above.
+The [backend README](../../backend/README.md) documents the existing loader, required `NODE_ENV` and local `PORT=14400` settings. `backend/.env.example` contains local development defaults; copy it only when creating a new .env and preserve existing settings. Vitest supplies synthetic test settings independently. The root `.env.example` remains the separate Compose contract above.
 
 Do not log real values, commit local env files, or copy credentials into requirements and PR descriptions. See [backend requirements](../requirements/BACKEND_REQUIREMENTS.md) for the unresolved identity and integration boundaries.

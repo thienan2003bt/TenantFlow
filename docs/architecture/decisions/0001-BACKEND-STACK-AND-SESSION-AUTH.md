@@ -3,7 +3,7 @@
 - **Date:** 23 October 2026
 - **Status:** Accepted by the developer; new integrations are not implemented or runtime-verified.
 - **Scope:** Backend persistence and the first registration/login/caller/logout slice.
-- **Related:** [Backend conventions](../BACKEND_CONVENTIONS.md), [backend requirements](../../requirements/BACKEND_REQUIREMENTS.md), [temporary development tracker](../../SESSION_AUTH_DEVELOPMENT_PLAN.md), [roadmap](../../planning/ROADMAP.md#current-priorities-and-learning-preferences).
+- **Related:** [Backend conventions](../BACKEND_CONVENTIONS.md), [backend requirements](../../requirements/BACKEND_REQUIREMENTS.md), [temporary development tracker](../../SESSION_AUTH_DEVELOPMENT_PLAN.md), [roadmap](../../planning/ROADMAP.md#delivery-sequence).
 
 ## Context
 
@@ -54,7 +54,7 @@ The selected stack adds entity metadata, relation-loading and transaction-contex
 - Verify atomic user/credential writes, concurrent normalized-email uniqueness, session lookup/expiry/revocation/renewal, connection cleanup and safe response/log fields against real PostgreSQL.
 - Hosting providers, frontend Stack Auth replacement, delivery infrastructure, RLS, shared rate-limit storage and future queues remain explicit later choices. No provider accounts or runtime quotas were validated by this decision.
 
-The [validation register](../../planning/VALIDATION.md#open-follow-ups) owns actual evidence and outstanding checks. No packages, entities, migrations, feature source or tests were created by this decision record.
+The [validation register](../../planning/VALIDATION.md#coverage-limits) owns actual evidence and outstanding checks. No packages, entities, migrations, feature source or tests were created by this decision record.
 
 ## Affected requirements and references
 

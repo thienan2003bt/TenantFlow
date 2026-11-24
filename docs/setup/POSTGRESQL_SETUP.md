@@ -30,7 +30,7 @@ The current checkpoint is container health, SQL execution and Windows client acc
    Test-NetConnection -ComputerName localhost -Port 5432
    ```
 
-   Expected: `TcpTestSucceeded : True`. This proves TCP reachability, not database credentials. The pgAdmin check below verifies a Windows SQL client connection. Historical CI results and outstanding local checks are in the [validation register](../planning/VALIDATION.md#recorded-foundation-checks).
+   Expected: `TcpTestSucceeded : True`. This proves TCP reachability, not database credentials. The pgAdmin check below verifies a Windows SQL client connection. Historical CI results and outstanding local checks are in the [validation register](../planning/VALIDATION.md#current-evidence).
 
 ## Connection details
 

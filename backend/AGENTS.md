@@ -23,8 +23,11 @@ Before migration-related work, read the [migration workflow and data-safety guid
 Begin with the intended result and prerequisites. For each step, explain:
 
 - **Objective:** the behavior or boundary this step establishes.
+
 - **Action:** the precise files/components and changes the developer should make; explain why they belong there.
+
 - **Command:** the exact command, working directory and required configuration, when a command is needed.
+
 - **Check:** expected successful output/HTTP behavior, relevant failure cases, and what evidence establishes completion.
 
 Keep steps small and ordered. Clearly separate generator-created files/registrations from behavior the developer writes. Avoid unrelated future infrastructure in the current milestone. Use the existing scripts and report which checks were actually run rather than calling a proposed check complete.
@@ -36,12 +39,23 @@ Give review findings in the conversation. Do not create a separate review docume
 ## Current formatting and import conventions
 
 - Developer preference confirmed on 24 November 2026: retain explicit TypeScript variable type declarations and include them in new/edited TypeScript code, including destructured results. Prefer meaningful domain types; do not replace annotations with unchecked casts or any just to satisfy this convention. Contextual callback typing may still be used where no variable is declared.
+
 - Put conditional bodies on separate lines and use braces, including early returns/throws. Never use single-line forms such as if (condition) return. ESLint's curly/all rule enforces braced bodies for backend TypeScript and JavaScript; Prettier formats their lines.
 
 - Use double quotes for import/export specifiers, Prettier `printWidth: 120`, and `tabWidth: 2` with spaces. Use `npm.cmd run format` and `npm.cmd run format:check` from `backend/`.
+
 - `npm.cmd run lint` runs ESLint. The pre-commit hook runs backend ESLint, unit tests and e2e tests only when staged paths include `backend/`. Do not auto-stage, stash, commit or change Git hook configuration; provide activation commands for the developer.
+
 - Source enum imports use `@enums/environment.enum.ts`, backed by the ordered `paths` mapping in `tsconfig.json`. Do not simplify that mapping without proving type-check, Nest build/watch, compiled Node startup and Vitest behavior together.
+
 - Build through the Nest CLI. Plain `tsc` does not perform Nest's alias rewrite. Do not disable TypeScript diagnostics or change the module system to hide an unresolved alias.
+
 - Keep the backend port configurable, with `14400` as the documented local choice. Treat listener host and CORS policy as explicit decisions; a port number does not enforce access control.
 
 Sources to consult include [Nest CLI](https://docs.nestjs.com/cli/usages), [configuration](https://docs.nestjs.com/techniques/configuration), [testing](https://docs.nestjs.com/fundamentals/testing), [TypeScript module resolution](https://www.typescriptlang.org/docs/handbook/modules/reference.html#paths), and [Prettier options](https://prettier.io/docs/options#quotes). These links are starting points, not substitutes for verifying the affected behavior.
+
+## Documentation
+
+Apply the root documentation limits: 300 lines, 120 words per line and 200 words per statement.
+Keep each page useful to its human reader. Plans/review discussion stay in chat; executable cases stay in tests.
+Replace stale explanations instead of adding historical logs or proposed-case backlogs.
