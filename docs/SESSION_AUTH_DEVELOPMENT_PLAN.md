@@ -1,6 +1,6 @@
 # Session authentication development plan
 
-**Current checkpoint: first migration review and isolated PostgreSQL verification.** The first-slice contract is finalized and all three entities are registered on `feat/auth-persistence`. Offline ORM review and the complete local check command pass after line-ending normalization. Password hashing/verification and their tests exist. Feature migrations and auth handlers remain unimplemented.
+**Current checkpoint: isolated PostgreSQL migration verification.** The first-slice contract, three mappings and generated InitialAuth migration are registered on `feat/auth-persistence`. Offline review and local checks cover source/configuration; applying/reverting the migration and actual constraints still need evidence. Password hashing/verification exists; auth handlers remain unimplemented.
 
 [Documentation index](README.md) · [Roadmap](planning/ROADMAP.md#current-priorities-and-learning-preferences) · [Accepted contract](requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) · [Validation register](planning/VALIDATION.md#open-follow-ups)
 
@@ -18,7 +18,7 @@ Keep implementation in `backend/`, preserve the frontend/assets/license and Post
 | --- | --- | --- |
 | 1. Define the auth contract | DONE — design finalized, not runtime-verified | Remaining decisions were resolved on 12 November 2026 in backend requirements. Preserve the explicitly accepted 6-128-code-point password policy and its security distinction. |
 | 2. Validate TypeORM integration and migration workflow | Basic CLI connectivity user-reported; remaining runtime checks open | Runtime/CLI wiring exists and migration-status execution succeeded per the developer. Nest compiled startup, health/shutdown and isolated migration/transaction checks need their own recorded evidence. |
-| 3. Establish persistence | IN PROGRESS — mapping increment complete; migration pending | All three entities and shared runtime/CLI registrations pass offline metadata/DDL review and the full local check command. Review the migration and real PostgreSQL tests for constraints, concurrent uniqueness, apply/revert/reapply and rollback. Preserve the development volume. |
+| 3. Establish persistence | IN PROGRESS — initial migration generated/registered; execution verification pending | InitialAuth SQL covers the three mappings, constraints, restrictive FKs and session user index. Use the named migration scripts for isolated PostgreSQL apply/revert/reapply and essential constraint/rollback checks. Preserve the development volume. |
 | 4. Implement the initial auth slice | IN PROGRESS — password primitive only | Password hashing/verification and tests pass, including formatting in the branch review. Registration, sessions, caller read and logout remain unimplemented. Introduce boundary validation, safe responses, CSRF and abuse controls with those flows. |
 | 5. Verify browser behavior and failure cases | NOT STARTED | Verify cookie issuance/renewal/sending/clearing, origin/CSRF denial, expiry/revocation, concurrent registration/logout, account status changes, hash secrecy and rollback. Add meaningful CI coverage with each consuming checkpoint. |
 | 6. Close this tracker | NOT STARTED | Preserve decisions/evidence and unfinished follow-ups in their owning documents; repair incoming links and remove this temporary file after the slice is complete. |
@@ -36,7 +36,9 @@ Use backend requirements as the single policy source. The design now fixes email
 
 ### Subsequent checkpoint — migration and real PostgreSQL
 
-After entity review, the developer generates and reviews the first migration using the compiled DataSource workflow in the backend README. Add an isolated test target before applying/reverting migrations or exercising cleanup. Verify the requirements' mapping acceptance cases and transaction rollback; keep normal development data intact. Add backend CI for locked install/static/unit/HTTP/hook/build and the new integration tests. The integration script and test-database lifecycle are implementation work, not existing commands.
+Work minimum-first under the developer's 24 November 2026 preference: InitialAuth is generated and registered, and its up/down SQL has been inspected. The immediate action is isolated database apply/revert/reapply and essential constraint checks using the [named package scripts](../backend/README.md#initial-auth-migration-next-developer-checkpoint). No new endpoint, service, test framework or CI expansion is needed for this checkpoint.
+
+Migration scripts rebuild automatically and load the shared compiled DataSource with backend environment configuration. Use an isolated database before applying/reverting migrations or exercising cleanup. Verify the requirements' essential constraint and transaction-rollback cases, keeping normal development data intact; local manual evidence can establish this first checkpoint before broader automation. Then implement registration as the first workable account operation with its required input/hash/transaction/duplicate-response and abuse/CSRF controls. Add database automation and backend CI incrementally; isolated test-database lifecycle automation remains later work.
 
 ## Follow-up boundaries and handoff
 

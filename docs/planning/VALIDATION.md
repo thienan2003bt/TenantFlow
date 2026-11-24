@@ -76,6 +76,19 @@ The developer requested a direct fix after committing the mappings. Both entity 
 
 The local mapping increment is complete. The next evidence remains a reviewed migration and isolated PostgreSQL apply/revert/reapply, constraint and rollback checks.
 
+### Initial auth migration and package commands — 24 November 2026
+
+The developer reported successful migration generation and supplied `1795512053650-InitialAuth.ts`. Source review found up() creates users, password_credentials and sessions, adds the session user index and both restrictive user FKs; down() removes those constraints/index/tables in dependency order. Generation is not application evidence. The agent formatted the generated file, registered its class in shared runtime/CLI options and added explicit db:migration:generate/show/run/revert package scripts. The small Node wrapper owns environment/DataSource/output paths and forwards argument arrays without a shell. Database operations remain developer actions.
+
+| Check | Observed result | Boundary |
+| --- | --- | --- |
+| Complete `npm.cmd run check` | Typecheck, lint, formatting, 23 unit tests, one database-stubbed HTTP test, seven hook tests and Nest build passed. | Uses unsandboxed execution for the HTTP loopback test. These checks do not connect to PostgreSQL or apply/revert the migration. |
+| npm argument forwarding/help | `npm.cmd run db:migration:generate -- --help` rebuilt and displayed wrapper usage successfully. | No generation or database connection. |
+| Wrapper diagnostics | 15 in-memory cases passed for valid command routing, fixed generation directory, invalid/missing/extra arguments, traversal rejection, help and child/spawn-error exit propagation. | Child process execution was replaced by a stub; no TypeORM/database operation ran. These diagnostics are not a new committed test suite. |
+| Compiled DataSource/migration loading | Three entities and InitialAuth loaded with synthetic settings. A query recorder observed six up and six down statements, including the two RESTRICT/RESTRICT foreign keys. | No DataSource initialization or SQL execution; this verifies discovery and statement assembly only. |
+
+Next checkpoint: use the named scripts to establish migration apply/revert/reapply and essential constraint/rollback evidence on an isolated PostgreSQL database, then proceed to minimal registration. No hosted CI or browser/auth result is established by this batch.
+
 ### Frontend and Compose — 17 October 2026
 
 Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared through [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8). These results concern the frontend/Compose foundation and do not establish the current PR's merge state or backend auth behavior.
@@ -97,9 +110,9 @@ These are local tracking IDs. The [accepted contract](../requirements/BACKEND_RE
 | --- | --- | --- |
 | F-01 | Replace inherited frontend Stack Auth with TenantFlow account/session and organization flows. | After backend contracts exist, verify registration/login/logout, recovery/account settings and authorized organization switching while preserving template assets/license. Status: queued frontend transition. |
 | F-02 | Implement first-slice auth and design the later account lifecycle. | Follow the finalized [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract). Password hashing/tests/formatting pass; blocklist asset pinning, deployment hashing benchmarks, auth/browser workflows, verification/recovery and internationalized-email input remain later work. Status: first-slice design finalized, workflows pending. |
-| F-03 | Verify persistence and later domain design. | All three mappings are implemented/registered and pass offline review and the local check command under the [three-entity contract](../requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping). Prove constraints/migration/rollback on isolated PostgreSQL. Broader model candidates in section 2 still need tenant/history-safe design. Status: local mapping increment complete; database verification pending. |
+| F-03 | Verify persistence and later domain design. | Three mappings and generated InitialAuth are registered and pass local checks under the [three-entity contract](../requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping). Prove constraints/migration/rollback on isolated PostgreSQL using the named scripts. Broader model candidates in section 2 still need tenant/history-safe design. Status: migration source reviewed; database verification pending. |
 | F-04 | Complete the NestJS foundation inside `backend/`. | Configuration validation/tests and TypeORM wiring exist. Add health HTTP coverage, database readiness, backend CI/container wiring and meaningful auth/isolation tests under the [roadmap](ROADMAP.md). Status: in progress. |
-| F-05 | Verify TypeORM/PostgreSQL behavior and select feasible hosting. | CLI migration-status execution is user-reported successful. Still prove Nest startup/shutdown, feature migrations, transactions, constraints, session concurrency and cleanup. Compare provider cost/capability, settle exact trusted proxies/Host forwarding and verify deployment compatibility while preserving local PostgreSQL data. Status: configuration implemented, CLI connectivity reported, integration pending. |
+| F-05 | Verify TypeORM/PostgreSQL behavior and select feasible hosting. | CLI migration-status execution and initial migration generation are user-reported successful. Still prove Nest startup/shutdown, migration apply/revert/reapply, transactions, constraints, session concurrency and cleanup. Compare provider cost/capability, settle exact trusted proxies/Host forwarding and verify deployment compatibility while preserving local PostgreSQL data. Status: configuration/commands implemented, CLI connectivity/generation reported, integration pending. |
 | F-06 | Verify backend CI, replacement frontend hosting and transactional email delivery. | Observe actual backend CI runs and hosted runtime checks. Verify verification/reset/invitation delivery to intended recipients; provider accounts and delivery infrastructure are not configured. Status: queued validation/design. |
 
 ## Documentation checks

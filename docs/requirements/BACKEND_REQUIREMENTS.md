@@ -1,6 +1,6 @@
 # Backend Requirements and Design Notes
 
-The NestJS application in `backend/` has configuration validation, HTTP liveness, TypeORM runtime wiring, a standalone migration DataSource, a tested Argon2id password service and registered User/PasswordCredential/Session mappings. Feature migrations and auth workflows are not implemented; agent-run real PostgreSQL checks remain unverified. The frontend still uses the inherited Stack Auth integration pending replacement.
+The NestJS application in `backend/` has configuration validation, HTTP liveness, TypeORM runtime wiring, a standalone migration DataSource, a tested Argon2id password service, registered User/PasswordCredential/Session mappings and a generated/registered initial auth migration. Auth workflows and real PostgreSQL migration/constraint verification remain unfinished. The frontend still uses the inherited Stack Auth integration pending replacement.
 
 The developer implements the backend inside `backend/`, alongside `frontend/`. The [backend README](../../backend/README.md) documents current startup, configuration, health behavior and test coverage. Broader requirements below follow in later milestones. Use [engineering conventions](../architecture/BACKEND_CONVENTIONS.md) for responsibility and review rules; explicit tooling requests do not authorize automatically implementing review findings.
 
@@ -71,7 +71,7 @@ The root model files remain design references, not migrations or runtime validat
 
 ### Accepted initial session-auth contract
 
-Baseline accepted on 25 October 2026; remaining policies finalized on 12 November 2026 under the developer's delegated decision authority. This is the implementation contract, not evidence that database constraints or auth routes work. The password primitive and all three mappings are implemented; migrations and HTTP workflows are pending. The temporary plan tracks execution, not competing policy proposals.
+Baseline accepted on 25 October 2026; remaining policies finalized on 12 November 2026 under the developer's delegated decision authority. This is the implementation contract, not evidence that database constraints or auth routes work. The password primitive, three mappings and initial migration are implemented; migration execution verification and HTTP workflows are pending. The temporary plan tracks execution, not competing policy proposals.
 
 | Concern | Accepted behavior |
 | --- | --- |
