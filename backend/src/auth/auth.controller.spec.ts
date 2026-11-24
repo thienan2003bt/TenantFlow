@@ -7,6 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vite
 import { AuthInputError } from "../errors/auth-input.error.js";
 import { AuthController } from "./auth.controller.js";
 import { RegistrationService } from "./registration.service.js";
+import { RegisterDto } from "./register.dto.js";
+import { RegisterInputPipe } from "./register-input.pipe.js";
+import { RegistrationExceptionFilter } from "./registration-exception.filter.js";
 
 const input: { email: string; password: string } = {
   email: "  Alice+registration@Example.com  ",
@@ -21,7 +24,11 @@ describe("AuthController (HTTP, registration service stubbed)", () => {
     register = vi.fn<RegistrationService["register"]>().mockResolvedValue(undefined);
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: RegistrationService, useValue: { register } }],
+      providers: [
+        RegisterInputPipe,
+        RegistrationExceptionFilter,
+        { provide: RegistrationService, useValue: { register } },
+      ],
     }).compile();
     app = module.createNestApplication();
     await app.init();
@@ -40,7 +47,8 @@ describe("AuthController (HTTP, registration service stubbed)", () => {
       .expect("Cache-Control", "no-store");
     expect(response.body).toEqual({ message: "Registration request accepted." });
     expect(response.headers["set-cookie"]).toBeUndefined();
-    expect(register).toHaveBeenCalledExactlyOnceWith(input);
+    expect(register).toHaveBeenCalledExactlyOnceWith(RegisterDto.fromUnknown(input));
+    expect(register.mock.calls[0][0]).toBeInstanceOf(RegisterDto);
   });
 
   it("awaits registration before returning an accepted response", async () => {
@@ -70,7 +78,7 @@ describe("AuthController (HTTP, registration service stubbed)", () => {
     expect((await response).status).toBe(202);
   });
 
-  it("maps validation or blocklist rejection to a fixed 400 without echoing the error", async () => {
+  it("maps blocklist rejection to a fixed 400 without echoing the error", async () => {
     register.mockRejectedValueOnce(new AuthInputError("sensitive-input-details"));
     const response: request.Response = await request(app.getHttpServer())
       .post("/auth/register")
@@ -83,6 +91,41 @@ describe("AuthController (HTTP, registration service stubbed)", () => {
       message: "Invalid registration input.",
     });
     expect(response.text).not.toContain("sensitive-input-details");
+  });
+
+  it.each([
+    { label: "missing fields", body: {} },
+    { label: "an invalid email", body: { ...input, email: "invalid" } },
+    { label: "an invalid password", body: { ...input, password: "weak" } },
+    { label: "a client-supplied canonical email", body: { ...input, emailCanonical: "forged@example.com" } },
+    { label: "an array", body: [input] },
+  ])("rejects $label in the pipe before invoking registration", async ({ body }) => {
+    const response: request.Response = await request(app.getHttpServer())
+      .post("/auth/register")
+      .send(body)
+      .expect(400)
+      .expect("Cache-Control", "no-store");
+    expect(response.body).toEqual({ statusCode: 400, code: "INVALID_INPUT", message: "Invalid registration input." });
+    expect(register).not.toHaveBeenCalled();
+  });
+
+  it("sanitizes an unexpected pipe failure before the controller method executes", async () => {
+    const logError: ReturnType<typeof vi.spyOn> = vi.spyOn(Logger.prototype, "error").mockImplementation(() => {});
+    vi.spyOn(RegisterDto, "fromUnknown").mockImplementationOnce(() => {
+      throw new Error("sensitive-pipe-details");
+    });
+    const response: request.Response = await request(app.getHttpServer())
+      .post("/auth/register")
+      .send(input)
+      .expect(500)
+      .expect("Cache-Control", "no-store");
+    expect(response.body).toEqual({
+      statusCode: 500,
+      code: "INTERNAL_ERROR",
+      message: "An unexpected error occurred.",
+    });
+    expect(register).not.toHaveBeenCalled();
+    expect(logError).not.toHaveBeenCalled();
   });
 
   it.each([

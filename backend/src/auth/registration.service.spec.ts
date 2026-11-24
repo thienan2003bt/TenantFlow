@@ -8,11 +8,12 @@ import { PasswordCredential } from "./password-credential.entity.js";
 import { PasswordService } from "./password.service.js";
 import { RegistrationService } from "./registration.service.js";
 import { User } from "./user.entity.js";
+import { RegisterDto } from "./register.dto.js";
 
-const input: { email: string; password: string } = {
+const input: RegisterDto = RegisterDto.fromUnknown({
   email: "  Alice.Smith+register@Example.com  ",
   password: "  Allowed-Reg-7391!  ",
-};
+});
 const hash: string = "synthetic-encoded-password-hash";
 const failureFor: (fields: Record<string, unknown>) => QueryFailedError = (fields: Record<string, unknown>) =>
   new QueryFailedError(
@@ -80,17 +81,6 @@ describe("RegistrationService", () => {
     finishHash(hash);
     await registration;
     expect(transaction).toHaveBeenCalledTimes(1);
-  });
-
-  it.each([
-    { label: "missing fields", value: {} },
-    { label: "an invalid email", value: { ...input, email: "invalid" } },
-    { label: "an invalid password", value: { ...input, password: "weak" } },
-  ])("rejects $label before blocklist, hashing or persistence work", async ({ value }) => {
-    await expect(service.register(value)).rejects.toBeInstanceOf(AuthInputError);
-    expect(assertAllowed).not.toHaveBeenCalled();
-    expect(hashPassword).not.toHaveBeenCalled();
-    expect(transaction).not.toHaveBeenCalled();
   });
 
   it("rejects a blocked password before hashing or persistence", async () => {

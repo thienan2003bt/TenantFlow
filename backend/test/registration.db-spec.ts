@@ -3,6 +3,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { DataSource, type DataSourceOptions, type QueryRunner } from "typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { RegistrationService } from "../src/auth/registration.service.js";
+import { RegisterDto } from "../src/auth/register.dto.js";
 import { PasswordService } from "../src/auth/password.service.js";
 import { PasswordBlocklistService } from "../src/auth/password-blocklist.service.js";
 import { PasswordCredential } from "../src/auth/password-credential.entity.js";
@@ -32,7 +33,7 @@ const options: DataSourceOptions = {
   extra: { max: 8, connectionTimeoutMillis: 5000, statement_timeout: 15000, lock_timeout: 15000 },
 };
 const password: string = "  Allowed-Reg-7391!  ";
-const input: { email: string; password: string } = { email: " Alice.Smith+register@Example.com ", password };
+const input: RegisterDto = RegisterDto.fromUnknown({ email: " Alice.Smith+register@Example.com ", password });
 
 describe("RegistrationService with isolated PostgreSQL", () => {
   let dataSource: DataSource;
@@ -119,7 +120,9 @@ describe("RegistrationService with isolated PostgreSQL", () => {
         [status, user.id],
       );
       await expect(
-        service.register({ email: input.email.toLowerCase(), password: "Different-Allowed-8329!" }),
+        service.register(
+          RegisterDto.fromUnknown({ email: input.email.toLowerCase(), password: "Different-Allowed-8329!" }),
+        ),
       ).resolves.toBeUndefined();
       expect(await dataSource.getRepository(User).count()).toBe(1);
       expect(await dataSource.getRepository(PasswordCredential).count()).toBe(1);
@@ -185,7 +188,13 @@ describe("RegistrationService with isolated PostgreSQL", () => {
       );
       pending.push(track(service.register(input)));
       await waitForLock("advisory");
-      pending.push(track(service.register({ email: input.email.toLowerCase(), password: "Different-Allowed-8329!" })));
+      pending.push(
+        track(
+          service.register(
+            RegisterDto.fromUnknown({ email: input.email.toLowerCase(), password: "Different-Allowed-8329!" }),
+          ),
+        ),
+      );
       await waitForLock("transactionid");
       await blocker.query("SELECT pg_advisory_unlock(739124)");
       expect((await Promise.all(pending)).map((result) => result.status)).toEqual(["fulfilled", "fulfilled"]);

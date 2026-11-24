@@ -1,16 +1,7 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Inject,
-  InternalServerErrorException,
-  Post,
-  Res,
-} from "@nestjs/common";
-import type { Response } from "express";
-import { AuthInputError } from "../errors/auth-input.error.js";
+import { Body, Controller, Header, HttpCode, HttpStatus, Inject, Post, UseFilters } from "@nestjs/common";
+import { RegisterDto } from "./register.dto.js";
+import { RegisterInputPipe } from "./register-input.pipe.js";
+import { RegistrationExceptionFilter } from "./registration-exception.filter.js";
 import { RegistrationService } from "./registration.service.js";
 
 export interface RegistrationAcceptedResponse {
@@ -23,30 +14,10 @@ export class AuthController {
 
   @Post("register")
   @HttpCode(HttpStatus.ACCEPTED)
-  async register(
-    @Body() input: unknown,
-    @Res({ passthrough: true }) response: Response,
-  ): Promise<RegistrationAcceptedResponse> {
-    response.setHeader("Cache-Control", "no-store");
-
-    try {
-      await this.registrationService.register(input);
-    } catch (error: unknown) {
-      if (error instanceof AuthInputError) {
-        throw new BadRequestException({
-          statusCode: HttpStatus.BAD_REQUEST,
-          code: "INVALID_INPUT",
-          message: "Invalid registration input.",
-        });
-      }
-      // Raw dependency errors can contain query parameters and credentials.
-      throw new InternalServerErrorException({
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        code: "INTERNAL_ERROR",
-        message: "An unexpected error occurred.",
-      });
-    }
-
+  @Header("Cache-Control", "no-store")
+  @UseFilters(RegistrationExceptionFilter)
+  async register(@Body(RegisterInputPipe) input: RegisterDto): Promise<RegistrationAcceptedResponse> {
+    await this.registrationService.register(input);
     return { message: "Registration request accepted." };
   }
 }

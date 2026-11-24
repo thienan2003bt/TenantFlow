@@ -2,7 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { randomUUID, type UUID } from "node:crypto";
 import { DataSource, type EntityManager, QueryFailedError } from "typeorm";
-import { parseAuthInput, type ParsedAuthInput } from "./auth-input.js";
+import type { RegisterDto } from "./register.dto.js";
 import { PasswordBlocklistService } from "./password-blocklist.service.js";
 import { PasswordCredential } from "./password-credential.entity.js";
 import { PasswordService } from "./password.service.js";
@@ -21,10 +21,10 @@ export class RegistrationService {
 
   /**
    * Creates a pending local account atomically; existing canonical emails resolve normally.
-   * Validates and hashes before opening the transaction. Other failures propagate.
+   * Accepts a DTO from RegisterDto.fromUnknown; checks the blocklist and hashes before the transaction. Other failures propagate.
    */
-  async register(input: unknown): Promise<void> {
-    const { email, emailCanonical, password }: ParsedAuthInput = parseAuthInput(input);
+  async register(input: RegisterDto): Promise<void> {
+    const { email, emailCanonical, password }: RegisterDto = input;
     this.passwordBlocklistService.assertAllowed(password);
     const passwordHash: string = await this.passwordService.hash(password);
     const userId: UUID = randomUUID();
