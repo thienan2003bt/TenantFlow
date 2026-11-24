@@ -28,7 +28,8 @@
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "test:hook": "node --test scripts/pre-commit.test.mjs",
-    "test:blocklist:build": "npm run build && node scripts/check-password-blocklist.mjs"
+    "test:blocklist:build": "npm run build && node scripts/check-password-blocklist.mjs",
+    "test:db": "node scripts/test-db.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

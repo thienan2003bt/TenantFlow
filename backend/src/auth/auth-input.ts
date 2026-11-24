@@ -7,6 +7,12 @@ export interface ParsedAuthInput {
   password: string;
 }
 
+/**
+ * Parses and validates authentication input, ensuring it contains valid email and password properties.
+ * @param input - The input object to be parsed and validated.
+ * @returns {ParsedAuthInput} An object containing the validated email, canonical email, and password.
+ * @throws {AuthInputError} If the input is invalid, missing required properties, or fails validation checks.
+ */
 export function parseAuthInput(input: unknown): ParsedAuthInput {
   if (input === null || typeof input !== "object" || Array.isArray(input)) {
     throw new AuthInputError("Input must be a valid object.");

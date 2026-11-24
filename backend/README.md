@@ -4,11 +4,19 @@ The developer implements this NestJS application. The assistant provides researc
 
 This application currently exposes `GET /` (Hello World) and `GET /health-check` (HTTP 200 with the text `Service is healthy!`). The current health endpoint is HTTP liveness only.
 
-`AuthModule` provides `PasswordService` for asynchronous Argon2id hashing and verification. Its current hashing profile uses 64 MiB, two iterations and parallelism one; verification reads the persisted hash's encoded parameters. Its public verification signature is `verify(rawPassword, hashedPassword)`. The shared auth input parser passes its 72-case unit suite for strict object shape, email canonicalization, password policy, Unicode preservation and safe validation errors; the accepted password policy is 8-128 Unicode code points plus required character classes, with the maximum and Unicode safeguards retained. See the [accepted contract](../docs/requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) for exact rules. Registration/login routes, credential persistence, cookies and sessions are not implemented yet.
+`AuthModule` provides `PasswordService` for asynchronous Argon2id hashing and verification. Its current hashing profile uses 64 MiB, two iterations and parallelism one; verification reads the persisted hash's encoded parameters. Its public verification signature is `verify(rawPassword, hashedPassword)`. The shared auth input parser passes its 72-case unit suite for strict object shape, email canonicalization, password policy, Unicode preservation and safe validation errors; the accepted password policy is 8-128 Unicode code points plus required character classes, with the maximum and Unicode safeguards retained. See the [accepted contract](../docs/requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) for exact rules. RegistrationService now implements user/credential creation; registration/login HTTP routes, cookies and session workflows are not implemented yet.
 
 The first entity example is `src/auth/user.entity.ts`, mapping `User` to the `users` table. It uses TypeORM decorators, a backend-local `UserStatus` enum, explicit snake_case column names, canonical-email uniqueness and account-state/email CHECK constraints. TypeORM operates through repositories/Data Mapper; entity instances do not save themselves. The creating service must supply a UUID and canonicalized email, and explicitly maintain user updates. Timestamp/status defaults take effect during database insertion, not `new User()`.
 
 Keep these three initial entity files directly in `src/auth/`, beside the existing module/service. An `entities/` subdirectory is optional if that feature becomes crowded; a root-wide entity directory would separate mappings from their owning features. The [mapping contract](../docs/requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping) owns exact fields and constraints.
+
+## Registration service
+
+`RegistrationService.register(input: unknown): Promise<void>` parses input, checks the blocklist and hashes the exact password before opening a TypeORM transaction. Both user and credential inserts use the callback's manager. Database defaults create the pending-verification account and timestamps; the service creates no session and returns no account identifiers or hashes.
+
+After the transaction rejects, only a QueryFailedError with PostgreSQL code 23505, constraint uq_users_email_canonical and table users is accepted as a duplicate. Existing credentials/status are preserved. All other failures propagate without service logging of database errors or query parameters. The future HTTP boundary must map failures to the accepted safe response/logging contract; no registration endpoint exists yet.
+
+The short register() JSDoc records these non-obvious semantics rather than duplicating TypeScript parameter/return types or enumerating implementation calls. Unit tests isolate dependencies; the PostgreSQL suite proves actual rollback, database defaults, hashing and overlapping uniqueness.
 
 ## Password blocklist
 
@@ -22,7 +30,7 @@ Nest copies `src/auth/data/password-blocklist/` into `dist/auth/data/password-bl
 npm.cmd run test:blocklist:build
 ```
 
-The combined check includes this smoke after its existing build. The required registration sequence remains parse input -> blocklist check -> hash -> atomic user/credential inserts. Registration and later password replacement must invoke the blocklist, while login must not apply it to existing credentials. That consumer integration is not implemented yet. See [Nest assets](https://docs.nestjs.com/cli/monorepo#assets) for the build mechanism.
+The combined check includes this smoke after its existing build. The required registration sequence remains parse input -> blocklist check -> hash -> atomic user/credential inserts. Registration and later password replacement must invoke the blocklist, while login must not apply it to existing credentials. RegistrationService now invokes it before hashing; HTTP registration and password-replacement consumers remain later work. See [Nest assets](https://docs.nestjs.com/cli/monorepo#assets) for the build mechanism.
 
 ## Local configuration and commands
 
@@ -50,7 +58,7 @@ Start PostgreSQL from the **repository root** before starting Nest:
 docker compose up -d --wait --wait-timeout 90 postgres
 ```
 
-`AppModule` validates configuration once, then imports `DatabaseModule`. That module injects `ConfigService` and uses `database.options.ts` to configure TypeORM. Nest manages the connection lifecycle. `User`, `PasswordCredential`, `Session` and the initial auth migration are registered in shared runtime/CLI options; synchronization and startup migrations remain disabled. Registration does not apply the migration or create its tables. Add `TypeOrmModule.forFeature([User])` in the consuming feature module when introducing an injected `Repository<User>`; no repository consumer is implemented yet. See [Nest's TypeORM integration](https://docs.nestjs.com/data/typeorm) and [TypeORM entities](https://typeorm.io/docs/entity/entities/).
+`AppModule` validates configuration once, then imports `DatabaseModule`. That module injects `ConfigService` and uses `database.options.ts` to configure TypeORM. Nest manages the connection lifecycle. `User`, `PasswordCredential`, `Session` and the initial auth migration are registered in shared runtime/CLI options; synchronization and startup migrations remain disabled. Registration does not apply the migration or create its tables. RegistrationService injects the existing DataSource and uses its transaction manager; this does not require forFeature(). Add `TypeOrmModule.forFeature([User])` when introducing an injected `Repository<User>` in another consumer. See [Nest's TypeORM integration](https://docs.nestjs.com/data/typeorm) and [TypeORM entities](https://typeorm.io/docs/entity/entities/).
 
 Start development mode:
 
@@ -77,7 +85,7 @@ The current bootstrap omits an explicit listening host and enables unrestricted 
 
 The standalone migration DataSource reuses the database validator and options builder without starting Nest. Read the [migration guide](src/database/migrations/README.md) for the named commands, target checks, registration, SQL review and data/history safeguards. Keep that detailed workflow in the guide.
 
-InitialAuth is generated and registered alongside the three auth entities. Developer-reported isolated database execution and constraint/rollback results are tracked in the [validation register](../docs/planning/VALIDATION.md); automated checks remain pending, and the [roadmap](../docs/planning/ROADMAP.md#current-priorities-and-learning-preferences) owns the next small PR. No migration is applied automatically at startup.
+InitialAuth is generated and registered alongside the three auth entities. Developer-reported isolated database execution and constraint/rollback results are tracked in the [validation register](../docs/planning/VALIDATION.md); automated apply/revert/reapply and registration transaction checks now pass under test:db, and the [roadmap](../docs/planning/ROADMAP.md#current-priorities-and-learning-preferences) owns the next small PR. No migration is applied automatically at startup.
 
 ## Formatting and checks
 
@@ -109,9 +117,23 @@ npm.cmd test
 npm.cmd run test:e2e
 ```
 
-ESLint uses its flat configuration and the TypeScript recommended rules, with type-aware floating-promise checks. Unit tests cover Hello World, configuration validation, the password primitive, shared auth inputs and blocklist behavior/operational failures. Password tests use real Argon2 for encoded algorithm/work factors, match/mismatch, independent salts, spaces, Unicode, persisted work factors and malformed hashes. A separate error suite injects library failures to verify preserved causes. Configuration tests cover numeric conversion, inherited database rules, missing/invalid settings and password redaction.
+ESLint uses its flat configuration and the TypeScript recommended rules, with type-aware floating-promise checks. Unit tests cover Hello World, configuration validation, the password primitive, shared auth inputs, blocklist behavior/operational failures and registration orchestration/duplicate handling. Password tests use real Argon2 for encoded algorithm/work factors, match/mismatch, independent salts, spaces, Unicode, persisted work factors and malformed hashes. A separate error suite injects library failures to verify preserved causes. Configuration tests cover numeric conversion, inherited database rules, missing/invalid settings and password redaction.
 
-The HTTP smoke suite supplies synthetic configuration and overrides the TypeORM DataSource; it checks HTTP assembly without connecting to a developer's database. Its success does not verify PostgreSQL connectivity, migrations, health readiness or authentication routes. Real database integration must use an isolated PostgreSQL database when added. The requested suite and lifecycle/cleanup work are tracked under [F-07](../docs/planning/VALIDATION.md#automated-postgresql-integration-testing--todo); no `test:db` script or Testcontainers harness exists yet. Actual results and any failed checks belong in the [validation register](../docs/planning/VALIDATION.md).
+The HTTP smoke suite supplies synthetic configuration and overrides the TypeORM DataSource; it checks HTTP assembly without connecting to a developer's database. Its success does not verify PostgreSQL connectivity, migrations, health readiness or authentication routes. The separate real PostgreSQL suite now covers registration persistence and migrations. Remaining schema, HTTP and CI work is tracked under [F-07](../docs/planning/VALIDATION.md#automated-postgresql-integration-testing--todo). Actual results and any failed checks belong in the [validation register](../docs/planning/VALIDATION.md).
+
+## PostgreSQL integration tests
+
+Run from backend/ with Docker's Linux engine available:
+
+```powershell
+npm.cmd run test:db
+```
+
+The existing-dependency harness uses the Docker CLI instead of adding Testcontainers. It creates a uniquely named/labelled PostgreSQL 17 container, a dynamically allocated loopback port and tmpfs database storage. Test-only connection settings are independent of application DB_* values. The suite refuses ordinary development targets, applies the actual migrations with synchronization disabled, and isolates test rows between cases. No existing database or named volume is used.
+
+Tests cover migration apply/revert/reapply, real Argon2 verification, default pending state, no automatic session, credential preservation across duplicates in all five account states, forced credential-insert rollback, unavailable persistence and explicitly overlapping registration transactions on separate connections. The concurrency test observes PostgreSQL lock waits before releasing the winner. Its temporary failure/wait triggers exist only inside the owned test database.
+
+The runner has bounded startup/test waits and closes test connections before stopping/removing its container on pass or failure. Infrastructure failures make the command fail visibly. If cleanup reports an ownership/engine problem, inspect the exact printed test-container name; do not prune shared volumes. The normal `check` and pre-commit hook remain database-free; run test:db explicitly for persistence changes. No dependency install is required beyond the existing backend packages. Comprehensive schema/HTTP tests and a hosted CI job remain queued under F-07.
 
 ## Pre-commit checks
 

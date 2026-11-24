@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AuthInputError } from "../errors/auth-input.error.js";
 import { parseAuthInput } from "./auth-input.js";
 import { AuthModule } from "./auth.module.js";
+import { RegistrationService } from "./registration.service.js";
 import { PasswordBlocklistService } from "./password-blocklist.service.js";
 
 const dataDirectory = new URL("./data/password-blocklist/", import.meta.url);
@@ -19,7 +20,10 @@ describe("PasswordBlocklistService bundled data", () => {
   let service: PasswordBlocklistService;
 
   beforeAll(async () => {
-    module = await Test.createTestingModule({ imports: [AuthModule] }).compile();
+    module = await Test.createTestingModule({ imports: [AuthModule] })
+      .overrideProvider(RegistrationService)
+      .useValue({})
+      .compile();
     service = module.get(PasswordBlocklistService);
   });
 
