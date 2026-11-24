@@ -1,4 +1,11 @@
 import "reflect-metadata";
+import type { INestApplication } from "@nestjs/common";
+import { Test, type TestingModule } from "@nestjs/testing";
+import request from "supertest";
+import type { App } from "supertest/types.js";
+import { AuthController } from "../src/auth/auth.controller.js";
+import { RegistrationExceptionFilter } from "../src/auth/registration-exception.filter.js";
+import { ValidationModule } from "../src/validation/validation.module.js";
 import { setTimeout as delay } from "node:timers/promises";
 import { DataSource, type DataSourceOptions, type QueryRunner } from "typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -153,6 +160,45 @@ describe("RegistrationService with isolated PostgreSQL", () => {
     } finally {
       await dataSource.query("DROP TRIGGER IF EXISTS registration_test_reject ON password_credentials");
       await dataSource.query("DROP FUNCTION IF EXISTS registration_test_reject()");
+    }
+  });
+
+  it("returns a safe HTTP 503 and rolls back a server-reported connection failure", async () => {
+    let app: INestApplication<App> | undefined;
+    // This is a synthetic server SQLSTATE, not a simulated network disconnect.
+    await dataSource.query(`CREATE FUNCTION registration_test_unavailable() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        RAISE EXCEPTION USING ERRCODE = '08006', MESSAGE = 'Synthetic connection failure with sensitive details';
+      END; $$`);
+    try {
+      await dataSource.query(
+        "CREATE TRIGGER registration_test_unavailable BEFORE INSERT ON password_credentials FOR EACH ROW EXECUTE FUNCTION registration_test_unavailable()",
+      );
+      const module: TestingModule = await Test.createTestingModule({
+        imports: [ValidationModule],
+        controllers: [AuthController],
+        providers: [RegistrationExceptionFilter, { provide: RegistrationService, useValue: service }],
+      }).compile();
+      app = module.createNestApplication();
+      await app.init();
+      const response: request.Response = await request(app.getHttpServer())
+        .post("/auth/register")
+        .send({ email: input.email, password })
+        .expect(503)
+        .expect("Cache-Control", "no-store");
+      expect(response.body).toEqual({
+        statusCode: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Service temporarily unavailable.",
+      });
+      expect(response.headers["set-cookie"]).toBeUndefined();
+      expect(await dataSource.getRepository(User).count()).toBe(0);
+      expect(await dataSource.getRepository(PasswordCredential).count()).toBe(0);
+      expect(await dataSource.getRepository(Session).count()).toBe(0);
+    } finally {
+      await app?.close();
+      await dataSource.query("DROP TRIGGER IF EXISTS registration_test_unavailable ON password_credentials");
+      await dataSource.query("DROP FUNCTION IF EXISTS registration_test_unavailable()");
     }
   });
 

@@ -3,6 +3,7 @@ import { getDataSourceToken } from "@nestjs/typeorm";
 import { EntityManager, QueryFailedError } from "typeorm";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { AuthInputError } from "../errors/auth-input.error.js";
+import { PersistenceUnavailableError } from "../errors/persistence-unavailable.error.js";
 import { PasswordBlocklistService } from "./password-blocklist.service.js";
 import { PasswordCredential } from "./password-credential.entity.js";
 import { PasswordService } from "./password.service.js";
@@ -178,13 +179,48 @@ describe("RegistrationService", () => {
     // Real rollback is verified by the PostgreSQL suite, not by this stub.
   });
 
+  it.each([
+    {
+      label: "a raw acquisition error",
+      error: Object.assign(new Error("sensitive connection details"), { code: "ECONNREFUSED" }),
+    },
+    { label: "a query failure", error: failureFor({ code: "08006" }) },
+    {
+      label: "a pool wrapper",
+      error: new Error("pool failed", { cause: Object.assign(new Error("socket failure"), { code: "ECONNRESET" }) }),
+    },
+  ])("wraps $label with the original cause and does not retry", async ({ error }) => {
+    transaction.mockRejectedValueOnce(error);
+    const registration: Promise<void> = service.register(input);
+    await expect(registration).rejects.toBeInstanceOf(PersistenceUnavailableError);
+    await expect(registration).rejects.toHaveProperty("cause", error);
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(hashPassword).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["blocklist", "hashing"])(
+    "does not classify a connection-like %s failure as database unavailability",
+    async (stage) => {
+      const error: Error = Object.assign(new Error("not a persistence failure"), { code: "ECONNREFUSED" });
+      if (stage === "blocklist") {
+        assertAllowed.mockImplementationOnce(() => {
+          throw error;
+        });
+      } else {
+        hashPassword.mockRejectedValueOnce(error);
+      }
+      await expect(service.register(input)).rejects.toBe(error);
+      expect(transaction).not.toHaveBeenCalled();
+    },
+  );
+
   it("does not log driver errors, query parameters or password hashes", async () => {
     const log: MockInstance<typeof console.log> = vi.spyOn(console, "log").mockImplementation(() => {});
     const warn: MockInstance<typeof console.warn> = vi.spyOn(console, "warn").mockImplementation(() => {});
     const errorLog: MockInstance<typeof console.error> = vi.spyOn(console, "error").mockImplementation(() => {});
     const error: QueryFailedError = failureFor({ code: "08006" });
     transaction.mockRejectedValueOnce(error);
-    await expect(service.register(input)).rejects.toBe(error);
+    await expect(service.register(input)).rejects.toMatchObject({ name: "PersistenceUnavailableError", cause: error });
     expect(log).not.toHaveBeenCalled();
     expect(warn).not.toHaveBeenCalled();
     expect(errorLog).not.toHaveBeenCalled();

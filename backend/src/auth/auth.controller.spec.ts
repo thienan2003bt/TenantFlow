@@ -5,6 +5,7 @@ import type { App } from "supertest/types.js";
 import { QueryFailedError } from "typeorm";
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { AuthInputError } from "../errors/auth-input.error.js";
+import { PersistenceUnavailableError } from "../errors/persistence-unavailable.error.js";
 import { AuthController } from "./auth.controller.js";
 import { RegistrationService } from "./registration.service.js";
 import { RegisterDto } from "./register.dto.js";
@@ -130,7 +131,44 @@ describe("AuthController (HTTP, registration service stubbed)", () => {
     expect(logError).not.toHaveBeenCalled();
   });
 
+  it("returns a fixed 503 for the persistence marker without exposing its message or cause", async () => {
+    const logError: ReturnType<typeof vi.spyOn> = vi.spyOn(Logger.prototype, "error").mockImplementation(() => {});
+    const consoleError: ReturnType<typeof vi.spyOn> = vi.spyOn(console, "error").mockImplementation(() => {});
+    const cause: QueryFailedError = new QueryFailedError(
+      "sensitive query",
+      ["sensitive-password-hash"],
+      new Error("sensitive driver details"),
+    );
+    const failure: PersistenceUnavailableError = new PersistenceUnavailableError(
+      "sensitive custom error message",
+      cause,
+    );
+    expect(failure.getCause()).toBe(cause);
+    register.mockRejectedValueOnce(failure);
+    const response: request.Response = await request(app.getHttpServer())
+      .post("/auth/register")
+      .send(input)
+      .expect(503)
+      .expect("Cache-Control", "no-store");
+    expect(response.body).toEqual({
+      statusCode: 503,
+      code: "SERVICE_UNAVAILABLE",
+      message: "Service temporarily unavailable.",
+    });
+    expect(response.headers["set-cookie"]).toBeUndefined();
+    expect(logError).not.toHaveBeenCalled();
+    expect(consoleError).not.toHaveBeenCalled();
+  });
+
   it.each([
+    {
+      label: "an unclassified connection-like error",
+      failure: Object.assign(new Error("sensitive connection details"), { code: "ECONNREFUSED" }),
+    },
+    {
+      label: "a spoofed persistence marker name",
+      failure: Object.assign(new Error("sensitive details"), { name: "PersistenceUnavailableError" }),
+    },
     {
       label: "a database error containing query parameters",
       failure: new QueryFailedError("INSERT INTO users", ["sensitive-password-hash"], new Error("database details")),

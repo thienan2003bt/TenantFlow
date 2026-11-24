@@ -2,10 +2,12 @@ import { Inject, Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { randomUUID, type UUID } from "node:crypto";
 import { DataSource, type EntityManager, QueryFailedError } from "typeorm";
-import type { RegisterDto } from "./register.dto.js";
+import { isPersistenceUnavailable } from "../database/is-persistence-unavailable.js";
+import { PersistenceUnavailableError } from "../errors/persistence-unavailable.error.js";
 import { PasswordBlocklistService } from "./password-blocklist.service.js";
 import { PasswordCredential } from "./password-credential.entity.js";
 import { PasswordService } from "./password.service.js";
+import type { RegisterDto } from "./register.dto.js";
 import { User } from "./user.entity.js";
 
 @Injectable()
@@ -38,6 +40,9 @@ export class RegistrationService {
     } catch (error: unknown) {
       if (isCanonicalEmailConflict(error)) {
         return;
+      }
+      if (isPersistenceUnavailable(error)) {
+        throw new PersistenceUnavailableError(undefined, error);
       }
       throw error;
     }
