@@ -9,6 +9,7 @@ export default defineConfig(
     files: ["eslint.config.mjs", "scripts/**/*.mjs"],
     extends: [js.configs.recommended],
     languageOptions: { globals: globals.node },
+    rules: { curly: ["error", "all"] },
   },
   {
     files: ["src/**/*.ts", "test/**/*.ts", "vitest.config*.ts"],
@@ -21,6 +22,7 @@ export default defineConfig(
       },
     },
     rules: {
+      curly: ["error", "all"],
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-floating-promises": "error",
     },

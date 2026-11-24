@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { setTimeout as delay } from "node:timers/promises";
-import { DataSource } from "typeorm";
+import { DataSource, type DataSourceOptions, type QueryRunner } from "typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { RegistrationService } from "../src/auth/registration.service.js";
 import { PasswordService } from "../src/auth/password.service.js";
@@ -10,7 +10,7 @@ import { Session } from "../src/auth/session.entity.js";
 import { User } from "../src/auth/user.entity.js";
 import { createDatabaseOptions } from "../src/database/database.options.js";
 
-const env = process.env;
+const env: NodeJS.ProcessEnv = process.env;
 if (
   !/^tenantflow-registration-db-[a-f0-9-]{36}$/.test(env.TENANTFLOW_TEST_DB_OWNER || "") ||
   env.TENANTFLOW_TEST_DB_HOST !== "127.0.0.1" ||
@@ -21,7 +21,7 @@ if (
 ) {
   throw new Error("Run this suite through npm run test:db against its disposable container only.");
 }
-const options = {
+const options: DataSourceOptions = {
   ...createDatabaseOptions({
     DB_HOST: env.TENANTFLOW_TEST_DB_HOST,
     DB_PORT: Number(env.TENANTFLOW_TEST_DB_PORT),
@@ -31,23 +31,23 @@ const options = {
   }),
   extra: { max: 8, connectionTimeoutMillis: 5000, statement_timeout: 15000, lock_timeout: 15000 },
 };
-const password = "  Allowed-Reg-7391!  ";
-const input = { email: " Alice.Smith+register@Example.com ", password };
+const password: string = "  Allowed-Reg-7391!  ";
+const input: { email: string; password: string } = { email: " Alice.Smith+register@Example.com ", password };
 
 describe("RegistrationService with isolated PostgreSQL", () => {
   let dataSource: DataSource;
   let service: RegistrationService;
-  const passwords = new PasswordService();
+  const passwords: PasswordService = new PasswordService();
   let migrationReport: { pendingBefore: boolean; pendingAfter: boolean; revertedTables: string[] };
 
   beforeAll(async () => {
     dataSource = new DataSource(options);
     await dataSource.initialize();
-    const pendingBefore = await dataSource.showMigrations();
+    const pendingBefore: boolean = await dataSource.showMigrations();
     await dataSource.runMigrations();
-    const pendingAfter = await dataSource.showMigrations();
+    const pendingAfter: boolean = await dataSource.showMigrations();
     await dataSource.undoLastMigration();
-    const rows = await dataSource.query<{ tablename: string }[]>(
+    const rows: { tablename: string }[] = await dataSource.query<{ tablename: string }[]>(
       "SELECT tablename FROM pg_tables WHERE schemaname = 'public'",
     );
     await dataSource.runMigrations();
@@ -60,7 +60,9 @@ describe("RegistrationService with isolated PostgreSQL", () => {
   });
 
   afterAll(async () => {
-    if (dataSource?.isInitialized) await dataSource.destroy();
+    if (dataSource?.isInitialized) {
+      await dataSource.destroy();
+    }
   });
 
   async function credentialFor(userId: string): Promise<PasswordCredential> {
@@ -76,14 +78,15 @@ describe("RegistrationService with isolated PostgreSQL", () => {
     expect(migrationReport).toEqual({ pendingBefore: true, pendingAfter: false, revertedTables: ["migrations"] });
     expect(await dataSource.showMigrations()).toBe(false);
     expect(dataSource.options.synchronize).toBe(false);
-    const version = await dataSource.query<{ server_version_num: string }[]>("SHOW server_version_num");
+    const version: { server_version_num: string }[] =
+      await dataSource.query<{ server_version_num: string }[]>("SHOW server_version_num");
     expect(Number(version[0].server_version_num)).toBeGreaterThanOrEqual(170000);
     expect(Number(version[0].server_version_num)).toBeLessThan(180000);
   });
 
   it("creates one pending account and a real verifiable hash without creating a session", async () => {
     await expect(service.register(input)).resolves.toBeUndefined();
-    const user = await dataSource
+    const user: User = await dataSource
       .getRepository(User)
       .findOneByOrFail({ emailCanonical: "alice.smith+register@example.com" });
     expect(user.email).toBe("Alice.Smith+register@Example.com");
@@ -91,7 +94,7 @@ describe("RegistrationService with isolated PostgreSQL", () => {
     expect(user.emailVerifiedAt).toBeNull();
     expect(user.deletedAt).toBeNull();
     expect(user.createdAt).toBeInstanceOf(Date);
-    const credential = await credentialFor(user.id);
+    const credential: PasswordCredential = await credentialFor(user.id);
     expect(credential.passwordHash).toMatch(/^\$argon2id\$/);
     expect(await passwords.verify(password, credential.passwordHash)).toBe(true);
     expect(await passwords.verify(password.trim(), credential.passwordHash)).toBe(false);
@@ -107,10 +110,10 @@ describe("RegistrationService with isolated PostgreSQL", () => {
     "preserves an existing %s account and credential on duplicate registration",
     async (status) => {
       await service.register(input);
-      const user = await dataSource
+      const user: User = await dataSource
         .getRepository(User)
         .findOneByOrFail({ emailCanonical: "alice.smith+register@example.com" });
-      const original = await credentialFor(user.id);
+      const original: PasswordCredential = await credentialFor(user.id);
       await dataSource.query(
         "UPDATE users SET status = $1::varchar, email_verified_at = CASE WHEN $1::varchar = 'active' THEN CURRENT_TIMESTAMP ELSE NULL END, deleted_at = CASE WHEN $1::varchar = 'deleted' THEN CURRENT_TIMESTAMP ELSE NULL END WHERE id = $2",
         [status, user.id],
@@ -151,22 +154,24 @@ describe("RegistrationService with isolated PostgreSQL", () => {
   });
 
   it("handles truly overlapping canonical-email inserts without replacing the winning password", async () => {
-    const blocker = dataSource.createQueryRunner();
+    const blocker: QueryRunner = dataSource.createQueryRunner();
     await blocker.connect();
     const pending: Promise<{ status: string; reason?: unknown }>[] = [];
-    const track = (work: Promise<void>) =>
+    const track: (work: Promise<void>) => Promise<{ status: string; reason?: unknown }> = (work: Promise<void>) =>
       work.then(
         () => ({ status: "fulfilled" }),
         (reason: unknown) => ({ status: "rejected", reason }),
       );
-    const waitForLock = async (event: string) => {
-      const deadline = Date.now() + 5000;
+    const waitForLock: (event: string) => Promise<void> = async (event: string) => {
+      const deadline: number = Date.now() + 5000;
       while (Date.now() < deadline) {
-        const rows = await dataSource.query<{ waiting: boolean }[]>(
+        const rows: { waiting: boolean }[] = await dataSource.query<{ waiting: boolean }[]>(
           "SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock' AND wait_event = $1) AS waiting",
           [event],
         );
-        if (rows[0].waiting) return;
+        if (rows[0].waiting) {
+          return;
+        }
         await delay(20);
       }
       throw new Error(`Expected concurrent database wait: ${event}`);
@@ -187,10 +192,10 @@ describe("RegistrationService with isolated PostgreSQL", () => {
       expect(await dataSource.getRepository(User).count()).toBe(1);
       expect(await dataSource.getRepository(PasswordCredential).count()).toBe(1);
       expect(await dataSource.getRepository(Session).count()).toBe(0);
-      const user = await dataSource
+      const user: User = await dataSource
         .getRepository(User)
         .findOneByOrFail({ emailCanonical: "alice.smith+register@example.com" });
-      const credential = await credentialFor(user.id);
+      const credential: PasswordCredential = await credentialFor(user.id);
       expect(await passwords.verify(password, credential.passwordHash)).toBe(true);
       expect(await passwords.verify("Different-Allowed-8329!", credential.passwordHash)).toBe(false);
     } finally {
@@ -203,10 +208,10 @@ describe("RegistrationService with isolated PostgreSQL", () => {
   });
 
   it("propagates unavailable persistence without creating an account", async () => {
-    const closed = new DataSource(options);
+    const closed: DataSource = new DataSource(options);
     await closed.initialize();
     await closed.destroy();
-    const unavailable = new RegistrationService(new PasswordBlocklistService(), passwords, closed);
+    const unavailable: RegistrationService = new RegistrationService(new PasswordBlocklistService(), passwords, closed);
     await expect(unavailable.register(input)).rejects.toBeInstanceOf(Error);
     expect(await dataSource.getRepository(User).count()).toBe(0);
   });

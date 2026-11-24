@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { EntityManager, QueryFailedError } from "typeorm";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { AuthInputError } from "../errors/auth-input.error.js";
 import { PasswordBlocklistService } from "./password-blocklist.service.js";
 import { PasswordCredential } from "./password-credential.entity.js";
@@ -9,9 +9,12 @@ import { PasswordService } from "./password.service.js";
 import { RegistrationService } from "./registration.service.js";
 import { User } from "./user.entity.js";
 
-const input = { email: "  Alice.Smith+register@Example.com  ", password: "  Allowed-Reg-7391!  " };
-const hash = "synthetic-encoded-password-hash";
-const failureFor = (fields: Record<string, unknown>) =>
+const input: { email: string; password: string } = {
+  email: "  Alice.Smith+register@Example.com  ",
+  password: "  Allowed-Reg-7391!  ",
+};
+const hash: string = "synthetic-encoded-password-hash";
+const failureFor: (fields: Record<string, unknown>) => QueryFailedError = (fields: Record<string, unknown>) =>
   new QueryFailedError(
     "INSERT",
     ["sensitive-query-parameter"],
@@ -28,7 +31,7 @@ describe("RegistrationService", () => {
 
   beforeEach(async () => {
     insert = vi.fn().mockResolvedValue({});
-    const manager = { insert } as unknown as EntityManager;
+    const manager: EntityManager = { insert } as unknown as EntityManager;
     transaction = vi.fn(async (work: (manager: EntityManager) => Promise<void>) => work(manager));
     assertAllowed = vi.fn();
     hashPassword = vi.fn().mockResolvedValue(hash);
@@ -52,7 +55,7 @@ describe("RegistrationService", () => {
     await expect(service.register(input)).resolves.toBeUndefined();
     expect(transaction).toHaveBeenCalledTimes(1);
     expect(insert).toHaveBeenCalledTimes(2);
-    const user = insert.mock.calls[0][1];
+    const user: Pick<User, "id" | "email" | "emailCanonical"> = insert.mock.calls[0][1];
     expect(insert.mock.calls[0][0]).toBe(User);
     expect(user).toEqual({
       id: expect.stringMatching(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/),
@@ -71,7 +74,7 @@ describe("RegistrationService", () => {
         finishHash = resolve;
       }),
     );
-    const registration = service.register(input);
+    const registration: Promise<void> = service.register(input);
     expect(assertAllowed).toHaveBeenCalledTimes(1);
     expect(transaction).not.toHaveBeenCalled();
     finishHash(hash);
@@ -91,7 +94,7 @@ describe("RegistrationService", () => {
   });
 
   it("rejects a blocked password before hashing or persistence", async () => {
-    const error = new AuthInputError("Blocked password.");
+    const error: AuthInputError = new AuthInputError("Blocked password.");
     assertAllowed.mockImplementationOnce(() => {
       throw error;
     });
@@ -101,7 +104,7 @@ describe("RegistrationService", () => {
   });
 
   it("propagates a blocklist operational failure before hashing or persistence", async () => {
-    const error = new Error("Blocklist unavailable.");
+    const error: Error = new Error("Blocklist unavailable.");
     assertAllowed.mockImplementationOnce(() => {
       throw error;
     });
@@ -111,7 +114,7 @@ describe("RegistrationService", () => {
   });
 
   it("propagates a hashing failure without opening a transaction", async () => {
-    const error = new Error("Hashing unavailable.");
+    const error: Error = new Error("Hashing unavailable.");
     hashPassword.mockRejectedValueOnce(error);
     await expect(service.register(input)).rejects.toBe(error);
     expect(transaction).not.toHaveBeenCalled();
@@ -119,12 +122,16 @@ describe("RegistrationService", () => {
 
   it("accepts the specific canonical-email conflict after the transaction rejects", async () => {
     const events: string[] = [];
-    const duplicate = failureFor({ code: "23505", constraint: "uq_users_email_canonical", table: "users" });
+    const duplicate: QueryFailedError = failureFor({
+      code: "23505",
+      constraint: "uq_users_email_canonical",
+      table: "users",
+    });
     insert.mockRejectedValueOnce(duplicate);
     transaction.mockImplementationOnce(async (work: (manager: EntityManager) => Promise<void>) => {
       try {
         await work({ insert } as unknown as EntityManager);
-      } catch (error) {
+      } catch (error: unknown) {
         events.push("transaction rejected");
         throw error;
       }
@@ -154,13 +161,13 @@ describe("RegistrationService", () => {
     { label: "a missing table field", fields: { code: "23505", constraint: "uq_users_email_canonical" } },
     { label: "missing driver fields", fields: {} },
   ])("does not hide $label", async ({ fields }) => {
-    const error = failureFor(fields);
+    const error: QueryFailedError = failureFor(fields);
     transaction.mockRejectedValueOnce(error);
     await expect(service.register(input)).rejects.toBe(error);
   });
 
   it("does not classify an ordinary error as a database duplicate", async () => {
-    const error = Object.assign(new Error("Unrelated failure"), {
+    const error: Error = Object.assign(new Error("Unrelated failure"), {
       code: "23505",
       constraint: "uq_users_email_canonical",
       table: "users",
@@ -170,7 +177,7 @@ describe("RegistrationService", () => {
   });
 
   it("propagates credential insertion failure out of the transaction callback", async () => {
-    const error = failureFor({
+    const error: QueryFailedError = failureFor({
       code: "23514",
       constraint: "synthetic_credential_failure",
       table: "password_credentials",
@@ -182,10 +189,10 @@ describe("RegistrationService", () => {
   });
 
   it("does not log driver errors, query parameters or password hashes", async () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
-    const error = failureFor({ code: "08006" });
+    const log: MockInstance<typeof console.log> = vi.spyOn(console, "log").mockImplementation(() => {});
+    const warn: MockInstance<typeof console.warn> = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errorLog: MockInstance<typeof console.error> = vi.spyOn(console, "error").mockImplementation(() => {});
+    const error: QueryFailedError = failureFor({ code: "08006" });
     transaction.mockRejectedValueOnce(error);
     await expect(service.register(input)).rejects.toBe(error);
     expect(log).not.toHaveBeenCalled();

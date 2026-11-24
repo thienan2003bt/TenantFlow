@@ -1,8 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
-import { randomUUID } from "node:crypto";
-import { DataSource, QueryFailedError } from "typeorm";
-import { parseAuthInput } from "./auth-input.js";
+import { randomUUID, type UUID } from "node:crypto";
+import { DataSource, type EntityManager, QueryFailedError } from "typeorm";
+import { parseAuthInput, type ParsedAuthInput } from "./auth-input.js";
 import { PasswordBlocklistService } from "./password-blocklist.service.js";
 import { PasswordCredential } from "./password-credential.entity.js";
 import { PasswordService } from "./password.service.js";
@@ -24,17 +24,17 @@ export class RegistrationService {
    * Validates and hashes before opening the transaction. Other failures propagate.
    */
   async register(input: unknown): Promise<void> {
-    const { email, emailCanonical, password } = parseAuthInput(input);
+    const { email, emailCanonical, password }: ParsedAuthInput = parseAuthInput(input);
     this.passwordBlocklistService.assertAllowed(password);
-    const passwordHash = await this.passwordService.hash(password);
-    const userId = randomUUID();
+    const passwordHash: string = await this.passwordService.hash(password);
+    const userId: UUID = randomUUID();
 
     try {
-      await this.dataSource.transaction(async (manager) => {
+      await this.dataSource.transaction(async (manager: EntityManager): Promise<void> => {
         await manager.insert(User, { id: userId, email, emailCanonical });
         await manager.insert(PasswordCredential, { userId, passwordHash });
       });
-    } catch (error) {
+    } catch (error: unknown) {
       if (isCanonicalEmailConflict(error)) {
         return;
       }

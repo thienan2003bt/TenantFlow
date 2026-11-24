@@ -10,7 +10,9 @@ function fixture(paths, options = {}) {
   const status = runPreCommit({
     read(command, args, settings) {
       reads.push({ command, args, settings });
-      if (args[0] === "rev-parse") return root + "\n";
+      if (args[0] === "rev-parse") {
+        return root + "\n";
+      }
       return paths;
     },
     run(command, args, settings) {

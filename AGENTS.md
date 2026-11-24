@@ -32,6 +32,8 @@ Apply these repository conventions within the current task instructions. The use
 - Resolve conflicting documentation against the canonical requirements. Preserve useful displaced ideas in the future backlog or design notes, record the reconciliation, and keep genuinely unresolved implementation decisions explicit.
 - Extract useful framework-independent requirements before deleting a mixed document. Remove stale references and broken links together with retired files; inspect tracked files even when ignore rules hide them.
 
+- Preserve the developer's explicit TypeScript variable annotations and add readable annotations for variables in new/edited TypeScript code. Do not remove them merely because inference is possible. Use braced, multiline if branches; never put an if body on the condition's line. See backend instructions for enforcement.
+
 ## Verification and handoff
 
 - Check the working tree and applicable instructions before editing; preserve unrelated user changes and continue on the intended branch.

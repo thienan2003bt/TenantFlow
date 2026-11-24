@@ -35,6 +35,9 @@ Give review findings in the conversation. Do not create a separate review docume
 
 ## Current formatting and import conventions
 
+- Developer preference confirmed on 24 November 2026: retain explicit TypeScript variable type declarations and include them in new/edited TypeScript code, including destructured results. Prefer meaningful domain types; do not replace annotations with unchecked casts or any just to satisfy this convention. Contextual callback typing may still be used where no variable is declared.
+- Put conditional bodies on separate lines and use braces, including early returns/throws. Never use single-line forms such as if (condition) return. ESLint's curly/all rule enforces braced bodies for backend TypeScript and JavaScript; Prettier formats their lines.
+
 - Use double quotes for import/export specifiers, Prettier `printWidth: 120`, and `tabWidth: 2` with spaces. Use `npm.cmd run format` and `npm.cmd run format:check` from `backend/`.
 - `npm.cmd run lint` runs ESLint. The pre-commit hook runs backend ESLint, unit tests and e2e tests only when staged paths include `backend/`. Do not auto-stage, stash, commit or change Git hook configuration; provide activation commands for the developer.
 - Source enum imports use `@enums/environment.enum.ts`, backed by the ordered `paths` mapping in `tsconfig.json`. Do not simplify that mapping without proving type-check, Nest build/watch, compiled Node startup and Vitest behavior together.

@@ -176,6 +176,8 @@ Nest integrations reduce wiring effort. They do not choose the application's sec
 - MUST use double quotes for backend import/export specifiers, enforced through backend Prettier formatting/checks. The requested `@enums/environment.enum.ts` source alias depends on the ordered paths mapping and Nest's build transformer documented in the backend README. Verify type-check, build, compiled/watch startup and tests before changing that mapping.
 - SHOULD use Prettier `printWidth: 120`, `tabWidth: 2` and spaces for indentation. ESLint owns backend lint checks; the staged-backend pre-commit gate runs lint, unit tests and e2e tests without altering the index or applying fixes.
 
+- MUST preserve explicit TypeScript variable types and add readable local annotations in new/edited TypeScript. The developer prefers these even where inference is available. Keep if branches braced and multiline; backend ESLint enforces curly/all.
+
 ## Testing and completion criteria
 
 Use unit tests for meaningful business policies, integration tests for real persistence and transaction behavior, and HTTP tests for the assembled request pipeline. Provider overrides are useful at external boundaries; do not mock away the behavior a test intends to verify.

@@ -37,6 +37,8 @@ if (!actions.has(action)) {
     windowsHide: true,
   });
 
-  if (result.error) console.error(`Could not start TypeORM: ${result.error.message}`);
+  if (result.error) {
+    console.error(`Could not start TypeORM: ${result.error.message}`);
+  }
   process.exitCode = result.status ?? 1;
 }

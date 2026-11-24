@@ -68,11 +68,15 @@ try {
     }
     await delay(250);
   }
-  if (!ready) throw new Error(interrupted ? "Database test interrupted." : "PostgreSQL readiness timed out.");
+  if (!ready) {
+    throw new Error(interrupted ? "Database test interrupted." : "PostgreSQL readiness timed out.");
+  }
 
   const mapping = docker(["port", container, "5432/tcp"]).stdout.trim();
   const port = /^127\.0\.0\.1:(\d+)$/.exec(mapping)?.[1];
-  if (!port) throw new Error("Expected an isolated loopback PostgreSQL port mapping.");
+  if (!port) {
+    throw new Error("Expected an isolated loopback PostgreSQL port mapping.");
+  }
   const env = {
     ...process.env,
     NODE_ENV: "test",
@@ -103,7 +107,9 @@ try {
       child.once("error", reject);
       child.once("exit", (code) => resolveExit(code));
     });
-    if (interrupted || code !== 0) throw new Error("PostgreSQL integration tests failed or were interrupted.");
+    if (interrupted || code !== 0) {
+      throw new Error("PostgreSQL integration tests failed or were interrupted.");
+    }
   } finally {
     clearTimeout(watchdog);
   }

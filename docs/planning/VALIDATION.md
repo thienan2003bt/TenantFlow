@@ -149,6 +149,14 @@ The developer staged RegistrationService, its generated spec, module wiring and 
 
 The test runner invokes installed Vitest directly with isolated connection settings and closes database connections before its owned-container cleanup. It is separate from the ordinary check/pre-commit commands. Primitive unit tests were narrowed or given a RegistrationService override so they remain offline after the new DataSource dependency. The Git index was left unchanged; all repairs/new test files require developer staging. The next checkpoint is the registration HTTP boundary and its controls.
 
+### Developer coding-style correction — 24 November 2026
+
+The developer explicitly requires readable TypeScript variable annotations and multiline conditional bodies. The agent restored annotations in the registration service/unit/database tests, preserved the developer's already-braced service guards, expanded the remaining bare guards in test/tooling files, and enabled ESLint curly/all for backend TypeScript/JavaScript. Root/backend instructions and engineering conventions record the preference; no unchecked casts were introduced to replace variable declarations. Application behavior and database-test boundaries are unchanged.
+
+The full npm.cmd run check passed: typecheck, lint, formatting, all 137 unit tests, one database-stubbed HTTP smoke test, seven hook tests, Nest build and compiled blocklist smoke. An AST inspection found no remaining bare if bodies in backend source/tests/scripts. PostgreSQL was not rerun for these type/formatting changes; the prior ten passing database cases remain the last database execution evidence. No Git staging, commit or database operation was performed.
+
+test:db is the command introduced during the delegated registration completion checks. It implements part of F-07 and should be extended for remaining schema/HTTP/CI work rather than duplicated. It is not automatically required by normal check or the commit hook; relevant persistence behavior still needs database evidence before acceptance.
+
 ### Frontend and Compose — 17 October 2026
 
 Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared through [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8). These results concern the frontend/Compose foundation and do not establish the current PR's merge state or backend auth behavior.
