@@ -1,3 +1,5 @@
+import type { NestExpressApplication } from "@nestjs/platform-express";
+import { configureHttpApplication, httpApplicationOptions } from "../http/configure-http.js";
 import { Logger, type INestApplication } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import request from "supertest";
@@ -29,7 +31,10 @@ describe("AuthController (HTTP, registration service stubbed)", () => {
       controllers: [AuthController],
       providers: [RegistrationExceptionFilter, { provide: RegistrationService, useValue: { register } }],
     }).compile();
-    app = module.createNestApplication();
+    const application: NestExpressApplication =
+      module.createNestApplication<NestExpressApplication>(httpApplicationOptions);
+    configureHttpApplication(application);
+    app = application;
     await app.init();
   });
 

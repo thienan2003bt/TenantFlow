@@ -1,3 +1,5 @@
+import type { NestExpressApplication } from "@nestjs/platform-express";
+import { configureHttpApplication, httpApplicationOptions } from "../src/http/configure-http.js";
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import request from "supertest";
@@ -17,7 +19,10 @@ describe("AppController (HTTP smoke, database stubbed)", () => {
       .useValue({ manager: {}, isInitialized: false })
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    const application: NestExpressApplication =
+      moduleFixture.createNestApplication<NestExpressApplication>(httpApplicationOptions);
+    configureHttpApplication(application);
+    app = application;
     await app.init();
   });
 

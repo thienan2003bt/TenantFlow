@@ -2,6 +2,7 @@ import { BadRequestException, Catch, HttpStatus, type ArgumentsHost, type Except
 import type { Response } from "express";
 import { AuthInputError } from "../errors/auth-input.error.js";
 import { PersistenceUnavailableError } from "../errors/persistence-unavailable.error.js";
+import { RegistrationRateLimitError } from "../errors/registration-rate-limit.error.js";
 
 @Catch()
 export class RegistrationExceptionFilter implements ExceptionFilter {
@@ -15,6 +16,11 @@ export class RegistrationExceptionFilter implements ExceptionFilter {
       statusCode = HttpStatus.BAD_REQUEST;
       code = "INVALID_INPUT";
       message = "Invalid registration input.";
+    } else if (error instanceof RegistrationRateLimitError) {
+      statusCode = HttpStatus.TOO_MANY_REQUESTS;
+      code = "RATE_LIMITED";
+      message = "Too many registration attempts.";
+      response.setHeader("Retry-After", String(error.retryAfterSeconds));
     } else if (error instanceof PersistenceUnavailableError) {
       statusCode = HttpStatus.SERVICE_UNAVAILABLE;
       code = "SERVICE_UNAVAILABLE";

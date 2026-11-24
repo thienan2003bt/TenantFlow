@@ -1,3 +1,5 @@
+import type { NestExpressApplication } from "@nestjs/platform-express";
+import { configureHttpApplication, httpApplicationOptions } from "../src/http/configure-http.js";
 import "reflect-metadata";
 import type { INestApplication } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
@@ -81,6 +83,82 @@ describe("RegistrationService with isolated PostgreSQL", () => {
       .where("credential.userId = :userId", { userId })
       .getOneOrFail();
   }
+
+  async function createHttpApp(): Promise<NestExpressApplication> {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [ValidationModule],
+      controllers: [AuthController],
+      providers: [RegistrationExceptionFilter, { provide: RegistrationService, useValue: service }],
+    }).compile();
+    const app: NestExpressApplication = module.createNestApplication<NestExpressApplication>(httpApplicationOptions);
+    configureHttpApplication(app);
+    await app.init();
+    return app;
+  }
+
+  it("registers new and duplicate accounts over protected HTTP without changing credentials", async () => {
+    const app: NestExpressApplication = await createHttpApp();
+    try {
+      const first: request.Response = await request(app.getHttpServer())
+        .post("/auth/register")
+        .set("Origin", "http://localhost:3000")
+        .set("Sec-Fetch-Site", "cross-site")
+        .send({ email: " Alice.Smith+register@Example.com ", password })
+        .expect(202)
+        .expect("Cache-Control", "no-store");
+      const user: User = await dataSource
+        .getRepository(User)
+        .findOneByOrFail({ emailCanonical: "alice.smith+register@example.com" });
+      const original: PasswordCredential = await credentialFor(user.id);
+      const duplicate: request.Response = await request(app.getHttpServer())
+        .post("/auth/register")
+        .set("Origin", "http://localhost:3000")
+        .set("Sec-Fetch-Site", "cross-site")
+        .send({ email: input.email.toLowerCase(), password: "Different-Allowed-8329!" })
+        .expect(202)
+        .expect("Cache-Control", "no-store");
+      expect(first.body).toEqual({ message: "Registration request accepted." });
+      expect(duplicate.body).toEqual(first.body);
+      expect(first.headers["set-cookie"]).toBeUndefined();
+      expect(duplicate.headers["set-cookie"]).toBeUndefined();
+      expect(user.status).toBe("pending_verification");
+      expect(user.email).toBe("Alice.Smith+register@Example.com");
+      expect(await dataSource.getRepository(User).count()).toBe(1);
+      expect(await dataSource.getRepository(PasswordCredential).count()).toBe(1);
+      expect((await credentialFor(user.id)).passwordHash).toBe(original.passwordHash);
+      expect(await passwords.verify(password, original.passwordHash)).toBe(true);
+      expect(await dataSource.getRepository(Session).count()).toBe(0);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("rejects foreign origins and throttles invalid requests before creating database rows", async () => {
+    const app: NestExpressApplication = await createHttpApp();
+    try {
+      await request(app.getHttpServer())
+        .post("/auth/register")
+        .set("Origin", "https://foreign.example")
+        .send({ email: input.email, password })
+        .expect(403);
+      for (let attempt: number = 0; attempt < 5; attempt += 1) {
+        await request(app.getHttpServer())
+          .post("/auth/register")
+          .send({ email: input.email, password: "weak" })
+          .expect(400);
+      }
+      await request(app.getHttpServer())
+        .post("/auth/register")
+        .send({ email: input.email, password })
+        .expect(429)
+        .expect("Cache-Control", "no-store");
+      expect(await dataSource.getRepository(User).count()).toBe(0);
+      expect(await dataSource.getRepository(PasswordCredential).count()).toBe(0);
+      expect(await dataSource.getRepository(Session).count()).toBe(0);
+    } finally {
+      await app.close();
+    }
+  });
 
   it("applies, reverts and reapplies the actual migration without synchronization", async () => {
     expect(migrationReport).toEqual({ pendingBefore: true, pendingAfter: false, revertedTables: ["migrations"] });
@@ -174,13 +252,7 @@ describe("RegistrationService with isolated PostgreSQL", () => {
       await dataSource.query(
         "CREATE TRIGGER registration_test_unavailable BEFORE INSERT ON password_credentials FOR EACH ROW EXECUTE FUNCTION registration_test_unavailable()",
       );
-      const module: TestingModule = await Test.createTestingModule({
-        imports: [ValidationModule],
-        controllers: [AuthController],
-        providers: [RegistrationExceptionFilter, { provide: RegistrationService, useValue: service }],
-      }).compile();
-      app = module.createNestApplication();
-      await app.init();
+      app = await createHttpApp();
       const response: request.Response = await request(app.getHttpServer())
         .post("/auth/register")
         .send({ email: input.email, password })
