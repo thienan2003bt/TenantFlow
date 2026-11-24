@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "build": "nest build",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run test:e2e && npm run test:hook && npm run build",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run test:e2e && npm run test:hook && npm run build && node scripts/check-password-blocklist.mjs",
     "db:migration:generate": "npm run build && node scripts/migration.mjs generate",
     "db:migration:show": "npm run build && node scripts/migration.mjs show",
     "db:migration:run": "npm run build && node scripts/migration.mjs run",
@@ -27,7 +27,8 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
-    "test:hook": "node --test scripts/pre-commit.test.mjs"
+    "test:hook": "node --test scripts/pre-commit.test.mjs",
+    "test:blocklist:build": "npm run build && node scripts/check-password-blocklist.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

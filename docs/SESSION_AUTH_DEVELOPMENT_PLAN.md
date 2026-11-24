@@ -1,6 +1,6 @@
 # Session authentication development plan
 
-**Current checkpoint: pinned common-password blocklist on `feat/auth-registration`.** PR #11 merged the persistence foundation. The developer reports passing isolated migration, constraint, concurrency and rollback checks and completing scratch cleanup. The shared parser now passes its 72-case suite and the full backend check under the revised password policy. Auth handlers remain unimplemented. The detailed registration PR plan stays in the chat; the requested database-automation TODO is retained in the validation register.
+**Current checkpoint: transactional account registration on `feat/auth-registration`.** PR #11 merged the persistence foundation. The developer reports passing isolated migration, constraint, concurrency and rollback checks and completing scratch cleanup. The shared parser now passes its 72-case suite and the full backend check under the revised password policy. The pinned blocklist also passes unit and compiled-asset checks; account creation and auth handlers remain unimplemented. The detailed registration PR plan stays in the chat; the requested database-automation TODO is retained in the validation register.
 
 [Documentation index](README.md) · [Roadmap](planning/ROADMAP.md#current-priorities-and-learning-preferences) · [Accepted contract](requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) · [Validation register](planning/VALIDATION.md#open-follow-ups)
 
@@ -19,7 +19,7 @@ Keep implementation in `backend/`, preserve the frontend/assets/license and Post
 | 1. Define the auth contract | DONE — design finalized, not runtime-verified | The accepted contract owns policy. On 24 November 2026 the developer changed passwords to 8-128 Unicode code points plus required character classes, retaining the maximum and Unicode safeguards; preserve its security distinction. |
 | 2. Validate TypeORM integration and migration workflow | Basic CLI connectivity user-reported; remaining runtime checks open | Runtime/CLI wiring exists and migration-status execution succeeded per the developer. Nest compiled startup, health/shutdown and isolated migration/transaction checks need their own recorded evidence. |
 | 3. Establish persistence | Manual isolated checks developer-reported complete; automation pending | Apply/revert/reapply, constraints, concurrent email uniqueness and rollback passed per the developer; scratch cleanup is reported complete. Add repeatable PostgreSQL coverage under F-07 while preserving the development volume. |
-| 4. Implement the initial auth slice | IN PROGRESS — shared input validation verified | F-08 is complete; implement the pinned blocklist and registration transaction/route with boundary validation, safe responses, CSRF and abuse controls. Sessions, caller read and logout remain later increments. |
+| 4. Implement the initial auth slice | IN PROGRESS — input and blocklist primitives verified | F-08 and the blocklist checkpoint pass; implement the registration transaction/route with boundary validation, safe responses, CSRF and abuse controls. Sessions, caller read and logout remain later increments. |
 | 5. Verify browser behavior and failure cases | NOT STARTED | Verify cookie issuance/renewal/sending/clearing, origin/CSRF denial, expiry/revocation, concurrent registration/logout, account status changes, hash secrecy and rollback. Add meaningful CI coverage with each consuming checkpoint. |
 | 6. Close this tracker | NOT STARTED | Preserve decisions/evidence and unfinished follow-ups in their owning documents; repair incoming links and remove this temporary file after the slice is complete. |
 
@@ -36,7 +36,7 @@ Use backend requirements as the single policy source. The design now fixes email
 
 ### Current handoff — registration and repeatable database checks
 
-The developer reports completing the manual isolated-schema checkpoint described in the [migration guide](../backend/src/database/migrations/README.md). Its evidence and limits belong in the validation register. The shared parser is corrected and its checks pass. Implement the pinned blocklist, then registration as the first workable account operation with the required blocklist/hash/transaction/duplicate-response and abuse/CSRF controls.
+The developer reports completing the manual isolated-schema checkpoint described in the [migration guide](../backend/src/database/migrations/README.md). Its evidence and limits belong in the validation register. The shared parser is corrected and its checks pass. The pinned blocklist is implemented and verified. Implement transactional registration as the first workable account operation with the required blocklist/hash/transaction/duplicate-response and abuse/CSRF controls.
 
 At the developer's request, [F-07](planning/VALIDATION.md#automated-postgresql-integration-testing--todo) now tracks a focused real-PostgreSQL integration suite, including isolated lifecycle and cleanup. Deliver it incrementally with registration. No database-test command, container harness or hosted CI result exists yet. Keep the detailed PR working plan in the chat rather than duplicating it here.
 

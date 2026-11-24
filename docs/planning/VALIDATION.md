@@ -120,6 +120,21 @@ The agent ran `npm.cmd run check` successfully in one sequence: typecheck, ESLin
 
 The developer also authorized directly applying identified fixes in future task scope, using only environment-required tool approvals. Root/backend agent instructions and engineering guidance now record that preference. Existing Git staging was preserved; edited files require restaging by the developer. No commit, publication, database operation, dependency or runtime configuration change was performed.
 
+### Pinned password blocklist and compiled assets — 24 November 2026
+
+The developer supplied the service scaffold and AuthModule registration. Review found that assertAllowed() replaced the list with an empty array on every call and that the generated test checked construction only. At the developer's standing fix authorization, the agent replaced that reset path with one-time constructor loading and exact Set membership, removed the public mutable reload operation, added checksum verification and preserved operational failures separately from blocked-password AuthInputError.
+
+The vendored SecLists snapshot is pinned to commit `fcde9140df969b1e4d7bb056122646dace4ed4cc`. Its exact 73,026 UTF-8/LF bytes were verified against Git blob `a93ea7f91f095b38728795ecd6ec731e59b8c112` and SHA-256 `68782d6a4a19a4768d5f15dd66bd534e7a33055cc755411e33f16d18c50fdcce`. The upstream filename says 10k, but there are 10,001 unique nonempty entries. Three separately maintained common/context-specific examples bring the loaded total to 10,004; they are not individually certified breach records. The same-commit MIT license and metadata/update procedure are bundled. Monthly review is next due 24 December 2026.
+
+| Check | Observed result | Boundary |
+| --- | --- | --- |
+| Complete `npm.cmd run check` | Passed typecheck, lint, formatting, all 119 unit tests, one HTTP smoke, seven hook tests, build and the compiled blocklist smoke. | No PostgreSQL or registration/session browser flow executed. |
+| Blocklist unit suites | 24 cases passed, including exact checks of every upstream/additional entry, composition-compliant blocked input, permitted case/space/substring/Unicode variants, repeated calls, metadata/license identity, safe errors and injected missing/unreadable/corrupt/empty files. | Normal behavior uses the real assets. Operational-failure tests mock filesystem reads only. |
+| Startup and per-check I/O | Nest provider construction rejects unavailable data; construction reads two assets and subsequent password checks perform no file reads. | Verifies provider/module behavior, not assembled Nest/PostgreSQL startup. |
+| Nest build packaging | All five source assets match their copied dist counterparts byte-for-byte. The compiled service passes blocked/permitted checks after changing cwd to the system temporary directory. | Standalone compiled provider only; no server or database started. |
+
+The build smoke is now part of the existing check pipeline. `npm.cmd run test:blocklist:build` rebuilds and runs it separately. No dependency, Git index, commit, database or publication operation was performed. The blocklist checkpoint is complete; invoke it from the future registration service before hashing and the atomic transaction. F-07 still owns real PostgreSQL integration testing.
+
 ### Frontend and Compose — 17 October 2026
 
 Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared through [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8). These results concern the frontend/Compose foundation and do not establish the current PR's merge state or backend auth behavior.
@@ -140,7 +155,7 @@ These are local tracking IDs. The [accepted contract](../requirements/BACKEND_RE
 | ID | Work still needed | Completion evidence / owning document |
 | --- | --- | --- |
 | F-01 | Replace inherited frontend Stack Auth with TenantFlow account/session and organization flows. | After backend contracts exist, verify registration/login/logout, recovery/account settings and authorized organization switching while preserving template assets/license. Status: queued frontend transition. |
-| F-02 | Implement first-slice auth and design the later account lifecycle. | Follow the finalized [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract). Password hashing/tests/formatting pass; blocklist asset pinning, deployment hashing benchmarks, auth/browser workflows, verification/recovery and internationalized-email input remain later work. Status: revised password contract and parser verified; blocklist/workflows pending. |
+| F-02 | Implement first-slice auth and design the later account lifecycle. | Follow the finalized [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract). Password hashing, shared input parsing and the pinned blocklist pass their checks; monthly blocklist review, deployment hashing benchmarks, registration/auth/browser workflows, verification/recovery and internationalized-email input remain later work. Status: input/blocklist primitives verified; registration and other workflows pending. |
 | F-03 | Verify persistence and later domain design. | Three mappings and generated InitialAuth are registered and pass local checks under the [three-entity contract](../requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping). Manual migration/constraint/concurrency/rollback checks are developer-reported complete above; automate them under F-07. Broader model candidates in section 2 still need tenant/history-safe design. Status: manual checkpoint reported complete; automation pending. |
 | F-04 | Complete the NestJS foundation inside `backend/`. | Configuration validation/tests and TypeORM wiring exist. Add health HTTP coverage, database readiness, backend CI/container wiring and meaningful auth/isolation tests under the [roadmap](ROADMAP.md). Status: in progress. |
 | F-05 | Verify TypeORM/PostgreSQL behavior and select feasible hosting. | CLI connectivity/generation and isolated migration/constraint/concurrent-uniqueness/rollback/cleanup checks are user-reported successful. Still prove Nest startup/shutdown and application-level transactions, session concurrency and cleanup; automate database checks under F-07. Compare provider cost/capability, settle exact trusted proxies/Host forwarding and verify deployment compatibility while preserving local PostgreSQL data. Status: configuration/commands implemented, manual schema verification reported, application integration pending. |
@@ -161,7 +176,7 @@ These are local tracking IDs. The [accepted contract](../requirements/BACKEND_RE
 
 ### Shared auth input corrections — completed
 
-**F-08 — completed by the agent at the developer's request.** The shared parser enforces the strict object/email contract and retained Unicode/code-point bounds. Its 72 tests and the full backend check pass, as recorded above. The pinned blocklist and registration consumer are the next implementation checkpoint; this completion does not establish a working registration endpoint.
+**F-08 — completed by the agent at the developer's request.** The shared parser enforces the strict object/email contract and retained Unicode/code-point bounds. Its 72 tests and the full backend check pass, as recorded above. The pinned blocklist checkpoint is also complete; its registration consumer is next. These primitive checks do not establish a working registration endpoint.
 
 ## Documentation checks
 

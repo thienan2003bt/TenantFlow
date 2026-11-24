@@ -10,6 +10,20 @@ The first entity example is `src/auth/user.entity.ts`, mapping `User` to the `us
 
 Keep these three initial entity files directly in `src/auth/`, beside the existing module/service. An `entities/` subdirectory is optional if that feature becomes crowded; a root-wide entity directory would separate mappings from their owning features. The [mapping contract](../docs/requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping) owns exact fields and constraints.
 
+## Password blocklist
+
+`AuthModule` also provides `PasswordBlocklistService`. It loads the required local assets once during provider construction, verifies their pinned SHA-256 values and keeps exact strings in a Set. `assertAllowed(password)` throws AuthInputError for a blocked password; missing/unreadable/corrupt data aborts provider construction as an operational error. Password checks perform no filesystem or network I/O and never trim, case-fold or normalize the submitted password.
+
+The [bundled data directory](src/auth/data/password-blocklist/README.md) owns the snapshot, separate additions, provenance, license and monthly update procedure. The original SecLists file contains 10,001 entries at its pinned commit; three maintained additions give 10,004 unique blocked strings. These additions are common/context-specific policy examples, not individually certified breach records. The next manual data review is due 24 December 2026.
+
+Nest copies `src/auth/data/password-blocklist/` into `dist/auth/data/password-blocklist/` via `compilerOptions.assets`. The service resolves URLs relative to its module, so the same code works in source tests and compiled Node output without depending on process.cwd(). The compiled smoke checks all five copied files byte-for-byte, then constructs and exercises the service from another working directory. Run it separately from `backend/`:
+
+```powershell
+npm.cmd run test:blocklist:build
+```
+
+The combined check includes this smoke after its existing build. The required registration sequence remains parse input -> blocklist check -> hash -> atomic user/credential inserts. Registration and later password replacement must invoke the blocklist, while login must not apply it to existing credentials. That consumer integration is not implemented yet. See [Nest assets](https://docs.nestjs.com/cli/monorepo#assets) for the build mechanism.
+
 ## Local configuration and commands
 
 Use Node.js compatible with the installed Nest/CLI and ESLint versions; recent checks used Node.js 24.21.0. Run commands from **`TenantFlow/backend/`**. For a clean dependency installation, use `npm.cmd ci`.
@@ -83,7 +97,7 @@ Run the complete existing verification sequence from `backend/`:
 npm.cmd run check
 ```
 
-This runs typecheck, lint, formatting verification, unit tests, HTTP smoke tests, hook-runner tests and Nest build, in that order. It stops at the first failure and does not apply fixes. The build writes compiled output under `dist/`. No PostgreSQL connection, migration, auth flow or browser behavior is verified by this command. The script uses npm's standard [run-script behavior](https://docs.npmjs.com/cli/v11/commands/npm-run/).
+This runs typecheck, lint, formatting verification, unit tests, HTTP smoke tests, hook-runner tests, Nest build and the compiled blocklist asset/loading smoke, in that order. It stops at the first failure and does not apply fixes. The build writes compiled output under `dist/`. No PostgreSQL connection, migration, auth flow or browser behavior is verified by this command. The script uses npm's standard [run-script behavior](https://docs.npmjs.com/cli/v11/commands/npm-run/).
 
 Individual checks remain available:
 
@@ -95,7 +109,7 @@ npm.cmd test
 npm.cmd run test:e2e
 ```
 
-ESLint uses its flat configuration and the TypeScript recommended rules, with type-aware floating-promise checks. Unit tests cover Hello World, configuration validation and the password primitive. Password tests use real Argon2 for encoded algorithm/work factors, match/mismatch, independent salts, spaces, Unicode, persisted work factors and malformed hashes. A separate error suite injects library failures to verify preserved causes. Configuration tests cover numeric conversion, inherited database rules, missing/invalid settings and password redaction.
+ESLint uses its flat configuration and the TypeScript recommended rules, with type-aware floating-promise checks. Unit tests cover Hello World, configuration validation, the password primitive, shared auth inputs and blocklist behavior/operational failures. Password tests use real Argon2 for encoded algorithm/work factors, match/mismatch, independent salts, spaces, Unicode, persisted work factors and malformed hashes. A separate error suite injects library failures to verify preserved causes. Configuration tests cover numeric conversion, inherited database rules, missing/invalid settings and password redaction.
 
 The HTTP smoke suite supplies synthetic configuration and overrides the TypeORM DataSource; it checks HTTP assembly without connecting to a developer's database. Its success does not verify PostgreSQL connectivity, migrations, health readiness or authentication routes. Real database integration must use an isolated PostgreSQL database when added. The requested suite and lifecycle/cleanup work are tracked under [F-07](../docs/planning/VALIDATION.md#automated-postgresql-integration-testing--todo); no `test:db` script or Testcontainers harness exists yet. Actual results and any failed checks belong in the [validation register](../docs/planning/VALIDATION.md).
 

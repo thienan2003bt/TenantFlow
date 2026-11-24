@@ -1,0 +1,28 @@
+{
+  "retrievedOn": "2026-11-24",
+  "reviewedOn": "2026-11-24",
+  "nextReviewDue": "2026-12-24",
+  "reviewCadence": "monthly; manually review and pin updates, never fetch at application runtime",
+  "source": {
+    "repository": "https://github.com/danielmiessler/SecLists",
+    "commit": "fcde9140df969b1e4d7bb056122646dace4ed4cc",
+    "path": "Passwords/Common-Credentials/10k-most-common.txt",
+    "url": "https://github.com/danielmiessler/SecLists/blob/fcde9140df969b1e4d7bb056122646dace4ed4cc/Passwords/Common-Credentials/10k-most-common.txt",
+    "gitBlobSha": "a93ea7f91f095b38728795ecd6ec731e59b8c112",
+    "sha256": "68782d6a4a19a4768d5f15dd66bd534e7a33055cc755411e33f16d18c50fdcce",
+    "bytes": 73026,
+    "entryCount": 10001,
+    "uniqueEntryCount": 10001,
+    "license": "MIT",
+    "licenseFile": "LICENSE-SecLists.txt",
+    "licenseSource": "https://github.com/danielmiessler/SecLists/blob/fcde9140df969b1e4d7bb056122646dace4ed4cc/LICENSE",
+    "licenseSha256": "3dbdc93d5f8829de0941744841730a09c106d0732e5ae0e98ca1d77be7ded66c"
+  },
+  "additional": {
+    "file": "additional-passwords.txt",
+    "sha256": "0c939a3bba2f87de7bed9cf534a6dcdfda9b14bd441f4cf368c89b9f6053a58d",
+    "entryCount": 3,
+    "basis": "Project-maintained common/context-specific weak-password examples. Password1! is an example discussed by NIST; Password123! is a predictable variant and TenantFlow1! includes the product name. These entries are not individually certified breach records.",
+    "reference": "https://pages.nist.gov/800-63-4/sp800-63b.html#appA"
+  }
+}
