@@ -1,6 +1,6 @@
 # Session authentication development plan
 
-**Current checkpoint: isolated PostgreSQL migration verification.** The first-slice contract, three mappings and generated InitialAuth migration are registered on `feat/auth-persistence`. Offline review and local checks cover source/configuration; applying/reverting the migration and actual constraints still need evidence. Password hashing/verification exists; auth handlers remain unimplemented.
+**Current checkpoint: pinned common-password blocklist on `feat/auth-registration`.** PR #11 merged the persistence foundation. The developer reports passing isolated migration, constraint, concurrency and rollback checks and completing scratch cleanup. The shared parser now passes its 72-case suite and the full backend check under the revised password policy. Auth handlers remain unimplemented. The detailed registration PR plan stays in the chat; the requested database-automation TODO is retained in the validation register.
 
 [Documentation index](README.md) · [Roadmap](planning/ROADMAP.md#current-priorities-and-learning-preferences) · [Accepted contract](requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) · [Validation register](planning/VALIDATION.md#open-follow-ups)
 
@@ -8,7 +8,7 @@
 
 The first slice covers registration, login, authenticated caller read and current-session logout. The developer accepted the baseline on 25 October 2026 and delegated remaining policy decisions on 12 November 2026. The [backend requirements](requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) now own the complete first-slice contract, including the exact [minimal persistence mapping](requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping). There are no remaining Step 1 policy proposals in this tracker.
 
-[ADR 0001](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) selects Nest/Express, TypeORM repositories with PostgreSQL, reviewed migrations, opaque database sessions and Argon2id. Runtime database wiring, a compiled CLI DataSource, `AuthModule` and `PasswordService` exist. The branch review passed static/password/HTTP-smoke/hook checks; the developer subsequently reported successful migration-status execution. These results do not establish feature migrations or account/session behavior. See the validation register for provenance and limits.
+[ADR 0001](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) selects Nest/Express, TypeORM repositories with PostgreSQL, reviewed migrations, opaque database sessions and Argon2id. Runtime database wiring, a compiled CLI DataSource, `AuthModule` and `PasswordService` exist. The branch review passed static/password/HTTP-smoke/hook checks; the developer subsequently reported successful migration-status execution. The subsequent manual schema checks are developer-reported in the validation register; neither those checks nor the earlier local suites establish account/session HTTP behavior. See the validation register for provenance and limits.
 
 Keep implementation in `backend/`, preserve the frontend/assets/license and PostgreSQL volume, and use the [backend README](../backend/README.md) for runtime commands. The developer writes backend behavior and runs generators/migrations.
 
@@ -16,16 +16,16 @@ Keep implementation in `backend/`, preserve the frontend/assets/license and Post
 
 | Step | State | Completion evidence |
 | --- | --- | --- |
-| 1. Define the auth contract | DONE — design finalized, not runtime-verified | Remaining decisions were resolved on 12 November 2026 in backend requirements. Preserve the explicitly accepted 6-128-code-point password policy and its security distinction. |
+| 1. Define the auth contract | DONE — design finalized, not runtime-verified | The accepted contract owns policy. On 24 November 2026 the developer changed passwords to 8-128 Unicode code points plus required character classes, retaining the maximum and Unicode safeguards; preserve its security distinction. |
 | 2. Validate TypeORM integration and migration workflow | Basic CLI connectivity user-reported; remaining runtime checks open | Runtime/CLI wiring exists and migration-status execution succeeded per the developer. Nest compiled startup, health/shutdown and isolated migration/transaction checks need their own recorded evidence. |
-| 3. Establish persistence | IN PROGRESS — initial migration generated/registered; execution verification pending | InitialAuth SQL covers the three mappings, constraints, restrictive FKs and session user index. Use the named migration scripts for isolated PostgreSQL apply/revert/reapply and essential constraint/rollback checks. Preserve the development volume. |
-| 4. Implement the initial auth slice | IN PROGRESS — password primitive only | Password hashing/verification and tests pass, including formatting in the branch review. Registration, sessions, caller read and logout remain unimplemented. Introduce boundary validation, safe responses, CSRF and abuse controls with those flows. |
+| 3. Establish persistence | Manual isolated checks developer-reported complete; automation pending | Apply/revert/reapply, constraints, concurrent email uniqueness and rollback passed per the developer; scratch cleanup is reported complete. Add repeatable PostgreSQL coverage under F-07 while preserving the development volume. |
+| 4. Implement the initial auth slice | IN PROGRESS — shared input validation verified | F-08 is complete; implement the pinned blocklist and registration transaction/route with boundary validation, safe responses, CSRF and abuse controls. Sessions, caller read and logout remain later increments. |
 | 5. Verify browser behavior and failure cases | NOT STARTED | Verify cookie issuance/renewal/sending/clearing, origin/CSRF denial, expiry/revocation, concurrent registration/logout, account status changes, hash secrecy and rollback. Add meaningful CI coverage with each consuming checkpoint. |
 | 6. Close this tracker | NOT STARTED | Preserve decisions/evidence and unfinished follow-ups in their owning documents; repair incoming links and remove this temporary file after the slice is complete. |
 
 ## Contract handoff
 
-Use backend requirements as the single policy source. The design now fixes email case/length, password Unicode/blocklist/input bounds, browser trust, exact entity fields, timestamps/deletion, renewal/retention, safe responses and local abuse limits. Later verification/recovery, frontend replacement and production proxy configuration retain explicit follow-ups.
+Use backend requirements as the single policy source. The design now fixes email case/length, password composition/Unicode/blocklist/input bounds, browser trust, exact entity fields, timestamps/deletion, renewal/retention, safe responses and local abuse limits. Later verification/recovery, frontend replacement and production proxy configuration retain explicit follow-ups.
 
 ### Completed checkpoint — three entity files
 
@@ -34,11 +34,11 @@ Use backend requirements as the single policy source. The design now fixes email
 - **Working directory:** `backend/`. `npm.cmd run check` passed typecheck, lint, formatting, unit/HTTP/hook tests and Nest build in one run. Continue using it after changes. The script does not run migrations or real database integration; provenance and limits are recorded in the validation register.
 - **Check:** review names/types/nullability, primary/unique/foreign keys, CHECK constraints, timestamp ownership, restrictive deletion and secret-selection behavior. Runtime and CLI must use the same registrations, with synchronization and startup migrations disabled. A successful build is not proof that PostgreSQL constraints work.
 
-### Subsequent checkpoint — migration and real PostgreSQL
+### Current handoff — registration and repeatable database checks
 
-Work minimum-first under the developer's 24 November 2026 preference: InitialAuth is generated and registered, and its up/down SQL has been inspected. The immediate action is isolated PostgreSQL verification using the [migration guide](../backend/src/database/migrations/README.md#make-and-review-a-migration). No new endpoint, service, test framework or CI expansion is needed for this checkpoint.
+The developer reports completing the manual isolated-schema checkpoint described in the [migration guide](../backend/src/database/migrations/README.md). Its evidence and limits belong in the validation register. The shared parser is corrected and its checks pass. Implement the pinned blocklist, then registration as the first workable account operation with the required blocklist/hash/transaction/duplicate-response and abuse/CSRF controls.
 
-Follow that guide for commands, target selection, registration, SQL/history safety and completion evidence. Keep this tracker focused on the slice: after the schema checkpoint, implement registration as the first workable account operation with its required input/hash/transaction/duplicate-response and abuse/CSRF controls. Add database automation and backend CI incrementally; isolated test-database lifecycle automation remains later work.
+At the developer's request, [F-07](planning/VALIDATION.md#automated-postgresql-integration-testing--todo) now tracks a focused real-PostgreSQL integration suite, including isolated lifecycle and cleanup. Deliver it incrementally with registration. No database-test command, container harness or hosted CI result exists yet. Keep the detailed PR working plan in the chat rather than duplicating it here.
 
 ## Follow-up boundaries and handoff
 

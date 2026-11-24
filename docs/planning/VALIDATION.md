@@ -89,6 +89,37 @@ The developer reported successful migration generation and supplied `17955120536
 
 Next checkpoint: use the named scripts to establish migration apply/revert/reapply and essential constraint/rollback evidence on an isolated PostgreSQL database, then proceed to minimal registration. No hosted CI or browser/auth result is established by this batch.
 
+### Manual isolated auth schema checks — 24 November 2026
+
+On `feat/auth-registration`, the developer reported passing the guided checks against the separate `tenantflow-auth-check` PostgreSQL 17 container/database on port 55432: InitialAuth apply/revert/reapply; table discovery; canonical-email uniqueness; failed credential insertion and full transaction rollback; credential primary-key/foreign-key restrictions; account status/timestamp rules; overlapping email inserts using two connections; email consistency; session digest, lifecycle, revocation, finite-time and foreign-key checks. The developer also reported fixture cleanup, scratch-container/anonymous-storage removal and closing the dedicated environment-override shells.
+
+These are user-reported manual results, not agent-executed or automated evidence. Raw SQL transaction checks prove database behavior, not that a future registration service uses a shared transaction correctly. Nest startup/shutdown, actual registration/login/session behavior, browser behavior and hosted CI remain separate checks. F-07 tracks repeatable automation.
+
+### Auth input parser and password-policy revision — 24 November 2026
+
+The developer supplied `src/auth/auth-input.ts` and `src/errors/auth-input.error.ts`, then requested a detailed unit suite and documentation reconciliation. The revised password contract requires 8-128 Unicode code points plus lowercase/uppercase ASCII letters, an ASCII digit and an isStrongPassword-recognized symbol. The developer explicitly retained the maximum and Unicode safeguards. The parser implementation is left unchanged in this testing/documentation batch.
+
+The suite uses the real installed class-validator implementation without a Nest application, database or password hashing. It covers object shape/types, email identity and boundaries, composition, code-point bounds, malformed Unicode, exact password preservation, result immutability and safe validation errors. Assertions for outstanding requirements remain active; failures are implementation findings, not skipped or expected-failure tests. The agent ran the backend scripts individually so the failed unit/format checks did not prevent observing the other results; this was not a successful combined `npm.cmd run check` run. F-08 owns remaining parser corrections.
+
+| Check | Observed result | Boundary |
+| --- | --- | --- |
+| New auth input suite | 72 tests: 58 passed, 14 failed. | Real installed validator; no mocks, database or HTTP server. Tests for outstanding requirements remain active. |
+| Full unit suite | 95 tests: 81 passed, 14 failed; all failures belong to auth-input.spec.ts. | Existing 23 unit cases remain passing. |
+| Typecheck, ESLint and Nest build | Passed. | Static/compiled checks do not establish parser contract correctness. |
+| Formatting | Failed on the developer's unchanged auth-input.ts and errors/auth-input.error.ts; the new spec passed. | The agent did not reformat or change either implementation file. |
+| Existing HTTP smoke and hook suites | One database-stubbed HTTP test and seven hook tests passed. | No PostgreSQL, registration HTTP or browser check was executed. |
+
+The 14 failing cases comprise unknown fields (3), array-shaped input with named fields (1), inherited credentials (1), email trimming (2), quoted/Unicode-domain email (2), overlength passwords (2), UTF-16/code-point minimum disagreement (1) and unpaired surrogates (2). That failed run is historical; the fixes and successful combined check below supersede its blocked status. No Git staging, commit, database operation or publication was performed.
+
+
+### Auth input parser fixes — 24 November 2026
+
+At the developer's explicit request, the agent fixed the parser directly and formatted it and AuthInputError. It now accepts unknown input safely, requires exactly two own credential fields, trims email before validation/display storage, excludes quoted/non-ASCII mailbox input, enforces well-formed 8-128-code-point passwords before the configured composition check, and preserves accepted password strings exactly. No tests were weakened, skipped or marked as expected failures.
+
+The agent ran `npm.cmd run check` successfully in one sequence: typecheck, ESLint, formatting, all 95 unit tests (including all 72 auth-input cases), one database-stubbed HTTP smoke test, seven hook tests and Nest build. F-08 is complete. The next checkpoint is the pinned blocklist. No PostgreSQL, actual registration/session HTTP or browser check ran; F-07 remains pending.
+
+The developer also authorized directly applying identified fixes in future task scope, using only environment-required tool approvals. Root/backend agent instructions and engineering guidance now record that preference. Existing Git staging was preserved; edited files require restaging by the developer. No commit, publication, database operation, dependency or runtime configuration change was performed.
+
 ### Frontend and Compose — 17 October 2026
 
 Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared through [PR #8](https://github.com/thienan2003bt/TenantFlow/pull/8). These results concern the frontend/Compose foundation and do not establish the current PR's merge state or backend auth behavior.
@@ -104,16 +135,33 @@ Implementation commit: `979d4bdafa2c384e94f1df971db374327793c47f`; prepared thro
 
 ## Open follow-ups
 
-These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns finalized first-slice policies/mappings, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns implementation checkpoints, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. All three mappings have passed offline review and the full local check command. Real persistence and browser behavior still require implementation and evidence.
+These are local tracking IDs. The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) owns finalized first-slice policies/mappings, the [temporary development plan](../SESSION_AUTH_DEVELOPMENT_PLAN.md) owns implementation checkpoints, and the [roadmap](ROADMAP.md#current-priorities-and-learning-preferences) owns task order. All three mappings have passed offline review and earlier full local checks. Manual isolated-schema verification is now developer-reported above; automated persistence verification and actual account/session/browser behavior remain unfinished.
 
 | ID | Work still needed | Completion evidence / owning document |
 | --- | --- | --- |
 | F-01 | Replace inherited frontend Stack Auth with TenantFlow account/session and organization flows. | After backend contracts exist, verify registration/login/logout, recovery/account settings and authorized organization switching while preserving template assets/license. Status: queued frontend transition. |
-| F-02 | Implement first-slice auth and design the later account lifecycle. | Follow the finalized [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract). Password hashing/tests/formatting pass; blocklist asset pinning, deployment hashing benchmarks, auth/browser workflows, verification/recovery and internationalized-email input remain later work. Status: first-slice design finalized, workflows pending. |
-| F-03 | Verify persistence and later domain design. | Three mappings and generated InitialAuth are registered and pass local checks under the [three-entity contract](../requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping). Prove constraints/migration/rollback on isolated PostgreSQL using the named scripts. Broader model candidates in section 2 still need tenant/history-safe design. Status: migration source reviewed; database verification pending. |
+| F-02 | Implement first-slice auth and design the later account lifecycle. | Follow the finalized [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract). Password hashing/tests/formatting pass; blocklist asset pinning, deployment hashing benchmarks, auth/browser workflows, verification/recovery and internationalized-email input remain later work. Status: revised password contract and parser verified; blocklist/workflows pending. |
+| F-03 | Verify persistence and later domain design. | Three mappings and generated InitialAuth are registered and pass local checks under the [three-entity contract](../requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping). Manual migration/constraint/concurrency/rollback checks are developer-reported complete above; automate them under F-07. Broader model candidates in section 2 still need tenant/history-safe design. Status: manual checkpoint reported complete; automation pending. |
 | F-04 | Complete the NestJS foundation inside `backend/`. | Configuration validation/tests and TypeORM wiring exist. Add health HTTP coverage, database readiness, backend CI/container wiring and meaningful auth/isolation tests under the [roadmap](ROADMAP.md). Status: in progress. |
-| F-05 | Verify TypeORM/PostgreSQL behavior and select feasible hosting. | CLI migration-status execution and initial migration generation are user-reported successful. Still prove Nest startup/shutdown, migration apply/revert/reapply, transactions, constraints, session concurrency and cleanup. Compare provider cost/capability, settle exact trusted proxies/Host forwarding and verify deployment compatibility while preserving local PostgreSQL data. Status: configuration/commands implemented, CLI connectivity/generation reported, integration pending. |
+| F-05 | Verify TypeORM/PostgreSQL behavior and select feasible hosting. | CLI connectivity/generation and isolated migration/constraint/concurrent-uniqueness/rollback/cleanup checks are user-reported successful. Still prove Nest startup/shutdown and application-level transactions, session concurrency and cleanup; automate database checks under F-07. Compare provider cost/capability, settle exact trusted proxies/Host forwarding and verify deployment compatibility while preserving local PostgreSQL data. Status: configuration/commands implemented, manual schema verification reported, application integration pending. |
 | F-06 | Verify backend CI, replacement frontend hosting and transactional email delivery. | Observe actual backend CI runs and hosted runtime checks. Verify verification/reset/invitation delivery to intended recipients; provider accounts and delivery infrastructure are not configured. Status: queued validation/design. |
+| F-07 | Agent: automate PostgreSQL integration verification with registration. | See the [concrete TODO](#automated-postgresql-integration-testing--todo) below for isolated lifecycle, migrations, schema/transaction/concurrency/HTTP checks and CI. Status: requested; not implemented. |
+| F-08 | Shared auth input parser corrections — complete. | See [completed parser corrections](#shared-auth-input-corrections--completed) below; all 72 parser cases and the full local check pass. Registration itself remains unfinished. |
+
+### Automated PostgreSQL integration testing — TODO
+
+**F-07 — agent implementation work requested for the registration PR; not implemented.** Add a focused suite using Vitest and disposable PostgreSQL 17 (Testcontainers is the proposed local harness). This is a PR verification deliverable, developed incrementally alongside registration. The current database-stubbed HTTP smoke test and `npm.cmd run check` do not provide this coverage.
+
+- [ ] Provision an isolated database with dynamic connection settings, bounded readiness and teardown on success or failure; close DataSources before stopping the container. Never reuse the development database/volume or read live credentials. See [Testcontainers PostgreSQL](https://node.testcontainers.org/modules/postgresql/).
+- [ ] Apply the actual registered migrations with synchronization disabled. Automate initial apply/revert/reapply on disposable data and essential schema invariants, asserting SQLSTATE/constraint names rather than error-message prose.
+- [ ] Exercise real registration persistence: user plus credential, duplicate credential preservation, forced credential-write failure with no orphan user, and concurrent duplicate requests using separate connections with explicit coordination. Do not wrap concurrency/HTTP cases in one outer connection's rollback transaction.
+- [ ] Exercise assembled registration HTTP behavior with real PostgreSQL and the same bootstrap protections: generic 202 for valid new/duplicate input, invalid input, controlled persistence faults and secret-free responses.
+- [ ] Isolate test data between cases and make the database job fail visibly when required infrastructure cannot start. Add a dedicated database-test script/configuration; `test:db` is a proposed name, not an existing command.
+- [ ] Run the suite in an appropriate Linux CI job with disposable PostgreSQL and publish actual results. Keep broad unrelated CI infrastructure out of the first registration task.
+
+### Shared auth input corrections — completed
+
+**F-08 — completed by the agent at the developer's request.** The shared parser enforces the strict object/email contract and retained Unicode/code-point bounds. Its 72 tests and the full backend check pass, as recorded above. The pinned blocklist and registration consumer are the next implementation checkpoint; this completion does not establish a working registration endpoint.
 
 ## Documentation checks
 
@@ -132,4 +180,4 @@ Historical documentation-only checks are retained below. Their counts describe t
 | 12 November 2026 first-slice contract finalization | All 153 local links and 34 anchors across 18 tracked Markdown documents resolved; final-newline and branch whitespace checks passed for the eight changed documents. Checked first-slice policy/mapping consistency, repaired retired worksheet anchors and reconciled SRS refresh-token vocabulary with opaque-session renewal. Application, database and browser checks were not rerun for this documentation batch. |
 | 24 November 2026 migration-guide consolidation | All 174 local links and 38 anchors across 19 Markdown documents, including the new untracked guide, resolved. Command references match the four package scripts; final-newline and whitespace checks passed. The migration-directory README now owns the workflow and data/history safeguards; repeated instructions and retired anchors were removed elsewhere. No code/configuration/SQL changes, application checks, database operations or Git publication were performed in this batch. |
 
-No application tests, Docker runtime, database migrations, auth flows or browser checks were run for these documentation updates. Keep future runtime evidence attached to its actual command/environment and observed outcome.
+The historical documentation-only batches above did not execute application/database/browser checks. Current testing evidence is recorded in its own dated section; keep future results attached to their actual command/environment and observed outcome.

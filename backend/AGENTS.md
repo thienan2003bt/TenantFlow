@@ -4,7 +4,7 @@ These instructions apply to `backend/` and to guidance about this application. R
 
 ## Developer ownership
 
-The developer writes backend behavior, source and tests. Default to instructions, reviews and feedback. Only edit code or configuration when the user explicitly authorizes that scope. A review request does not authorize automatically fixing the findings. The current quote-style and enum-alias configuration request authorizes those changes and their verification, not unrelated application behavior changes.
+The developer owns new backend feature implementation. As explicitly requested on 24 November 2026, apply concrete fixes identified within the current task directly and verify them, using tool approval only where the environment requires it. Do not stop at suggested repairs or request duplicate conversational permission for already authorized fixes. Continue guiding new feature work unless asked to implement it. This preference does not authorize unrelated features, dependency installation, migration/database operations or Git/publication mutations; the root instructions retain those boundaries.
 
 Keep the application in `backend/`, use the installed local Nest CLI, and retain the selected ESM/Vitest conventions. Prefer the CLI's colocated feature structure and `--format` when adding features; the developer runs generators unless explicitly asking the agent to do so.
 

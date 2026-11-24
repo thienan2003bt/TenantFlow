@@ -4,7 +4,7 @@ The developer implements this NestJS application. The assistant provides researc
 
 This application currently exposes `GET /` (Hello World) and `GET /health-check` (HTTP 200 with the text `Service is healthy!`). The current health endpoint is HTTP liveness only.
 
-`AuthModule` provides `PasswordService` for asynchronous Argon2id hashing and verification. Its current hashing profile uses 64 MiB, two iterations and parallelism one; verification reads the persisted hash's encoded parameters. Its public verification signature is `verify(rawPassword, hashedPassword)`. Registration/login routes, credential persistence, cookies and sessions are not implemented yet.
+`AuthModule` provides `PasswordService` for asynchronous Argon2id hashing and verification. Its current hashing profile uses 64 MiB, two iterations and parallelism one; verification reads the persisted hash's encoded parameters. Its public verification signature is `verify(rawPassword, hashedPassword)`. The shared auth input parser passes its 72-case unit suite for strict object shape, email canonicalization, password policy, Unicode preservation and safe validation errors; the accepted password policy is 8-128 Unicode code points plus required character classes, with the maximum and Unicode safeguards retained. See the [accepted contract](../docs/requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) for exact rules. Registration/login routes, credential persistence, cookies and sessions are not implemented yet.
 
 The first entity example is `src/auth/user.entity.ts`, mapping `User` to the `users` table. It uses TypeORM decorators, a backend-local `UserStatus` enum, explicit snake_case column names, canonical-email uniqueness and account-state/email CHECK constraints. TypeORM operates through repositories/Data Mapper; entity instances do not save themselves. The creating service must supply a UUID and canonicalized email, and explicitly maintain user updates. Timestamp/status defaults take effect during database insertion, not `new User()`.
 
@@ -63,7 +63,7 @@ The current bootstrap omits an explicit listening host and enables unrestricted 
 
 The standalone migration DataSource reuses the database validator and options builder without starting Nest. Read the [migration guide](src/database/migrations/README.md) for the named commands, target checks, registration, SQL review and data/history safeguards. Keep that detailed workflow in the guide.
 
-InitialAuth is generated and registered alongside the three auth entities. Database execution and constraint/rollback evidence remain tracked in the [validation register](../docs/planning/VALIDATION.md); the [roadmap](../docs/planning/ROADMAP.md#current-priorities-and-learning-preferences) owns the next small PR. No migration is applied automatically at startup.
+InitialAuth is generated and registered alongside the three auth entities. Developer-reported isolated database execution and constraint/rollback results are tracked in the [validation register](../docs/planning/VALIDATION.md); automated checks remain pending, and the [roadmap](../docs/planning/ROADMAP.md#current-priorities-and-learning-preferences) owns the next small PR. No migration is applied automatically at startup.
 
 ## Formatting and checks
 
@@ -97,7 +97,7 @@ npm.cmd run test:e2e
 
 ESLint uses its flat configuration and the TypeScript recommended rules, with type-aware floating-promise checks. Unit tests cover Hello World, configuration validation and the password primitive. Password tests use real Argon2 for encoded algorithm/work factors, match/mismatch, independent salts, spaces, Unicode, persisted work factors and malformed hashes. A separate error suite injects library failures to verify preserved causes. Configuration tests cover numeric conversion, inherited database rules, missing/invalid settings and password redaction.
 
-The HTTP smoke suite supplies synthetic configuration and overrides the TypeORM DataSource; it checks HTTP assembly without connecting to a developer's database. Its success does not verify PostgreSQL connectivity, migrations, health readiness or authentication routes. Real database integration must use an isolated PostgreSQL database when added. Actual results and any failed checks belong in the [validation register](../docs/planning/VALIDATION.md).
+The HTTP smoke suite supplies synthetic configuration and overrides the TypeORM DataSource; it checks HTTP assembly without connecting to a developer's database. Its success does not verify PostgreSQL connectivity, migrations, health readiness or authentication routes. Real database integration must use an isolated PostgreSQL database when added. The requested suite and lifecycle/cleanup work are tracked under [F-07](../docs/planning/VALIDATION.md#automated-postgresql-integration-testing--todo); no `test:db` script or Testcontainers harness exists yet. Actual results and any failed checks belong in the [validation register](../docs/planning/VALIDATION.md).
 
 ## Pre-commit checks
 
