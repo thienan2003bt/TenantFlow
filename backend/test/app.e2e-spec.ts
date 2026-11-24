@@ -1,3 +1,5 @@
+import type { NestExpressApplication } from "@nestjs/platform-express";
+import { configureHttpApplication, httpApplicationOptions } from "../src/http/configure-http.js";
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import request from "supertest";
@@ -17,12 +19,24 @@ describe("AppController (HTTP smoke, database stubbed)", () => {
       .useValue({ manager: {}, isInitialized: false })
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    const application: NestExpressApplication =
+      moduleFixture.createNestApplication<NestExpressApplication>(httpApplicationOptions);
+    configureHttpApplication(application);
+    app = application;
     await app.init();
   });
 
   it("/ (GET)", () => {
     return request(app.getHttpServer()).get("/").expect(200).expect("Hello World!");
+  });
+
+  it("applies global DTO validation to registration through AppModule", async () => {
+    await request(app.getHttpServer())
+      .post("/auth/register")
+      .send({ email: "alice@example.com", password: "weak" })
+      .expect(400)
+      .expect("Cache-Control", "no-store")
+      .expect({ statusCode: 400, code: "INVALID_INPUT", message: "Invalid registration input." });
   });
 
   afterEach(async () => {

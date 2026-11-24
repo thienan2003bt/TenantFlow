@@ -9,7 +9,7 @@ Use the [documentation index](../README.md) and [backend commands and configurat
 1. Read the [SRS](../requirements/TenantFlow-SRS.md) for the product, tenant isolation, permissions, billing, and data-retention rules.
 2. Review [backend requirements and design notes](../requirements/BACKEND_REQUIREMENTS.md), including preserved constraint candidates and identity decisions.
 3. Compare the [schema references](../../schemas.ts) and [enums](../../enum.ts). They are provisional models, not database migrations or runtime validation.
-4. Follow the [implementation roadmap](../planning/ROADMAP.md) and [validation evidence and follow-ups](../planning/VALIDATION.md#recorded-foundation-checks). Release dates and old milestone checkboxes are not proof of implementation.
+4. Follow the [implementation roadmap](../planning/ROADMAP.md) and [validation evidence and follow-ups](../planning/VALIDATION.md#current-evidence). Release dates and old milestone checkboxes are not proof of implementation.
 
 The frontend currently uses Stack Auth for users, sign-in, account management and teams. NestJS credential verification, provider-to-domain user mapping, team-to-tenant mapping, identifier compatibility, and server authorization remain requirements to design. Frontend team selection alone does not enforce backend tenant isolation.
 

@@ -1,0 +1,93 @@
+import { isEmail, isStrongPassword } from "class-validator";
+import { AuthInputError } from "../errors/auth-input.error.js";
+
+export interface ParsedAuthInput {
+  email: string;
+  emailCanonical: string;
+  password: string;
+}
+
+/**
+ * Parses and validates authentication input, ensuring it contains valid email and password properties.
+ * @param input - The input object to be parsed and validated.
+ * @returns {ParsedAuthInput} An object containing the validated email, canonical email, and password.
+ * @throws {AuthInputError} If the input is invalid, missing required properties, or fails validation checks.
+ */
+export function parseAuthInput(input: unknown): ParsedAuthInput {
+  if (input === null || typeof input !== "object" || Array.isArray(input)) {
+    throw new AuthInputError("Input must be a valid object.");
+  }
+
+  if (Reflect.ownKeys(input).length !== 2 || !Object.hasOwn(input, "email") || !Object.hasOwn(input, "password")) {
+    throw new AuthInputError("Input must contain only 'email' and 'password' properties.");
+  }
+
+  const { email: rawEmail, password: rawPassword }: Record<string, unknown> = input as Record<string, unknown>;
+  const { email, emailCanonical }: ParsedAuthEmail = parseAuthEmail(rawEmail);
+  const password: string = parseAuthPassword(rawPassword);
+  return { email, emailCanonical, password };
+}
+
+export interface ParsedAuthEmail {
+  email: string;
+  emailCanonical: string;
+}
+
+export function parseAuthEmail(input: unknown): ParsedAuthEmail {
+  if (typeof input !== "string") {
+    throw new AuthInputError("Email is required and must be a valid email address.");
+  }
+  const email: string = input.trim();
+  const localPartLength: number = email.indexOf("@");
+  if (
+    email.length > 254 ||
+    localPartLength < 1 ||
+    localPartLength > 64 ||
+    !/^[!-~]+$/.test(email) ||
+    email.includes('"') ||
+    !isEmail(email, {
+      allow_display_name: false,
+      allow_utf8_local_part: false,
+      require_tld: true,
+      allow_ip_domain: false,
+      domain_specific_validation: false,
+    })
+  ) {
+    throw new AuthInputError("Email is required and must be a valid email address.");
+  }
+
+  return { email, emailCanonical: email.toLowerCase() };
+}
+
+export function parseAuthPassword(input: unknown): string {
+  if (typeof input !== "string") {
+    throw new AuthInputError("Password is required and must be a valid password.");
+  }
+  // String iteration counts code points; an unpaired surrogate remains a single code unit.
+  let passwordLength: number = 0;
+  for (const character of input) {
+    const codeUnit: number = character.charCodeAt(0);
+    if (character.length === 1 && codeUnit >= 0xd800 && codeUnit <= 0xdfff) {
+      throw new AuthInputError("Password is required and must be a valid password.");
+    }
+    passwordLength += 1;
+    if (passwordLength > 128) {
+      throw new AuthInputError("Password is required and must be a valid password.");
+    }
+  }
+
+  if (
+    passwordLength < 8 ||
+    !isStrongPassword(input, {
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+  ) {
+    throw new AuthInputError("Password is required and must be a valid password.");
+  }
+
+  return input;
+}

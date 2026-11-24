@@ -1,6 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import * as Argon2 from "argon2";
-import { AuthModule } from "./auth.module.js";
 import { PasswordService } from "./password.service.js";
 
 describe("PasswordService", () => {
@@ -9,7 +8,7 @@ describe("PasswordService", () => {
 
   beforeEach(async () => {
     module = await Test.createTestingModule({
-      imports: [AuthModule],
+      providers: [PasswordService],
     }).compile();
 
     service = module.get<PasswordService>(PasswordService);

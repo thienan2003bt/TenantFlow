@@ -1,24 +1,21 @@
-﻿# TenantFlow backend
+# TenantFlow backend
 
-The developer implements this NestJS application. The assistant provides researched instructions, reviews and feedback under [backend agent instructions](AGENTS.md).
-
-This application currently exposes `GET /` (Hello World) and `GET /health-check` (HTTP 200 with the text `Service is healthy!`). The current health endpoint is HTTP liveness only.
-
-`AuthModule` provides `PasswordService` for asynchronous Argon2id hashing and verification. Its current hashing profile uses 64 MiB, two iterations and parallelism one; verification reads the persisted hash's encoded parameters. Its public verification signature is `verify(rawPassword, hashedPassword)`. Registration/login routes, credential persistence, cookies and sessions are not implemented yet.
-
-The first entity example is `src/auth/user.entity.ts`, mapping `User` to the `users` table. It uses TypeORM decorators, a backend-local `UserStatus` enum, explicit snake_case column names, canonical-email uniqueness and account-state/email CHECK constraints. TypeORM operates through repositories/Data Mapper; entity instances do not save themselves. The creating service must supply a UUID and canonicalized email, and explicitly maintain user updates. Timestamp/status defaults take effect during database insertion, not `new User()`.
-
-Keep these three initial entity files directly in `src/auth/`, beside the existing module/service. An `entities/` subdirectory is optional if that feature becomes crowded; a root-wide entity directory would separate mappings from their owning features. The [mapping contract](../docs/requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping) owns exact fields and constraints.
+This NestJS application uses PostgreSQL, TypeORM, Argon2id and global DTO validation.
+It exposes GET /, GET /health-check and POST /auth/register.
+The health endpoint reports process liveness, not database readiness.
 
 ## Local configuration and commands
 
-Use Node.js compatible with the installed Nest/CLI and ESLint versions; recent checks used Node.js 24.21.0. Run commands from **`TenantFlow/backend/`**. For a clean dependency installation, use `npm.cmd ci`.
+Use Node.js compatible with the lockfile; the verified development runtime is 24.21.0.
+Run commands from TenantFlow/backend/. npm.cmd avoids PowerShell shim restrictions.
 
-The application loads `.env` from this working directory. Validation requires `NODE_ENV`, `PORT`, `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` and `DB_NAME`; process variables override env-file values. The environment enum allows `development`, `production`, `test` and `provisioning`. Both ports must be integers from 1 to 65535. The documented local HTTP port is `14400`.
+The application reads backend/.env. Process environment variables override it.
+Required settings are NODE_ENV, PORT, DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD and DB_NAME.
+Both ports must be integers from 1 to 65535.
 
-Create your local `.env` with safe development values:
+Example local settings:
 
-```dotenv
+~~~dotenv
 NODE_ENV=development
 PORT=14400
 DB_HOST=localhost
@@ -26,113 +23,164 @@ DB_PORT=5432
 DB_USERNAME=tenantflow
 DB_PASSWORD=tenantflow_password
 DB_NAME=tenantflow_dev
-```
+~~~
 
-The tracked `.env.example` contains these development values, matching the retained Compose PostgreSQL service. Use it to create a local `.env` if one does not exist; preserve existing local settings. Real `.env` values remain ignored by Git. Root `.env` is for Compose, and `frontend/.env.local` is for Next.js.
+Preserve existing settings when creating .env from .env.example.
+The root .env belongs to Compose; frontend/.env.local belongs to Next.js.
 
-Start PostgreSQL from the **repository root** before starting Nest:
+Start PostgreSQL from the repository root if needed:
 
-```powershell
+~~~powershell
 docker compose up -d --wait --wait-timeout 90 postgres
-```
+~~~
 
-`AppModule` validates configuration once, then imports `DatabaseModule`. That module injects `ConfigService` and uses `database.options.ts` to configure TypeORM. Nest manages the connection lifecycle. `User`, `PasswordCredential`, `Session` and the initial auth migration are registered in shared runtime/CLI options; synchronization and startup migrations remain disabled. Registration does not apply the migration or create its tables. Add `TypeOrmModule.forFeature([User])` in the consuming feature module when introducing an injected `Repository<User>`; no repository consumer is implemented yet. See [Nest's TypeORM integration](https://docs.nestjs.com/data/typeorm) and [TypeORM entities](https://typeorm.io/docs/entity/entities/).
+Before starting the API, apply InitialAuth to the database selected by backend/.env and any shell overrides.
+Verify the host, port, database and user using the [migration guide](src/database/migrations/README.md).
+A migration applied to a scratch/test database does not initialize tenantflow_dev.
+From backend/, apply pending registered migrations:
 
-Start development mode:
+~~~powershell
+npm.cmd run db:migration:run
+~~~
 
-```powershell
+Start the API from backend/:
+
+~~~powershell
 npm.cmd run start:dev
-```
+~~~
 
-Check the existing endpoint from another terminal:
+The API binds 127.0.0.1 and the configured PORT, normally 14400.
+Use http://localhost:14400 from a browser.
+Startup does not apply migrations. A running API can still lack the auth tables.
 
-```powershell
-curl.exe --noproxy "*" -i http://127.0.0.1:14400/health-check
-```
+## Registration
 
-Build and start compiled output:
+POST /auth/register accepts only email and password string fields in a JSON object.
+Valid new and duplicate requests return 202 with:
 
-```powershell
-npm.cmd run build
-npm.cmd run start:prod
-```
+~~~json
+{ "message": "Registration request accepted." }
+~~~
 
-The current bootstrap omits an explicit listening host and enables unrestricted CORS. The printed localhost URL does not restrict exposure.
+New accounts are pending_verification. User and credential inserts are atomic.
+Duplicates preserve the existing account and password.
+Registration issues no session cookie and sends no email.
+The [auth contract](../docs/requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract)
+owns exact input and persistence rules.
 
-## Database migrations
+Shared request processing runs security/media/body checks, then the registration guard, global DTO validation
+and the service. The service checks the blocklist, hashes the exact password and opens the transaction.
 
-The standalone migration DataSource reuses the database validator and options builder without starting Nest. Read the [migration guide](src/database/migrations/README.md) for the named commands, target checks, registration, SQL review and data/history safeguards. Keep that detailed workflow in the guide.
+The local policy permits credentialed CORS only from http://localhost:3000 and uses native Nest CSRF protection.
+Auth writes require JSON, identity encoding and a body no larger than 16 KiB.
+Registration admits five requests per direct socket IP per hour, including DTO-invalid requests.
+Earlier CSRF/parser/media failures do not count. Forwarded IP headers are ignored.
 
-InitialAuth is generated and registered alongside the three auth entities. Database execution and constraint/rollback evidence remain tracked in the [validation register](../docs/planning/VALIDATION.md); the [roadmap](../docs/planning/ROADMAP.md#current-priorities-and-learning-preferences) owns the next small PR. No migration is applied automatically at startup.
+A 429 includes a browser-readable Retry-After. Counter state resets when the API process restarts.
+Auth responses use no-store and fixed safe error bodies; passwords, hashes and SQL are not returned or logged.
 
-## Formatting and checks
+## Swagger UI
 
-Backend Prettier configuration uses double quotes for imports, `printWidth: 120`, two spaces per indentation level (`tabWidth: 2`, `useTabs: false`) and explicit LF line endings (`endOfLine: "lf"`), matching `backend/.gitattributes`. Existing CRLF working files still need formatting even when Git stores LF in the index; see [Prettier's line-ending option](https://prettier.io/docs/options#end-of-line). `printWidth` is Prettier's wrapping preference, not a hard limit on every line. Run formatting after editing or generation:
+With NODE_ENV=development, start the API and open http://localhost:14400/docs.
+The OpenAPI document is available at http://localhost:14400/docs-json.
+These routes are not registered in other environments.
 
-```powershell
-npm.cmd run format
-```
+Expand Authentication → POST /auth/register, click Try it out, edit the example email/password and click Execute.
+Use a distinct test email when checking a new account. Expect 202 for new and duplicate canonical emails.
+The UI also documents input rules, safe error bodies, no-store and Retry-After headers.
 
-When using the Nest CLI, append `--format`, for example `npx.cmd --no-install nest generate module tenants --format`, so the generator applies the local Prettier configuration immediately. The [CLI reference](https://docs.nestjs.com/cli/usages#nest-generate) documents this flag; `format:check` catches remaining formatting differences.
+Swagger uses the API's origin, so it needs no separate frontend server or CORS exception.
+It sends real requests: successful registration creates a pending account, and invalid DTOs count toward
+five attempts per IP per hour. A 429 includes Retry-After; restart the local API for a fresh test window.
 
-The existing `backend/.vscode/settings.json` selects double quotes for auto-imports and Prettier on save **when `backend/` is opened as the VS Code workspace** and the Prettier extension is installed. Nested VS Code settings do not apply automatically when opening only the repository root; the formatter and scripts still read the backend Prettier configuration. Prettier may choose another delimiter for ordinary strings to reduce escaping; import specifiers here use double quotes.
+Swagger metadata describes the API; the existing global pipe, guards and services enforce the rules.
+UI assets are served locally and the external Swagger validator is disabled.
+See the [Nest Swagger guide](https://docs.nestjs.com/openapi/introduction).
 
-Run the complete existing verification sequence from `backend/`:
+## Browser check
 
-```powershell
+The requesting page must be http://localhost:3000 in a normal top-level browser tab.
+Origin null identifies an opaque context, such as a sandboxed or local-file page.
+Browser local-network protection may block such a request before it reaches the API.
+
+1. Stop any frontend/test server using port 3000. Leave PostgreSQL running.
+
+2. Start or restart the API above for a fresh attempt window.
+
+3. In another terminal, from backend/, run:
+
+~~~powershell
+node scripts/auth-browser-check.mjs
+~~~
+
+4. Navigate the address bar to http://localhost:3000. Do not open a saved HTML file or blank page.
+
+5. Confirm Origin: http://localhost:3000 and Secure context: true on the page.
+
+6. Click Check API connection. Expect 200 and Service is healthy!. This checks liveness, not schema readiness.
+
+7. Click Run six registration checks once. Expect 202, 202, 400, 400, 400, 429.
+
+The sequence uses test credentials and creates one pending account in the local database.
+It covers new/duplicate input, weak/blocked passwords, unknown fields and throttling.
+
+The page already defines registerAuth and browserCredentials for console use.
+Select its top-level execution context. Check context before a manual request:
+
+~~~javascript
+({ url: location.href, origin: location.origin, secure: isSecureContext })
+~~~
+
+In Network, inspect the JSON preflight, exact allowed origin, credential grant and no-store header.
+Registration must not set a TenantFlow session cookie.
+The existing frontend form and Stack Auth cookies are separate from this endpoint.
+
+Stop the API and check-page servers you started with Ctrl+C afterward. Preserve PostgreSQL volumes.
+See [secure contexts](https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Secure_Contexts).
+
+## Development checks
+
+~~~powershell
 npm.cmd run check
-```
+npm.cmd run test:db
+~~~
 
-This runs typecheck, lint, formatting verification, unit tests, HTTP smoke tests, hook-runner tests and Nest build, in that order. It stops at the first failure and does not apply fixes. The build writes compiled output under `dist/`. No PostgreSQL connection, migration, auth flow or browser behavior is verified by this command. The script uses npm's standard [run-script behavior](https://docs.npmjs.com/cli/v11/commands/npm-run/).
+check runs typecheck, lint, formatting, unit/HTTP/hook tests, Nest build and compiled blocklist smoke.
+It does not connect to PostgreSQL.
 
-Individual checks remain available:
+test:db creates a uniquely named PostgreSQL 17 container with independent test settings and temporary storage.
+It removes the container on pass or failure. Never substitute a development database for this suite.
+The [coverage summary](../docs/planning/VALIDATION.md) explains what these results establish.
 
-```powershell
-npm.cmd run typecheck
-npm.cmd run lint
-npm.cmd run format:check
-npm.cmd test
-npm.cmd run test:e2e
-```
+Other useful commands:
 
-ESLint uses its flat configuration and the TypeScript recommended rules, with type-aware floating-promise checks. Unit tests cover Hello World, configuration validation and the password primitive. Password tests use real Argon2 for encoded algorithm/work factors, match/mismatch, independent salts, spaces, Unicode, persisted work factors and malformed hashes. A separate error suite injects library failures to verify preserved causes. Configuration tests cover numeric conversion, inherited database rules, missing/invalid settings and password redaction.
+- npm.cmd run build: compile through Nest and copy assets.
 
-The HTTP smoke suite supplies synthetic configuration and overrides the TypeORM DataSource; it checks HTTP assembly without connecting to a developer's database. Its success does not verify PostgreSQL connectivity, migrations, health readiness or authentication routes. Real database integration must use an isolated PostgreSQL database when added. Actual results and any failed checks belong in the [validation register](../docs/planning/VALIDATION.md).
+- npm.cmd run start:prod: run the compiled application after building.
 
-## Pre-commit checks
+- npm.cmd run format: apply formatting; format:check verifies it.
 
-The tracked hook at `.githooks/pre-commit` invokes the backend's Node runner. It reads **staged** paths with `git diff --cached`, including deletions and both sides of renames. With no `backend/` changes it exits immediately. Otherwise it runs these commands from `backend/`, in order:
+- npm.cmd run test:blocklist:build: verify compiled blocklist assets and loading.
 
-1. `npm run lint` — ESLint without auto-fixes; any warning or error fails.
-2. `npm test` — Nest unit tests in one-shot mode.
-3. `npm run test:e2e` — Nest e2e tests in one-shot mode.
+The backend pre-commit gate runs lint, unit tests and HTTP tests when backend paths are staged.
+It does not run database tests or modify the Git index.
 
-Any failure stops the commit. Frontend commands are never run. The checks examine the backend working tree; if you partially stage a file, they do not create a staged snapshot or stash your other edits. They do not install dependencies, auto-fix or stage files.
+## Code boundaries
 
-**Activate once per clone**, from the **repository root**:
+ValidationModule registers APP_PIPE once. Controllers use concrete DTO classes with plain @Body().
+DTO constraints reuse the email/password functions in auth-input.ts.
+Reserved and inherited Object-method keys are rejected before transformation can discard them.
+Non-HTTP callers validate through RegisterDto.fromUnknown before calling RegistrationService.
 
-```powershell
-git config --local core.hooksPath .githooks
-```
+The service owns blocklist policy, hashing and the transaction.
+Only the precise canonical-email unique conflict is accepted as a duplicate.
+Recognized transaction connection failures become PersistenceUnavailableError with the original cause retained.
+The filter returns 503 for that marker and 500 for unsupported failures. Transactions are not retried.
 
-Git configuration changes are left to the developer under repository policy; preparing the tracked hook does not activate it automatically. On Linux/macOS also run `chmod +x .githooks/pre-commit` before use. Hook files use LF line endings for Git's shell, including Git for Windows. Node and npm must be available to the Git client.
+PasswordBlocklistService loads checksum-pinned local assets at construction and fails closed on invalid data.
+It uses exact strings and performs no runtime downloads.
+The [asset guide](src/auth/data/password-blocklist/README.md) owns provenance, license and updates.
 
-After installing backend dependencies, manually check the hook from the repository root with `node backend/scripts/pre-commit.mjs`. It skips when no backend changes are staged and runs the checks when backend paths are staged. Run `npm.cmd run test:hook` from `backend/` for the runner's path-gating and failure-propagation tests without changing the Git index.
-
-The setup follows [Git's pre-commit hook contract](https://git-scm.com/docs/githooks#_pre_commit), [ESLint configuration](https://eslint.org/docs/latest/use/configure/configuration-files), and [typescript-eslint guidance](https://typescript-eslint.io/getting-started/).
-
-## Enum imports and compiled output
-
-Source code can use the requested spelling:
-
-```typescript
-import { Environment } from "@enums/environment.enum.ts";
-```
-
-`tsconfig.json` deliberately maps `@enums/*.ts` to **two ordered candidates**: `./src/enums/*.js`, then `./src/enums/*`. Under NodeNext, TypeScript resolves the first candidate to the corresponding TypeScript source using extension substitution. Nest's installed path transformer resolves the second source candidate and emits a relative `.js` import. Keeping both candidates permits the exact `.ts` alias without disabling diagnostics or adding a runtime loader.
-
-Build through `npm.cmd run build` / the Nest CLI: plain `tsc` does not rewrite aliases, and plain Node does not understand the source alias. The existing Vite 8/Vitest configurations already enable `resolve.tsconfigPaths`. Type checking, build, compiled startup, watch startup and the existing test suites were verified with this mapping. Recheck them if changing the compiler, CLI, module system or path mapping.
-
-These choices follow [TypeScript's paths and extension-resolution rules](https://www.typescriptlang.org/docs/handbook/modules/reference.html#paths), [Nest CLI compilation](https://docs.nestjs.com/cli/usages#nest-build), [Vite path resolution](https://vite.dev/config/shared-options.html#resolve-tsconfigpaths), and [Prettier options](https://prettier.io/docs/options#quotes). The exact `.ts` alias is a project preference; it is not a Nest requirement. The completed setup walkthrough has been retired.
-
-The framework is [NestJS](https://nestjs.com/), distributed under its [MIT license](https://github.com/nestjs/nest/blob/master/LICENSE).
+Runtime and migration CLI share explicit registrations. Keep synchronize and migrationsRun false.
+Build through Nest, which performs the chosen alias rewrite.
+The @enums/environment.enum.ts source alias depends on the ordered tsconfig paths mapping.

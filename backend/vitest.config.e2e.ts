@@ -1,6 +1,7 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  oxc: { decorator: { legacy: true, emitDecoratorMetadata: true } },
   resolve: { tsconfigPaths: true },
   test: {
     // HTTP smoke tests override the DataSource; these values never connect to PostgreSQL.

@@ -1,44 +1,43 @@
 # TenantFlow documentation
 
-The NestJS backend has a minimal HTTP/configuration foundation and TypeORM runtime/CLI wiring. Auth and domain persistence remain unfinished. Use the validation register for evidence and the roadmap for the next checkpoint.
+Choose a document by the question you need answered.
 
-## Where to start
+## Run and test
 
-- Run the existing frontend or PostgreSQL: [Start Here](setup/START_HERE.md).
-- Continue backend implementation: [commands and configuration](../backend/README.md) and [Backend Conventions](architecture/BACKEND_CONVENTIONS.md).
-- Change the database schema: [migration workflow and data safety](../backend/src/database/migrations/README.md).
-- Check product behavior and MVP scope: [Software Requirements Specification](requirements/TenantFlow-SRS.md).
-- Choose the next milestone: [Implementation Roadmap](planning/ROADMAP.md).
-- Work on the first session-auth slice: [temporary development plan](SESSION_AUTH_DEVELOPMENT_PLAN.md).
+- [Backend guide](../backend/README.md): configure the API, run tests and check registration in a browser.
 
-## Document ownership
+- [Start Here](setup/START_HERE.md): run the existing frontend and development PostgreSQL service.
 
-| Location | Document | Owns |
-| --- | --- | --- |
-| `requirements/` | [SRS](requirements/TenantFlow-SRS.md) | Product rules, tenant boundaries, required behavior, MVP versus future scope |
-| `requirements/` | [Backend Requirements](requirements/BACKEND_REQUIREMENTS.md) | Backend constraints, accepted auth contract, model candidates and unresolved design choices |
-| `docs/` (temporary) | [Session Auth Development Plan](SESSION_AUTH_DEVELOPMENT_PLAN.md) | Active slice checkpoints and entity/migration handoff; finalized policies live in backend requirements; retire after preserving decisions/evidence |
-| `architecture/` | [Backend Conventions](architecture/BACKEND_CONVENTIONS.md) | Responsibilities, Nest request lifecycle diagram, security/data conventions, review agreement |
-| `architecture/decisions/` | [ADR 0001: Backend Stack and Session Auth](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) | Accepted TypeORM/session/supporting-stack decision, alternatives, consequences and unverified implementation details |
-| `setup/` | [Start Here](setup/START_HERE.md) | Commands for the existing checkout and onboarding order |
-| `backend/` | [Backend README](../backend/README.md) | Current commands, environment loading, formatting, aliases and runtime limitations |
-| `backend/src/database/migrations/` | [Migration Guide](../backend/src/database/migrations/README.md) | Migration commands, registration, SQL review, history/data safety and verification procedure |
-| `setup/` | [Environment and Ignore Rules](setup/ENV_AND_GITIGNORE_SETUP.md) | Actual environment consumers, secret handling, build/runtime boundaries |
-| `setup/` | [PostgreSQL Setup](setup/POSTGRESQL_SETUP.md) | Development database operation and persistent data |
-| `planning/` | [Implementation Roadmap](planning/ROADMAP.md) | Current milestone status and sequencing |
-| `planning/` | [Validation and Follow-ups](planning/VALIDATION.md) | Retained verification evidence, limits, outstanding manual checks |
-| `planning/releases/1.0.0/` | [Version Plan](planning/releases/1.0.0/VERSION-PLANNING.md) | Release grouping and historical schedule |
-| `planning/releases/1.0.0/` | [Future Roadmap](planning/releases/1.0.0/FUTURE-ROADMAP.md) | Enhancements beyond the canonical MVP |
+- [Environment guide](setup/ENV_AND_GITIGNORE_SETUP.md): understand environment files and their consumers.
 
-The root [README](../README.md) owns the project overview. Root [schemas](../schemas.ts) and [enums](../enum.ts) are provisional vocabulary, not runtime contracts or migrations. [Frontend documentation](../frontend/README.md) stays beside that application; shared images stay in `assets/images/`.
+- [Migration guide](../backend/src/database/migrations/README.md): review and apply schema changes safely.
 
-## Keeping documents manageable
+## Understand the system
 
-1. Update the owning document, then link to it from related guides. Avoid another setup-complete summary or duplicate source of milestone status.
-2. Follow SRS product rules when documents conflict. Keep proposals, accepted decisions, existing files and verified behavior distinct. Remove superseded instructions and duplicate drafts as decisions change; retain useful evidence in the validation register and rationale in decision records.
-3. Use descriptive filenames matching the existing uppercase guide names. Keep `README.md` as the index and link new documents here. Use relative links and repair incoming links whenever a file moves.
-4. Record significant accepted technical decisions under `architecture/decisions/`: date, status, context, choice, alternatives, consequences and affected requirements. Keep current implementation state in the owning runtime/planning documents.
-5. Keep completion evidence short: command/check, commit or environment, observed result, and remaining limitation. Keep secrets and account details out of documentation.
-6. Remove completed temporary plans after preserving useful decisions and unfinished follow-ups in their owning documents. Git history retains the detailed change narrative.
+- [SRS](requirements/TenantFlow-SRS.md): product rules and release boundaries.
 
-Backend guidance follows [backend agent instructions](../backend/AGENTS.md). Keep review feedback in the conversation; use the backend README for runtime instructions.
+- [Backend requirements](requirements/BACKEND_REQUIREMENTS.md): authentication and persistence contracts.
+
+- [Backend conventions](architecture/BACKEND_CONVENTIONS.md): responsibility placement and coding conventions.
+
+- [ADR 0001](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md): why the stack was selected.
+
+- [Auth overview](SESSION_AUTH_DEVELOPMENT_PLAN.md): how the current auth components fit together.
+
+## Understand status
+
+- [Roadmap](planning/ROADMAP.md): high-level delivery sequence.
+
+- [Coverage summary](planning/VALIDATION.md): verified behavior and verification limits.
+
+- [Release scope](planning/releases/1.0.0/VERSION-PLANNING.md): release intent, not implementation evidence.
+
+## Maintain these pages
+
+Each document should answer one reader question and link to the owner of other details.
+Keep current explanations, not chronological work logs or accumulating proposed-case lists.
+Implementation plans and review discussion belong in the chat; executable cases belong in tests.
+
+Limits: 300 lines per document, 120 words per line and 200 words per statement.
+A statement is a prose paragraph, list item or table entry.
+Preserve accepted requirements when simplifying; remove duplication and stale links.
