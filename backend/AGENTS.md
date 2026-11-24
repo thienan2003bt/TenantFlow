@@ -8,6 +8,8 @@ The developer writes backend behavior, source and tests. Default to instructions
 
 Keep the application in `backend/`, use the installed local Nest CLI, and retain the selected ESM/Vitest conventions. Prefer the CLI's colocated feature structure and `--format` when adding features; the developer runs generators unless explicitly asking the agent to do so.
 
+Before migration-related work, read the [migration workflow and data-safety guide](src/database/migrations/README.md). It owns migration commands, registration, SQL review, history preservation, failure handling and isolated database checks. Keep those instructions there rather than duplicating them in planning documents. The guide does not expand the current task's Git or database execution authority.
+
 ## Research before giving instructions
 
 1. Inspect the relevant files, installed versions, module registration, scripts and existing checks first. Distinguish what exists from what is proposed or verified.
@@ -29,7 +31,7 @@ Keep steps small and ordered. Clearly separate generator-created files/registrat
 
 For reviews, lead with actionable findings ordered by severity, including file/line references, observed impact, evidence and a correction the developer can implement. Distinguish correctness/security findings from optional structure or style preferences. If tests pass but miss relevant behavior, explain that coverage limit.
 
-Give review findings in the conversation. Do not create a separate review document unless the user asks for one. Keep current runtime commands/configuration in the backend README and milestone state in the existing roadmap.
+Give review findings in the conversation. Do not create a separate review document unless the user asks for one. Keep general runtime commands/configuration in the backend README, migration procedure in the migration guide, and milestone state in the existing roadmap.
 
 ## Current formatting and import conventions
 

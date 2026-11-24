@@ -8,7 +8,7 @@ Version 1.5 · Reviewed 23 October 2026 · NestJS backend · Engineering baselin
 
 Use this guide when designing, implementing, reviewing, or modifying TenantFlow backend functionality. It defines shared conventions for human developers and AI agents so that request handling, business behavior, tenant isolation, and infrastructure integration remain consistent.
 
-The minimal Nest 12 application has historical startup and HTTP health smoke evidence; the [backend README](../../backend/README.md) records current commands, behavior and test coverage. On 23 October 2026 the developer accepted [ADR 0001: backend stack and session authentication](decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md). It selects PostgreSQL with TypeORM repositories/Data Mapper, application-owned database sessions, Argon2id and the supporting Nest stack. These new integrations are accepted architecture, not implemented or verified features. Template Stack Auth remains until later frontend replacement. Detailed session policies, package compatibility and hosting remain open. The [SRS](../requirements/TenantFlow-SRS.md) owns product rules and release boundaries; this guide owns engineering conventions.
+The minimal Nest 12 application has historical startup and HTTP health smoke evidence; the [backend README](../../backend/README.md) records current commands, behavior and test coverage. On 23 October 2026 the developer accepted [ADR 0001: backend stack and session authentication](decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md). It selects PostgreSQL with TypeORM repositories/Data Mapper, application-owned database sessions, Argon2id and the supporting Nest stack. Database wiring and password hashing are implemented; domain persistence and auth workflows remain unfinished. The [first-slice contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial-session-auth-contract) was finalized on 12 November 2026. Template Stack Auth remains until later replacement; recovery, production integration and hosting require later work. The [SRS](../requirements/TenantFlow-SRS.md) owns product rules and release boundaries; this guide owns engineering conventions.
 
 ## Accepted stack
 
@@ -140,7 +140,7 @@ Application services SHOULD own the transaction boundary for a business operatio
 - MUST use database constraints, atomic operations, locking, or suitable transaction isolation where concurrency could violate an invariant.
 - MUST NOT rely solely on a read-then-write check for limits or uniqueness under concurrent requests.
 - SHOULD keep slow external network calls outside database transactions where possible.
-- MUST manage schema changes through reviewed migrations. Destructive or incompatible migrations need a deliberate rollout strategy.
+- MUST manage schema changes through reviewed migrations. Destructive or incompatible migrations need a deliberate rollout strategy. Use the [migration guide](../../backend/src/database/migrations/README.md) for the concrete workflow and data/history safeguards.
 - SHOULD add a repository interface only when it protects a useful contract. Do not wrap every ORM method mechanically.
 
 MUST prevent cross-tenant parent/child links and role assignments, using tenant-aware foreign keys or equivalent checks plus the required database constraints. Review query plans and bounded pagination for common tenant lookups. Automatic schema synchronization is not a production migration strategy.
@@ -214,7 +214,7 @@ The table distinguishes accepted architecture from details still needed. A recor
 | Application location and tooling | Backend inside `backend/`, beside `frontend/`; keep package/configuration/source/tests within that directory and record supported tooling versions |
 | Database and data library | PostgreSQL with TypeORM repositories/Data Mapper and reviewed TypeORM migrations selected in ADR 0001; PostgreSQL 17 service exists; released versions and integration remain unverified |
 | Tenancy storage | Shared database with tenant IDs is the product direction; record constraints and any additional RLS decision |
-| Authentication | Application-owned database sessions with a service/guard and Argon2id selected; detailed cookie/CSRF/session/recovery policies remain open; template Stack Auth replacement is later work |
+| Authentication | Application-owned database sessions and Argon2id under the finalized first-slice contract; entities, session service/guard and browser safeguards remain implementation work; recovery and template Stack Auth replacement follow later |
 | Authorization | Membership, permissions, resource policy, and administrative access |
 | API contracts | Versioning, response shape, error schema, pagination conventions |
 | Background execution | Whether a durable queue is needed and its operational ownership |

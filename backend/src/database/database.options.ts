@@ -1,5 +1,9 @@
 import type { DataSourceOptions } from "typeorm";
+import { PasswordCredential } from "../auth/password-credential.entity.js";
+import { Session } from "../auth/session.entity.js";
+import { User } from "../auth/user.entity.js";
 import type { DatabaseEnvironment } from "./database.validation.js";
+import { InitialAuth1795512053650 } from "./migrations/1795512053650-InitialAuth.js";
 
 export function createDatabaseOptions(config: DatabaseEnvironment): DataSourceOptions {
   return {
@@ -9,8 +13,8 @@ export function createDatabaseOptions(config: DatabaseEnvironment): DataSourceOp
     username: config.DB_USERNAME,
     password: config.DB_PASSWORD,
     database: config.DB_NAME,
-    entities: [],
-    migrations: [],
+    entities: [User, PasswordCredential, Session],
+    migrations: [InitialAuth1795512053650],
     // Schema changes are applied through reviewed migrations, not application startup.
     synchronize: false,
     migrationsRun: false,

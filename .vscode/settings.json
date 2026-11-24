@@ -5,6 +5,7 @@
     "nestjs",
     "psql",
     "tenantflow",
+    "timestamptz",
     "TOTP",
     "vercel",
     "webapi",

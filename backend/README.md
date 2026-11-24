@@ -6,6 +6,10 @@ This application currently exposes `GET /` (Hello World) and `GET /health-check`
 
 `AuthModule` provides `PasswordService` for asynchronous Argon2id hashing and verification. Its current hashing profile uses 64 MiB, two iterations and parallelism one; verification reads the persisted hash's encoded parameters. Its public verification signature is `verify(rawPassword, hashedPassword)`. Registration/login routes, credential persistence, cookies and sessions are not implemented yet.
 
+The first entity example is `src/auth/user.entity.ts`, mapping `User` to the `users` table. It uses TypeORM decorators, a backend-local `UserStatus` enum, explicit snake_case column names, canonical-email uniqueness and account-state/email CHECK constraints. TypeORM operates through repositories/Data Mapper; entity instances do not save themselves. The creating service must supply a UUID and canonicalized email, and explicitly maintain user updates. Timestamp/status defaults take effect during database insertion, not `new User()`.
+
+Keep these three initial entity files directly in `src/auth/`, beside the existing module/service. An `entities/` subdirectory is optional if that feature becomes crowded; a root-wide entity directory would separate mappings from their owning features. The [mapping contract](../docs/requirements/BACKEND_REQUIREMENTS.md#minimal-auth-persistence-mapping) owns exact fields and constraints.
+
 ## Local configuration and commands
 
 Use Node.js compatible with the installed Nest/CLI and ESLint versions; recent checks used Node.js 24.21.0. Run commands from **`TenantFlow/backend/`**. For a clean dependency installation, use `npm.cmd ci`.
@@ -32,7 +36,7 @@ Start PostgreSQL from the **repository root** before starting Nest:
 docker compose up -d --wait --wait-timeout 90 postgres
 ```
 
-`AppModule` validates configuration once, then imports `DatabaseModule`. That module injects `ConfigService` and uses `database.options.ts` to configure TypeORM. Nest manages the connection lifecycle. Synchronization and startup migrations are disabled; no feature entities or migrations are registered yet.
+`AppModule` validates configuration once, then imports `DatabaseModule`. That module injects `ConfigService` and uses `database.options.ts` to configure TypeORM. Nest manages the connection lifecycle. `User`, `PasswordCredential`, `Session` and the initial auth migration are registered in shared runtime/CLI options; synchronization and startup migrations remain disabled. Registration does not apply the migration or create its tables. Add `TypeOrmModule.forFeature([User])` in the consuming feature module when introducing an injected `Repository<User>`; no repository consumer is implemented yet. See [Nest's TypeORM integration](https://docs.nestjs.com/data/typeorm) and [TypeORM entities](https://typeorm.io/docs/entity/entities/).
 
 Start development mode:
 
@@ -53,19 +57,17 @@ npm.cmd run build
 npm.cmd run start:prod
 ```
 
-The standalone migration DataSource reuses the database validator and options builder without starting Nest. After building, run this from `backend/` to check migration status against the configured PostgreSQL database:
-
-```powershell
-node --env-file=.env ./node_modules/typeorm/cli.js migration:show -d ./dist/database/data-source.js
-```
-
-With no migrations registered, no migration entries are expected. This command may create TypeORM's migration-history table; it does not apply feature migrations. Loading the DataSource without opening a connection is not proof that PostgreSQL is reachable.
-
 The current bootstrap omits an explicit listening host and enables unrestricted CORS. The printed localhost URL does not restrict exposure.
+
+## Database migrations
+
+The standalone migration DataSource reuses the database validator and options builder without starting Nest. Read the [migration guide](src/database/migrations/README.md) for the named commands, target checks, registration, SQL review and data/history safeguards. Keep that detailed workflow in the guide.
+
+InitialAuth is generated and registered alongside the three auth entities. Database execution and constraint/rollback evidence remain tracked in the [validation register](../docs/planning/VALIDATION.md); the [roadmap](../docs/planning/ROADMAP.md#current-priorities-and-learning-preferences) owns the next small PR. No migration is applied automatically at startup.
 
 ## Formatting and checks
 
-Backend Prettier configuration uses double quotes for imports, `printWidth: 120` and two spaces per indentation level (`tabWidth: 2`, `useTabs: false`). `printWidth` is Prettier's wrapping preference, not a hard limit on every line. Run formatting after editing or generation:
+Backend Prettier configuration uses double quotes for imports, `printWidth: 120`, two spaces per indentation level (`tabWidth: 2`, `useTabs: false`) and explicit LF line endings (`endOfLine: "lf"`), matching `backend/.gitattributes`. Existing CRLF working files still need formatting even when Git stores LF in the index; see [Prettier's line-ending option](https://prettier.io/docs/options#end-of-line). `printWidth` is Prettier's wrapping preference, not a hard limit on every line. Run formatting after editing or generation:
 
 ```powershell
 npm.cmd run format
@@ -75,7 +77,15 @@ When using the Nest CLI, append `--format`, for example `npx.cmd --no-install ne
 
 The existing `backend/.vscode/settings.json` selects double quotes for auto-imports and Prettier on save **when `backend/` is opened as the VS Code workspace** and the Prettier extension is installed. Nested VS Code settings do not apply automatically when opening only the repository root; the formatter and scripts still read the backend Prettier configuration. Prettier may choose another delimiter for ordinary strings to reduce escaping; import specifiers here use double quotes.
 
-Run these checks from `backend/`:
+Run the complete existing verification sequence from `backend/`:
+
+```powershell
+npm.cmd run check
+```
+
+This runs typecheck, lint, formatting verification, unit tests, HTTP smoke tests, hook-runner tests and Nest build, in that order. It stops at the first failure and does not apply fixes. The build writes compiled output under `dist/`. No PostgreSQL connection, migration, auth flow or browser behavior is verified by this command. The script uses npm's standard [run-script behavior](https://docs.npmjs.com/cli/v11/commands/npm-run/).
+
+Individual checks remain available:
 
 ```powershell
 npm.cmd run typecheck
