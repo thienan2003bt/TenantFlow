@@ -36,9 +36,9 @@ Use backend requirements as the single policy source. The design now fixes email
 
 ### Subsequent checkpoint — migration and real PostgreSQL
 
-Work minimum-first under the developer's 24 November 2026 preference: InitialAuth is generated and registered, and its up/down SQL has been inspected. The immediate action is isolated database apply/revert/reapply and essential constraint checks using the [named package scripts](../backend/README.md#initial-auth-migration-next-developer-checkpoint). No new endpoint, service, test framework or CI expansion is needed for this checkpoint.
+Work minimum-first under the developer's 24 November 2026 preference: InitialAuth is generated and registered, and its up/down SQL has been inspected. The immediate action is isolated PostgreSQL verification using the [migration guide](../backend/src/database/migrations/README.md#make-and-review-a-migration). No new endpoint, service, test framework or CI expansion is needed for this checkpoint.
 
-Migration scripts rebuild automatically and load the shared compiled DataSource with backend environment configuration. Use an isolated database before applying/reverting migrations or exercising cleanup. Verify the requirements' essential constraint and transaction-rollback cases, keeping normal development data intact; local manual evidence can establish this first checkpoint before broader automation. Then implement registration as the first workable account operation with its required input/hash/transaction/duplicate-response and abuse/CSRF controls. Add database automation and backend CI incrementally; isolated test-database lifecycle automation remains later work.
+Follow that guide for commands, target selection, registration, SQL/history safety and completion evidence. Keep this tracker focused on the slice: after the schema checkpoint, implement registration as the first workable account operation with its required input/hash/transaction/duplicate-response and abuse/CSRF controls. Add database automation and backend CI incrementally; isolated test-database lifecycle automation remains later work.
 
 ## Follow-up boundaries and handoff
 

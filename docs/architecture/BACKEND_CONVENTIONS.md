@@ -140,7 +140,7 @@ Application services SHOULD own the transaction boundary for a business operatio
 - MUST use database constraints, atomic operations, locking, or suitable transaction isolation where concurrency could violate an invariant.
 - MUST NOT rely solely on a read-then-write check for limits or uniqueness under concurrent requests.
 - SHOULD keep slow external network calls outside database transactions where possible.
-- MUST manage schema changes through reviewed migrations. Destructive or incompatible migrations need a deliberate rollout strategy.
+- MUST manage schema changes through reviewed migrations. Destructive or incompatible migrations need a deliberate rollout strategy. Use the [migration guide](../../backend/src/database/migrations/README.md) for the concrete workflow and data/history safeguards.
 - SHOULD add a repository interface only when it protects a useful contract. Do not wrap every ORM method mechanically.
 
 MUST prevent cross-tenant parent/child links and role assignments, using tenant-aware foreign keys or equivalent checks plus the required database constraints. Review query plans and bounded pagination for common tenant lookups. Automatic schema synchronization is not a production migration strategy.

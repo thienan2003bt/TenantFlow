@@ -6,6 +6,7 @@ The NestJS backend has a minimal HTTP/configuration foundation and TypeORM runti
 
 - Run the existing frontend or PostgreSQL: [Start Here](setup/START_HERE.md).
 - Continue backend implementation: [commands and configuration](../backend/README.md) and [Backend Conventions](architecture/BACKEND_CONVENTIONS.md).
+- Change the database schema: [migration workflow and data safety](../backend/src/database/migrations/README.md).
 - Check product behavior and MVP scope: [Software Requirements Specification](requirements/TenantFlow-SRS.md).
 - Choose the next milestone: [Implementation Roadmap](planning/ROADMAP.md).
 - Work on the first session-auth slice: [temporary development plan](SESSION_AUTH_DEVELOPMENT_PLAN.md).
@@ -21,6 +22,7 @@ The NestJS backend has a minimal HTTP/configuration foundation and TypeORM runti
 | `architecture/decisions/` | [ADR 0001: Backend Stack and Session Auth](architecture/decisions/0001-BACKEND-STACK-AND-SESSION-AUTH.md) | Accepted TypeORM/session/supporting-stack decision, alternatives, consequences and unverified implementation details |
 | `setup/` | [Start Here](setup/START_HERE.md) | Commands for the existing checkout and onboarding order |
 | `backend/` | [Backend README](../backend/README.md) | Current commands, environment loading, formatting, aliases and runtime limitations |
+| `backend/src/database/migrations/` | [Migration Guide](../backend/src/database/migrations/README.md) | Migration commands, registration, SQL review, history/data safety and verification procedure |
 | `setup/` | [Environment and Ignore Rules](setup/ENV_AND_GITIGNORE_SETUP.md) | Actual environment consumers, secret handling, build/runtime boundaries |
 | `setup/` | [PostgreSQL Setup](setup/POSTGRESQL_SETUP.md) | Development database operation and persistent data |
 | `planning/` | [Implementation Roadmap](planning/ROADMAP.md) | Current milestone status and sequencing |

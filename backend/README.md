@@ -57,43 +57,13 @@ npm.cmd run build
 npm.cmd run start:prod
 ```
 
-The standalone migration DataSource reuses the database validator and options builder without starting Nest. Run this from `backend/` to rebuild and check migration status against the configured PostgreSQL database:
-
-```powershell
-npm.cmd run db:migration:show
-```
-
-The output lists `InitialAuth1795512053650` as pending or applied according to the target database's history. This command may create TypeORM's migration-history table; it does not apply feature migrations. Loading the DataSource without opening a connection is not proof that PostgreSQL is reachable.
-
 The current bootstrap omits an explicit listening host and enables unrestricted CORS. The printed localhost URL does not restrict exposure.
 
-## Initial auth migration: next developer checkpoint
+## Database migrations
 
-The generated `src/database/migrations/1795512053650-InitialAuth.ts` creates the three auth tables, their constraints and the session user index; it is registered in `database.options.ts`. Generation was reported successful by the developer. Its application/reversal and real constraint enforcement have not been verified by the agent.
+The standalone migration DataSource reuses the database validator and options builder without starting Nest. Read the [migration guide](src/database/migrations/README.md) for the named commands, target checks, registration, SQL review and data/history safeguards. Keep that detailed workflow in the guide.
 
-Use the package scripts from `backend/`; long CLI commands and paths are owned by `scripts/migration.mjs`. Every command rebuilds first, loads `backend/.env` and uses the shared compiled DataSource. Process environment variables override env-file values. Start PostgreSQL and verify the target database before using a command.
-
-| Command | Behavior |
-| --- | --- |
-| `npm run db:migration:generate -- AddUserProfile` | Compare current entities with the database and generate a new timestamped TypeScript file under `src/database/migrations/`. Accepts a name only, without a directory or extension. |
-| `npm run db:migration:show` | List registered migrations and their applied status. |
-| `npm run db:migration:run` | Apply all pending registered migrations. |
-| `npm run db:migration:revert` | Execute down() for the latest applied migration. |
-
-Use `npm.cmd` in PowerShell if script execution policy prevents the `npm` shim from running. Add `-- --help` to any of these commands for usage without connecting to PostgreSQL. Names start with a letter and may contain letters, digits, underscores or hyphens. No additional flags are forwarded; local connection settings come from environment configuration. These wrappers are local developer commands, not production deployment automation. npm forwards arguments after `--` as described in its [run command reference](https://docs.npmjs.com/cli/v11/commands/npm-run/).
-
-For the existing migration, the next checkpoint uses an isolated database: inspect status, apply, revert and reapply it, then check essential constraints and rollback. Do not generate another InitialAuth migration. The following commands change the configured target when run:
-
-```powershell
-npm.cmd run db:migration:show
-npm.cmd run db:migration:run
-npm.cmd run db:migration:revert
-npm.cmd run db:migration:run
-```
-
-For later entity changes, generation writes SQL without applying it. Review up()/down(), run `npm.cmd run format`, and import the newly generated migration class into the shared `migrations` array before executing it; the next script invocation rebuilds automatically. Generation does not auto-register a new class. If no changes are detected, the generator exits with code 1; inspect the target/schema rather than resetting development data. See [TypeORM generation](https://typeorm.io/docs/migrations/generating/), [execution](https://typeorm.io/docs/migrations/executing/) and [registration](https://typeorm.io/docs/migrations/setup/).
-
-Keep synchronization/startup migrations disabled and preserve the development volume. Reverting InitialAuth removes its tables and their data, so apply/revert/reapply verification belongs on an isolated database. Registration follows once the schema is usable. No migration generation, application or reversal was executed by the agent for this script update.
+InitialAuth is generated and registered alongside the three auth entities. Database execution and constraint/rollback evidence remain tracked in the [validation register](../docs/planning/VALIDATION.md); the [roadmap](../docs/planning/ROADMAP.md#current-priorities-and-learning-preferences) owns the next small PR. No migration is applied automatically at startup.
 
 ## Formatting and checks
 

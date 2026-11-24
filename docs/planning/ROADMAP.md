@@ -2,7 +2,7 @@
 
 This roadmap tracks the implementation of TenantFlow from architecture decisions to public deployment. The file is meant to stay current and should be updated whenever a milestone changes status.
 
-The developer implements NestJS in `backend/`, beside the independent `frontend/`. The [backend README](../../backend/README.md) owns commands and current runtime behavior; the [validation register](VALIDATION.md) owns recorded results and outstanding checks. Database wiring and a tested password service exist; domain persistence, auth workflows and agent-run real PostgreSQL verification remain unfinished.
+The developer implements NestJS in `backend/`, beside the independent `frontend/`. The [backend README](../../backend/README.md) owns startup/configuration, the [migration guide](../../backend/src/database/migrations/README.md) owns database-change procedure, and the [validation register](VALIDATION.md) owns recorded results and outstanding checks. Database wiring and a tested password service exist; domain persistence, auth workflows and agent-run real PostgreSQL verification remain unfinished.
 
 The [canonical SRS release boundaries](../requirements/TenantFlow-SRS.md#24-canonical-release-boundaries) govern MVP versus future scope. The [version plan](releases/1.0.0/VERSION-PLANNING.md) groups release work; its archived original schedule is retained for history only.
 
@@ -37,7 +37,7 @@ The [accepted contract](../requirements/BACKEND_REQUIREMENTS.md#accepted-initial
 
 Do not introduce queues, distributed cache, live push, multiple API instances or a managed load balancer merely to use available products. Evaluate them when a feature or operational exercise needs them. R2 is a later file-storage candidate. Hosted API compute, frontend auth replacement/deployment and transactional email delivery remain explicit follow-ups, not verified free-tier capabilities.
 
-**Immediate checkpoint:** Use the [named migration scripts](../../backend/README.md#initial-auth-migration-next-developer-checkpoint) to verify InitialAuth apply/revert/reapply plus essential constraints/rollback on isolated PostgreSQL. The generated/registered migration covers users, password_credentials, sessions and their constraints/indexes, but source inspection is not execution evidence. Then implement registration as the first usable auth operation. CI expansion follows incrementally. Record actual results in [Validation and Follow-ups](VALIDATION.md); the developer runs database operations.
+**Next small PR:** Verify InitialAuth on isolated PostgreSQL using the [migration guide](../../backend/src/database/migrations/README.md#make-and-review-a-migration), and retain actual constraint/rollback evidence in [Validation and Follow-ups](VALIDATION.md). The current branch is a persistence-foundation batch; merging it does not complete those checks or authentication. Registration is the next feature slice after schema verification, with CI expansion following incrementally. The developer performs merging and database operations.
 
 ---
 
